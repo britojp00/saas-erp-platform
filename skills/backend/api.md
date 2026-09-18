@@ -1,0 +1,813 @@
+# Backend API
+
+## Objetivo
+
+Definir os padrões para criação, organização, evolução e manutenção da API HTTP do SaaS ERP Platform.
+
+Este documento complementa:
+
+```text
+skills/02-architecture.md
+skills/backend/README.md
+skills/backend/architecture.md
+
+A API deve funcionar como um contrato estável entre o backend, o frontend e futuras integrações externas.
+
+1. Princípios
+
+A API deve ser:
+
+consistente;
+previsível;
+versionada;
+segura;
+documentada;
+orientada a recursos;
+compatível com o modelo multi-tenant.
+
+As decisões de API devem priorizar clareza e estabilidade.
+
+2. Versionamento
+
+As rotas devem utilizar versionamento.
+
+Estrutura:
+
+/api/v1/
+
+Exemplos:
+
+/api/v1/customers
+/api/v1/products
+/api/v1/orders
+
+Novas alterações incompatíveis devem utilizar uma nova versão quando necessário.
+
+Evitar quebrar silenciosamente o contrato existente.
+
+3. Organização
+
+Os endpoints da API ficam organizados em:
+
+backend/app/api/v1/
+
+Exemplo:
+
+app/
+└── api/
+    └── v1/
+        ├── customers.py
+        ├── products.py
+        ├── inventory.py
+        ├── orders.py
+        └── auth.py
+
+A organização deve acompanhar os recursos e casos de uso da aplicação.
+
+4. Recursos
+
+Os endpoints devem representar recursos de forma consistente.
+
+Exemplo:
+
+/customers
+/products
+/categories
+/inventory
+/orders
+
+Preferir substantivos no nome da rota.
+
+Evitar:
+
+/createCustomer
+/getCustomers
+/deleteProduct
+
+Preferir:
+
+POST   /customers
+GET    /customers
+GET    /customers/{customer_id}
+PATCH  /customers/{customer_id}
+DELETE /customers/{customer_id}
+5. Métodos HTTP
+
+Utilizar o método apropriado para a operação.
+
+GET
+
+Consulta recursos.
+
+GET /customers
+GET /customers/{customer_id}
+
+Não deve alterar estado.
+
+POST
+
+Criação ou execução de operações que não sejam idempotentes por natureza.
+
+POST /customers
+POST /orders
+PATCH
+
+Atualização parcial.
+
+PATCH /customers/{customer_id}
+PUT
+
+Utilizar somente quando a semântica de substituição completa for realmente necessária.
+
+Não utilizar PUT apenas por preferência pessoal.
+
+DELETE
+
+Exclusão lógica ou física conforme a regra definida para o recurso.
+
+Para entidades de negócio, a implementação normalmente utilizará deleted_at.
+
+6. Status HTTP
+
+Utilizar códigos HTTP de forma consistente.
+
+Exemplos:
+
+200 OK
+201 Created
+204 No Content
+400 Bad Request
+401 Unauthorized
+403 Forbidden
+404 Not Found
+409 Conflict
+422 Unprocessable Entity
+500 Internal Server Error
+
+Exemplo:
+
+POST /customers
+→ 201 Created
+GET /customers/123
+→ 200 OK
+DELETE /customers/123
+→ 204 No Content
+
+A escolha deve refletir o resultado real da operação.
+
+7. Autenticação
+
+Endpoints protegidos devem exigir autenticação.
+
+Fluxo conceitual:
+
+Request
+   ↓
+JWT
+   ↓
+Authenticated User
+   ↓
+Tenant Context
+   ↓
+Authorization
+   ↓
+Endpoint
+
+Endpoints públicos devem ser explicitamente definidos.
+
+Não considerar um endpoint público simplesmente porque nenhuma dependency de autenticação foi adicionada ainda.
+
+8. Autorização
+
+Autenticação e autorização são responsabilidades diferentes.
+
+Exemplo:
+
+Usuário autenticado
+       ↓
+Possui customer.read?
+       ↓
+SIM → acesso permitido
+NÃO → 403 Forbidden
+
+A autorização deve ocorrer antes da execução da operação protegida.
+
+9. Tenant Context
+
+Endpoints que trabalham com dados de tenant não devem depender de um tenant_id arbitrário enviado pelo frontend para autorizar a operação.
+
+O contexto deve ser derivado da identidade autenticada.
+
+Exemplo:
+
+Authorization Header
+        ↓
+JWT
+        ↓
+User
+        ↓
+Tenant
+        ↓
+Repository query
+
+Um tenant_id fornecido explicitamente pela requisição somente deve ser utilizado quando fizer parte de uma operação autorizada e claramente definida.
+
+10. IDs
+
+Os recursos utilizam UUID.
+
+Exemplo:
+
+GET /customers/550e8400-e29b-41d4-a716-446655440000
+
+O backend deve validar o formato do UUID antes da execução da operação.
+
+Não utilizar IDs sequenciais quando o padrão do domínio for UUID.
+
+11. Request Schemas
+
+Dados recebidos pelo cliente devem ser validados através de schemas Pydantic.
+
+Exemplo:
+
+class CustomerCreate(BaseModel):
+    name: str
+    email: str | None = None
+
+O router deve receber o schema, e não dados arbitrários.
+
+Evitar:
+
+async def create_customer(data: dict):
+    ...
+
+quando existir um contrato conhecido.
+
+12. Response Schemas
+
+Responses devem utilizar schemas definidos.
+
+Exemplo:
+
+class CustomerResponse(BaseModel):
+    id: UUID
+    name: str
+    email: str | None
+
+Evitar retornar diretamente estruturas internas do banco sem controle do contrato.
+
+O response schema deve definir claramente o que pode ser exposto.
+
+13. Separação entre Request e Response
+
+Não assumir que o mesmo schema deve ser usado para:
+
+Create
+Update
+Response
+
+Exemplo:
+
+CustomerCreate
+CustomerUpdate
+CustomerResponse
+
+Essa separação permite controlar corretamente:
+
+campos obrigatórios;
+campos opcionais;
+campos somente leitura;
+informações internas.
+14. Campos somente leitura
+
+Campos como:
+
+id
+created_at
+updated_at
+deleted_at
+
+normalmente não devem ser aceitos como entrada comum do cliente.
+
+O backend deve ser responsável por esses valores.
+
+15. Paginação
+
+Listagens devem possuir paginação quando puderem retornar quantidade significativa de registros.
+
+Exemplo:
+
+GET /customers?page=1&page_size=20
+
+Ou, conforme a estratégia definida:
+
+GET /customers?limit=20&offset=0
+
+Os valores devem possuir limites.
+
+Evitar permitir:
+
+page_size=1000000
+16. Response de listagem
+
+A resposta de uma coleção deve possuir estrutura previsível.
+
+Exemplo:
+
+{
+  "items": [
+    {
+      "id": "uuid",
+      "name": "Cliente"
+    }
+  ],
+  "page": 1,
+  "page_size": 20,
+  "total": 125
+}
+
+A estrutura definitiva deve ser padronizada quando os primeiros endpoints de listagem forem implementados.
+
+Não criar formatos diferentes de paginação para cada recurso sem necessidade.
+
+17. Filtros
+
+Filtros devem utilizar query parameters.
+
+Exemplo:
+
+GET /customers?search=joao
+
+Múltiplos filtros:
+
+GET /customers?search=joao&status=active
+
+Os filtros devem:
+
+possuir nomes claros;
+ser validados;
+possuir comportamento documentado;
+respeitar tenant;
+considerar deleted_at.
+18. Busca
+
+Quando um endpoint possuir busca textual, utilizar parâmetros explícitos.
+
+Exemplo:
+
+GET /products?search=camisa
+
+Não criar rotas diferentes para cada variação simples de pesquisa.
+
+19. Ordenação
+
+Ordenação deve ser controlada.
+
+Exemplo:
+
+GET /customers?sort=created_at&order=desc
+
+Somente campos previamente permitidos devem poder ser utilizados.
+
+Não inserir diretamente valores recebidos do cliente em SQL.
+
+O backend deve mapear os valores aceitos para colunas conhecidas.
+
+20. Filtros por datas
+
+Filtros temporais devem possuir nomes e formato consistentes.
+
+Exemplo:
+
+GET /orders?created_from=2026-09-01&created_to=2026-09-30
+
+Quando horário for relevante, utilizar formato ISO 8601.
+
+Exemplo:
+
+2026-09-17T18:30:00Z
+
+O backend deve trabalhar internamente com timestamps timezone-aware.
+
+21. Recursos aninhados
+
+Recursos relacionados podem utilizar rotas aninhadas quando isso melhorar a clareza.
+
+Exemplo:
+
+GET /orders/{order_id}/items
+
+Evitar aninhamento excessivamente profundo:
+
+/customers/{customer_id}/orders/{order_id}/items/{item_id}/...
+
+Quando a rota ficar difícil de compreender ou manter, preferir um recurso independente.
+
+22. Ações específicas
+
+Algumas operações de negócio não representam CRUD simples.
+
+Nesses casos, uma rota de ação pode ser utilizada.
+
+Exemplo:
+
+POST /orders/{order_id}/cancel
+POST /orders/{order_id}/confirm
+
+Essas rotas devem representar ações de negócio reais.
+
+Não criar endpoints de ação simplesmente para evitar organizar uma regra no service.
+
+23. Operações idempotentes
+
+Operações sujeitas a retry devem considerar idempotência quando necessário.
+
+Exemplo:
+
+POST /orders
+Idempotency-Key: 8d9e...
+
+A estratégia deve ser implementada somente em operações que realmente necessitem desse controle.
+
+A chave de idempotência deve possuir escopo apropriado ao tenant e à operação.
+
+24. Erros
+
+Os erros da API devem possuir estrutura consistente.
+
+Exemplo:
+
+{
+  "detail": {
+    "code": "INSUFFICIENT_STOCK",
+    "message": "Estoque insuficiente."
+  }
+}
+
+O formato definitivo deve ser padronizado antes de existirem muitos endpoints públicos.
+
+Não retornar erros em formatos completamente diferentes entre recursos.
+
+25. Erros de validação
+
+Erros relacionados à entrada devem indicar que o payload não atende ao contrato.
+
+Exemplos:
+
+campo obrigatório ausente
+tipo inválido
+formato inválido
+valor fora do intervalo
+
+A validação deve ocorrer antes da execução da regra de negócio sempre que possível.
+
+26. Not Found
+
+Quando um recurso não existir dentro do contexto autorizado:
+
+404 Not Found
+
+Em recursos multi-tenant, o comportamento não deve permitir descobrir dados de outro tenant através de mensagens diferenciadas.
+
+27. Forbidden
+
+Usar:
+
+403 Forbidden
+
+quando o usuário estiver autenticado, mas não possuir autorização para executar a operação.
+
+Exemplo:
+
+Usuário autenticado
++
+sem permission = customer.delete
+→ 403
+28. Conflict
+
+Utilizar:
+
+409 Conflict
+
+quando houver conflito com o estado atual do recurso.
+
+Exemplos:
+
+SKU já existente
+E-mail único já utilizado
+Pedido já processado
+Operação incompatível com estado atual
+
+A regra específica deve permanecer no service.
+
+29. Internal Server Error
+
+Erros inesperados devem resultar em:
+
+500 Internal Server Error
+
+A resposta para o cliente não deve expor detalhes internos.
+
+O erro completo deve ser registrado nos logs apropriados.
+
+30. JSON
+
+A comunicação da API utiliza JSON salvo quando existir uma necessidade explícita de outro formato.
+
+Nomes de campos devem seguir snake_case.
+
+Exemplo:
+
+{
+  "created_at": "2026-09-17T18:30:00Z",
+  "customer_id": "uuid"
+}
+
+Evitar misturar:
+
+camelCase
+snake_case
+PascalCase
+
+sem motivo arquitetural.
+
+31. Datas e horários
+
+Datas e horários devem utilizar formatos padronizados.
+
+Para timestamps:
+
+ISO 8601
+UTC
+timezone-aware
+
+Exemplo:
+
+2026-09-17T18:30:00Z
+
+O backend deve evitar timestamps sem informação de timezone.
+
+32. Valores monetários
+
+A API deve representar valores monetários sem utilizar float.
+
+Exemplo:
+
+{
+  "price": "199.90"
+}
+
+A representação definitiva deve permanecer compatível com o schema e o tipo NUMERIC utilizado no banco.
+
+33. Booleanos
+
+Booleanos devem ser representados como booleanos JSON.
+
+Correto:
+
+{
+  "active": true
+}
+
+Evitar:
+
+{
+  "active": "true"
+}
+
+quando o campo representa realmente um booleano.
+
+34. Null
+
+Utilizar null quando o contrato permitir ausência de valor.
+
+Exemplo:
+
+{
+  "phone": null
+}
+
+Não utilizar strings como:
+
+"null"
+""
+"N/A"
+
+como substitutos genéricos de ausência.
+
+35. Documentação OpenAPI
+
+A API deve possuir documentação automática através do FastAPI/OpenAPI.
+
+Cada endpoint relevante deve possuir:
+
+descrição clara;
+parâmetros definidos;
+request schema;
+response schema;
+status codes;
+autenticação quando aplicável.
+
+Quando necessário, adicionar exemplos de request e response.
+
+36. Tags
+
+Endpoints devem ser organizados em tags relacionadas ao recurso.
+
+Exemplo:
+
+router = APIRouter(
+    prefix="/customers",
+    tags=["Customers"],
+)
+
+Isso melhora a organização da documentação Swagger/OpenAPI.
+
+37. Prefixos
+
+O prefixo da API deve ser centralizado.
+
+Estrutura esperada:
+
+/api/v1
+
+Depois:
+
+/api/v1/customers
+/api/v1/products
+/api/v1/orders
+
+Evitar duplicar manualmente /api/v1 em todos os endpoints caso isso possa ser resolvido pelo router principal.
+
+38. Compatibilidade
+
+Alterações na API devem considerar consumidores existentes.
+
+Mudanças potencialmente incompatíveis incluem:
+
+remoção de campos
+mudança de tipo
+mudança de significado
+remoção de endpoint
+mudança de autenticação
+mudança de comportamento
+
+Antes de executar uma alteração incompatível, avaliar versionamento ou estratégia de compatibilidade.
+
+39. Segurança da API
+
+Nunca confiar diretamente em informações vindas do cliente para:
+
+tenant_id
+user_id
+role
+permission
+created_at
+updated_at
+deleted_at
+
+quando esses dados forem controlados pelo backend.
+
+Informações de identidade e autorização devem vir do contexto confiável da aplicação.
+
+40. Rate Limiting
+
+Rate limiting poderá ser utilizado futuramente com Redis.
+
+Deve considerar:
+
+IP
+usuário
+tenant
+endpoint
+operação
+
+conforme o caso de uso.
+
+Não implementar rate limiting de forma indiscriminada antes de existir necessidade ou requisito.
+
+41. Health Endpoints
+
+O backend deve possuir endpoints para verificação de disponibilidade e, futuramente, dependências.
+
+Exemplo já existente:
+
+GET /health
+
+Um health check simples deve informar que a aplicação está respondendo.
+
+Checks mais profundos de infraestrutura podem ser separados conforme a necessidade.
+
+42. API e banco de dados
+
+A API não deve expor diretamente a estrutura interna das tabelas.
+
+Exemplo a evitar:
+
+{
+  "internal_database_field": "...",
+  "technical_column": "..."
+}
+
+O contrato da API deve representar o domínio da aplicação.
+
+Alterações internas do banco não devem exigir mudanças na API quando o comportamento externo continuar o mesmo.
+
+43. API e repositories
+
+Routers não devem acessar repositories diretamente quando a operação possuir regra de negócio.
+
+Preferir:
+
+Router
+   ↓
+Service
+   ↓
+Repository
+
+O acesso direto pode ser considerado somente para operações realmente simples e sem lógica relevante, mantendo consistência com a arquitetura definida.
+
+44. API e transações
+
+O endpoint não deve manipular commits de maneira arbitrária.
+
+A fronteira transacional deve ser definida pela operação de negócio.
+
+O service e a infraestrutura de persistência devem seguir o padrão estabelecido pelo projeto.
+
+45. Testes de API
+
+Endpoints relevantes devem possuir testes.
+
+Cobrir pelo menos:
+
+200 / 201
+400
+401
+403
+404
+409
+validação
+multi-tenancy
+
+quando forem aplicáveis ao recurso.
+
+Testar também:
+
+tenant A → seus dados
+tenant A → dados do tenant B
+
+O segundo cenário deve ser bloqueado.
+
+46. Evolução da API
+
+Ao criar um novo endpoint:
+
+1. Definir recurso ou caso de uso
+2. Definir contrato
+3. Criar request schema
+4. Criar response schema
+5. Criar service
+6. Criar repository quando necessário
+7. Implementar router
+8. Implementar autorização
+9. Criar testes
+10. Verificar OpenAPI
+
+Não começar pela implementação HTTP sem definir o comportamento esperado.
+
+47. Checklist
+
+Antes de finalizar um endpoint:
+
+ A rota está na versão correta;
+ O método HTTP é apropriado;
+ O nome do recurso é consistente;
+ Request schema está definido;
+ Response schema está definido;
+ Autenticação foi considerada;
+ Autorização foi considerada;
+ Contexto do tenant está correto;
+ Status HTTP está correto;
+ Erros estão padronizados;
+ Paginação foi considerada em listagens;
+ Filtros foram validados;
+ Ordenação utiliza campos permitidos;
+ Documentação OpenAPI está adequada;
+ Testes foram criados;
+ Não há exposição de dados internos.
+48. Regra principal
+
+A API deve ser tratada como um contrato.
+
+O objetivo não é apenas fazer o endpoint funcionar, mas garantir que ele seja:
+
+Claro
+Consistente
+Seguro
+Versionado
+Testável
+Documentado
+Estável
+
+Toda evolução da API deve preservar a previsibilidade para seus consumidores.

@@ -1,0 +1,884 @@
+# Backend Database
+
+## Objetivo
+
+Definir os padrões de acesso, persistência e consultas ao banco de dados dentro do backend do SaaS ERP Platform.
+
+Este documento complementa:
+
+```text
+skills/database/README.md
+skills/database/modeling.md
+skills/database/multi-tenancy.md
+skills/database/migrations.md
+skills/database/postgresql.md
+skills/backend/README.md
+skills/backend/architecture.md
+
+A camada de banco deve garantir:
+
+Consistência
+Isolamento entre tenants
+Integridade
+Testabilidade
+Performance
+Previsibilidade
+1. Banco principal
+
+O banco de dados principal do sistema é:
+
+PostgreSQL
+
+O backend utiliza:
+
+SQLAlchemy
+asyncpg
+Alembic
+
+O acesso à aplicação deve utilizar a URL configurada por variável de ambiente.
+
+Exemplo:
+
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/saas_erp
+
+Dentro do Docker, o host poderá ser diferente:
+
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/saas_erp
+
+O código da aplicação não deve depender de um host fixo.
+
+2. SQLAlchemy
+
+SQLAlchemy é responsável pela camada de persistência do backend.
+
+Responsabilidades principais:
+
+Engine
+Session
+Models
+Relationships
+Queries
+Transactions
+
+A implementação deve utilizar a API moderna do SQLAlchemy.
+
+Evitar misturar padrões antigos e modernos sem necessidade.
+
+3. Async Engine
+
+O backend utiliza acesso assíncrono ao PostgreSQL.
+
+Conceito:
+
+FastAPI
+   ↓
+Async SQLAlchemy
+   ↓
+asyncpg
+   ↓
+PostgreSQL
+
+A engine deve ser criada centralizadamente.
+
+Não criar uma nova engine em cada requisição.
+
+4. Database Session
+
+A sessão deve possuir ciclo de vida controlado.
+
+Fluxo esperado:
+
+Request
+   ↓
+Create/Get Session
+   ↓
+Service
+   ↓
+Repository
+   ↓
+Commit / Rollback
+   ↓
+Close
+
+A session não deve permanecer aberta além da operação necessária.
+
+5. Dependency da Session
+
+A obtenção da session deve ser centralizada em uma dependency ou componente equivalente.
+
+Conceito:
+
+async def get_db():
+    async with session_factory() as session:
+        yield session
+
+A implementação real deve seguir o padrão estabelecido pelo projeto.
+
+Routers não devem criar sessions manualmente.
+
+6. Models
+
+Models ficam em:
+
+backend/app/models/
+
+Exemplo:
+
+models/
+├── tenant.py
+├── user.py
+├── customer.py
+├── product.py
+├── category.py
+├── inventory.py
+├── order.py
+└── audit_log.py
+
+Um model deve representar uma entidade persistida.
+
+Deve possuir somente responsabilidades apropriadas à persistência e relacionamento da entidade.
+
+7. Naming
+
+Seguir as convenções definidas nas skills de database.
+
+Tabelas:
+
+snake_case
+plural
+
+Exemplo:
+
+customers
+products
+order_items
+audit_logs
+
+Colunas:
+
+snake_case
+
+Exemplo:
+
+tenant_id
+created_at
+updated_at
+deleted_at
+8. Primary Keys
+
+As entidades utilizam UUID como identificador principal.
+
+Exemplo conceitual:
+
+id: Mapped[UUID]
+
+O banco deve possuir o tipo apropriado para UUID.
+
+Não utilizar IDs inteiros sequenciais para novas entidades quando o padrão do projeto exigir UUID.
+
+9. Foreign Keys
+
+Relacionamentos entre entidades devem utilizar foreign keys reais.
+
+Exemplo:
+
+customers.tenant_id
+    ↓
+tenants.id
+
+Evitar armazenar relacionamentos somente como texto ou JSON.
+
+Foreign keys permitem que o banco também participe da proteção da integridade dos dados.
+
+10. Tenant ID
+
+Entidades pertencentes a um tenant devem possuir:
+
+tenant_id
+
+Exemplo:
+
+customers
+├── id
+├── tenant_id
+├── name
+└── ...
+
+A coluna deve possuir foreign key para:
+
+tenants.id
+
+quando aplicável.
+
+11. Queries Multi-tenant
+
+Repositories que acessam entidades de tenant devem aplicar o contexto do tenant.
+
+Exemplo conceitual:
+
+select(Customer).where(
+    Customer.id == customer_id,
+    Customer.tenant_id == tenant_id,
+    Customer.deleted_at.is_(None),
+)
+
+Não depender de um filtro adicionado somente posteriormente pelo router.
+
+O isolamento deve fazer parte da operação de persistência.
+
+12. Nunca consultar somente pelo ID quando o recurso for multi-tenant
+
+Evitar:
+
+select(Customer).where(
+    Customer.id == customer_id
+)
+
+quando o contexto do tenant for obrigatório.
+
+Preferir:
+
+select(Customer).where(
+    Customer.id == customer_id,
+    Customer.tenant_id == tenant_id,
+)
+
+Essa regra deve ser aplicada a:
+
+SELECT
+UPDATE
+DELETE
+13. Soft Delete
+
+Entidades de negócio utilizarão:
+
+deleted_at
+
+Registro ativo:
+
+deleted_at IS NULL
+
+Registro excluído logicamente:
+
+deleted_at IS NOT NULL
+
+Consultas normais devem considerar somente registros ativos.
+
+14. Soft Delete em Repository
+
+Exemplo conceitual:
+
+stmt = select(Customer).where(
+    Customer.tenant_id == tenant_id,
+    Customer.deleted_at.is_(None),
+)
+
+A consulta de registros excluídos deve ser explícita.
+
+Evitar que algumas operações ignorem deleted_at enquanto outras o aplicam sem um padrão claro.
+
+15. UPDATE Multi-tenant
+
+Atualizações devem considerar o tenant.
+
+Evitar:
+
+update(Customer).where(
+    Customer.id == customer_id
+)
+
+Preferir:
+
+update(Customer).where(
+    Customer.id == customer_id,
+    Customer.tenant_id == tenant_id,
+    Customer.deleted_at.is_(None),
+)
+
+A operação deve garantir que o registro pertence ao contexto autorizado.
+
+16. DELETE Multi-tenant
+
+Para entidades de negócio, normalmente utilizar soft delete.
+
+Conceito:
+
+entity.deleted_at = datetime.now(timezone.utc)
+
+Não realizar DELETE físico indiscriminadamente.
+
+Exclusão física somente deve existir quando for explicitamente necessária e autorizada.
+
+17. Timestamps
+
+Entidades de negócio devem possuir:
+
+created_at
+updated_at
+deleted_at
+
+Os valores devem ser timezone-aware.
+
+Utilizar UTC.
+
+Exemplo:
+
+2026-09-17T18:30:00Z
+
+Não utilizar timestamps locais sem timezone.
+
+18. Money
+
+Valores monetários devem utilizar:
+
+NUMERIC
+
+Nunca utilizar float como representação principal de valores monetários.
+
+Exemplo de banco:
+
+NUMERIC(15, 2)
+
+A representação na API deve permanecer compatível com a precisão definida pelo domínio.
+
+19. Quantidades
+
+Quantidades devem utilizar tipos adequados ao domínio.
+
+Dependendo da entidade:
+
+INTEGER
+NUMERIC
+
+Exemplo:
+
+stock_quantity
+quantity
+
+Não usar float para quantidades que exigem precisão controlada sem uma justificativa clara.
+
+20. Relationships
+
+Relacionamentos devem utilizar os mecanismos de relacionamento do SQLAlchemy quando apropriado.
+
+Exemplo conceitual:
+
+tenant = relationship("Tenant")
+
+Relacionamentos devem refletir as foreign keys existentes no banco.
+
+Não criar relacionamentos no ORM sem uma estrutura de banco coerente.
+
+21. Many-to-many
+
+Relacionamentos muitos-para-muitos devem utilizar tabelas de associação.
+
+Exemplo:
+
+users
+roles
+user_roles
+
+Evitar armazenar IDs em:
+
+TEXT
+ARRAY
+JSONB
+
+quando o relacionamento for estruturalmente relacional.
+
+22. JSONB
+
+JSONB pode ser utilizado quando o dado for realmente semi-estruturado.
+
+Exemplos possíveis:
+
+metadata
+external_payload
+integration_settings
+
+Não utilizar JSONB para evitar a criação de entidades ou relacionamentos que pertencem ao modelo relacional.
+
+23. External IDs
+
+Integrações externas devem utilizar campos explícitos.
+
+Exemplo:
+
+external_id
+source_system
+
+Quando necessário, uma constraint de unicidade deve considerar o tenant e o sistema de origem.
+
+Exemplo conceitual:
+
+UNIQUE (
+    tenant_id,
+    source_system,
+    external_id
+)
+
+A regra deve refletir o comportamento real da integração.
+
+24. Constraints
+
+Sempre que uma regra puder ser garantida pelo banco, considerar uma constraint.
+
+Exemplos:
+
+NOT NULL
+UNIQUE
+FOREIGN KEY
+CHECK
+
+Não depender somente da aplicação para preservar invariantes críticos que podem ser protegidos pelo PostgreSQL.
+
+25. Unique Constraints
+
+A unicidade deve ser definida de acordo com o escopo da regra.
+
+Exemplo global:
+
+email
+
+Exemplo por tenant:
+
+tenant_id + sku
+
+Não assumir que um campo é globalmente único quando o domínio permitir valores iguais em tenants diferentes.
+
+26. Índices
+
+Índices devem existir para padrões reais de consulta.
+
+Considerar especialmente consultas por:
+
+tenant_id
+foreign keys
+campos de busca frequente
+campos utilizados em ordenação
+campos utilizados em filtros
+
+Em sistemas multi-tenant, índices compostos podem ser necessários.
+
+Exemplo:
+
+(tenant_id, created_at)
+
+ou:
+
+(tenant_id, sku)
+
+A criação de índices deve considerar o padrão de consulta, não apenas adicionar índices indiscriminadamente.
+
+27. Partial Index
+
+Índices parciais podem ser utilizados quando fizer sentido.
+
+Exemplo conceitual:
+
+CREATE INDEX ...
+ON customers (tenant_id, email)
+WHERE deleted_at IS NULL;
+
+Isso pode ser útil quando as consultas operam principalmente sobre registros ativos.
+
+A estratégia deve ser validada de acordo com o comportamento real da aplicação.
+
+28. Repository
+
+Repositories devem concentrar operações de persistência.
+
+Exemplo:
+
+CustomerRepository
+├── get_by_id
+├── list
+├── create
+├── update
+└── soft_delete
+
+Os nomes devem refletir operações reais.
+
+Evitar methods genéricos demais quando eles esconderem regras importantes.
+
+29. Repository e regra de negócio
+
+Repository não deve decidir:
+
+se pedido pode ser cancelado
+se estoque pode ficar negativo
+se usuário pode alterar preço
+
+Essas são regras de negócio.
+
+O repository deve persistir e consultar os dados necessários.
+
+30. Service e persistência
+
+O service coordena a operação.
+
+Exemplo:
+
+OrderService
+   ↓
+verifica estoque
+   ↓
+OrderRepository
+   ↓
+InventoryRepository
+   ↓
+commit
+
+O service não deve montar queries SQL complexas diretamente quando elas pertencem ao repository.
+
+31. Transações
+
+Operações que modificam múltiplas entidades relacionadas devem utilizar uma única unidade transacional quando o domínio exigir atomicidade.
+
+Exemplo:
+
+Criar pedido
++
+Criar itens
++
+Baixar estoque
+
+Fluxo:
+
+BEGIN
+   ↓
+operação 1
+   ↓
+operação 2
+   ↓
+operação 3
+   ↓
+COMMIT
+
+Em caso de erro:
+
+ROLLBACK
+32. Commit
+
+O commit deve possuir uma responsabilidade clara.
+
+Evitar vários commits dentro de uma única operação de negócio sem necessidade.
+
+Exemplo a evitar:
+
+commit
+commit
+commit
+
+quando todas as operações deveriam ser atômicas.
+
+Preferir:
+
+operações
+   ↓
+commit único
+
+quando apropriado.
+
+33. Flush
+
+flush pode ser utilizado quando for necessário obter valores gerados pelo banco antes do commit.
+
+Exemplo conceitual:
+
+session.add(order)
+await session.flush()
+
+Não utilizar flush indiscriminadamente.
+
+34. Rollback
+
+Em caso de erro durante uma transação:
+
+await session.rollback()
+
+A estratégia exata deve seguir a implementação central da sessão.
+
+Nunca deixar uma session em estado inconsistente após uma exceção.
+
+35. Queries
+
+Priorizar queries claras e específicas.
+
+Evitar carregar entidades ou relacionamentos que não sejam necessários.
+
+Exemplo de problema:
+
+listar clientes
++
+carregar pedidos
++
+carregar itens
++
+carregar histórico
+
+sem que a API realmente precise desses dados.
+
+36. N+1
+
+Considerar o problema de N+1 queries.
+
+Exemplo:
+
+1 query para clientes
++
+1 query para cada cliente
+
+Quando necessário, utilizar mecanismos apropriados do SQLAlchemy, como:
+
+selectinload
+joinedload
+
+A estratégia deve ser escolhida conforme a cardinalidade e o comportamento esperado.
+
+37. Projeções
+
+Quando uma operação precisar somente de alguns campos, considerar selecionar apenas as colunas necessárias.
+
+Exemplo:
+
+id
+name
+email
+
+em vez de carregar toda a entidade e relacionamentos desnecessários.
+
+Isso é especialmente relevante em listagens grandes.
+
+38. Paginação no banco
+
+A paginação deve ser realizada no banco sempre que possível.
+
+Evitar:
+
+buscar todos
+↓
+filtrar em Python
+↓
+separar página
+
+Preferir:
+
+filtros
+↓
+ORDER BY
+↓
+LIMIT/OFFSET ou cursor
+↓
+banco
+39. Ordenação estável
+
+Listagens paginadas devem possuir ordenação previsível.
+
+Quando necessário, utilizar um segundo campo para desempate.
+
+Exemplo:
+
+ORDER BY created_at DESC, id DESC
+
+Isso ajuda a evitar resultados instáveis entre páginas.
+
+40. Queries e tenant
+
+Nenhuma otimização pode remover o isolamento por tenant.
+
+Mesmo quando uma consulta estiver otimizada, ela precisa respeitar:
+
+tenant_id
+
+quando a entidade for multi-tenant.
+
+Performance nunca deve ser obtida sacrificando isolamento.
+
+41. Concorrência
+
+Operações sensíveis à concorrência devem considerar que múltiplas requisições podem ocorrer simultaneamente.
+
+Exemplo:
+
+Dois pedidos
+      ↓
+mesmo produto
+      ↓
+estoque limitado
+
+A implementação deve evitar condições de corrida.
+
+Dependendo do caso, podem ser necessários:
+
+UPDATE atômico
+row locking
+transaction isolation
+constraints
+
+A solução deve ser específica para o problema.
+
+42. Estoque
+
+Operações de estoque devem possuir proteção contra estado inválido.
+
+Exemplo:
+
+stock_quantity < 0
+
+não deve acontecer quando a regra do domínio proibir estoque negativo.
+
+Não confiar somente em uma verificação feita anteriormente pela aplicação quando houver possibilidade de concorrência.
+
+43. Migrations
+
+Alterações estruturais no banco devem utilizar:
+
+Alembic
+
+Fluxo:
+
+Model
+ ↓
+Migration
+ ↓
+Review
+ ↓
+Apply
+ ↓
+Test
+
+Não realizar alterações manuais como substituto da migration.
+
+Consultar:
+
+skills/database/migrations.md
+
+antes de alterar o schema.
+
+44. Autogenerate
+
+O Alembic pode ser utilizado para detectar diferenças entre models e schema.
+
+Entretanto, migrations geradas automaticamente devem ser revisadas.
+
+Nunca assumir que o autogenerate produziu uma migration correta somente porque ela foi gerada sem erro.
+
+Verificar:
+
+constraints
+indexes
+foreign keys
+nullability
+data migration
+destructive operations
+45. Test Database
+
+Testes que dependem de persistência devem utilizar um banco de teste isolado.
+
+Não executar testes destrutivos contra o banco de desenvolvimento ou produção.
+
+A estratégia definitiva de criação e limpeza do banco de testes deve permanecer centralizada na infraestrutura de testes.
+
+46. Testes de isolamento
+
+Funcionalidades multi-tenant devem possuir testes explícitos.
+
+Exemplo:
+
+Tenant A
+ └── Customer A
+
+Tenant B
+ └── Customer B
+
+Teste:
+
+Tenant A → Customer A
+✓ permitido
+Tenant A → Customer B
+✗ bloqueado
+
+Esse tipo de teste é obrigatório para operações relevantes de dados multi-tenant.
+
+47. Testes de integridade
+
+Quando apropriado, testar:
+
+foreign keys
+unique constraints
+soft delete
+transações
+concorrência
+regras de estoque
+
+O objetivo é garantir tanto as regras da aplicação quanto a integridade persistida.
+
+48. Performance
+
+Não otimizar prematuramente.
+
+Antes de alterar uma query por performance:
+
+identificar o problema;
+reproduzir o comportamento;
+verificar a query;
+analisar o plano quando necessário;
+realizar a otimização;
+validar o resultado.
+
+Evitar adicionar índices ou joins complexos sem evidência de necessidade.
+
+49. Segurança
+
+Nunca confiar no cliente para definir:
+
+tenant_id
+user_id
+created_at
+updated_at
+deleted_at
+permissions
+roles
+
+quando esses dados forem controlados pelo backend.
+
+Queries devem ser parametrizadas através dos mecanismos do SQLAlchemy.
+
+Não concatenar SQL utilizando entrada do usuário.
+
+50. Checklist
+
+Antes de finalizar uma alteração relacionada ao banco:
+
+ O model está correto;
+ Foreign keys estão definidas;
+ tenant_id foi considerado;
+ Soft delete foi considerado;
+ Timestamps estão corretos;
+ Money utiliza NUMERIC;
+ Constraints foram avaliadas;
+ Índices foram avaliados;
+ Queries filtram pelo tenant quando necessário;
+ Paginação ocorre no banco;
+ Ordenação é estável;
+ Transações estão corretas;
+ Não existe N+1 conhecido;
+ Migration foi criada quando necessária;
+ Migration foi revisada;
+ Testes foram atualizados;
+ Isolamento entre tenants foi testado.
+51. Regra principal
+
+O banco deve ser tratado como parte da arquitetura da aplicação, e não apenas como um local para armazenar dados.
+
+Toda implementação deve buscar:
+
+Integridade
+Isolamento
+Consistência
+Performance
+Rastreabilidade
+
+A aplicação deve utilizar o PostgreSQL para reforçar regras estruturais sempre que isso for possível e apropriado.
