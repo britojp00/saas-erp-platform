@@ -5,6 +5,7 @@ from urllib.parse import urlparse, urlunparse
 import asyncpg
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -76,6 +77,7 @@ async def db_session(_ensure_test_db) -> AsyncGenerator[AsyncSession]:
         await conn.run_sync(Base.metadata.create_all)
 
     async with session_factory() as session:
+        await session.execute(text(f"SET timezone TO '{settings.app_timezone}'"))
         app.dependency_overrides[get_db_session] = lambda: session
         yield session
         app.dependency_overrides.clear()

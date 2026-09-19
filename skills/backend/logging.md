@@ -68,12 +68,12 @@ Preferir logs estruturados.
 Conceito:
 
 {
-  "timestamp": "2026-09-17T18:30:00Z",
+  "timestamp": "2026-09-18T23:28:01.685674-03:00",
   "level": "INFO",
   "event": "customer.created",
   "request_id": "uuid",
-  "tenant_id": "uuid",
-  "user_id": "uuid"
+  "tenant_id": 10,
+  "user_id": 32
 }
 
 Os campos devem possuir nomes consistentes em toda a aplicação.
@@ -105,13 +105,13 @@ Todo log deve possuir timestamp.
 
 Utilizar:
 
-UTC
 timezone-aware
 ISO 8601
+offset local (APP_TIMEZONE)
 
 Exemplo:
 
-2026-09-17T18:30:00Z
+2026-09-18T23:28:01.685674-03:00
 
 Não utilizar horários locais sem indicação de timezone.
 

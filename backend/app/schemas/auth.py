@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
+
+from app.core.config import settings
 
 
 class LoginRequest(BaseModel):
@@ -22,3 +24,7 @@ class UserResponse(BaseModel):
     is_active: bool
     tenant_id: int
     created_at: datetime
+
+    @field_serializer("created_at")
+    def _serialize_created_at(self, value: datetime, _info) -> str:
+        return value.astimezone(settings.tz).isoformat()

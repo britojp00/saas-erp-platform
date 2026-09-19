@@ -1,510 +1,367 @@
-SaaS ERP Platform
+# SaaS ERP Platform
 
-Plataforma ERP SaaS multi-tenant desenvolvida para demonstrar práticas de desenvolvimento de software backend e frontend aplicadas a um sistema corporativo real.
+Plataforma ERP SaaS multi-tenant desenvolvida com Python e FastAPI.
 
-O projeto será construído de forma incremental, com foco em arquitetura, regras de negócio, segurança, testes automatizados, observabilidade, integração entre sistemas e documentação técnica.
+O projeto demonstra praticas modernas de desenvolvimento backend aplicadas a um sistema corporativo real, com arquitetura em camadas, autenticacao JWT, isolamento entre tenants, testes automatizados e observabilidade.
 
-Objetivos
+O Integration Hub sera um projeto futuro que consumira a API REST deste ERP para demonstrar integracao entre sistemas.
 
-Construir um ERP SaaS com isolamento de dados entre empresas (multi-tenancy).
+## Stack
 
-Disponibilizar uma API REST com FastAPI.
+| Camada | Tecnologia |
+|---|---|
+| Runtime | Python 3.13 |
+| API | FastAPI |
+| ORM | SQLAlchemy async |
+| Migrations | Alembic |
+| Validacao | Pydantic |
+| Banco de dados | PostgreSQL 17 |
+| Driver async | asyncpg |
+| Cache | Redis 7 |
+| JWT | PyJWT |
+| Senhas | pwdlib + bcrypt |
+| Timezone data | tzdata |
+| Testes | Pytest + pytest-asyncio |
+| HTTP test client | HTTPX |
+| Lint / Format | Ruff |
+| Containers | Docker / Docker Compose |
+| Gerenciamento Python | uv |
+| Versionamento | Git / GitHub |
+| IA | OpenCode + VS Code |
 
-Criar uma interface web separada do backend.
+## Arquitetura
 
-Aplicar autenticação e controle de permissões.
-
-Implementar regras de negócio reais de ERP.
-
-Utilizar testes automatizados desde o desenvolvimento dos módulos.
-
-Implementar logs técnicos e auditoria de operações.
-
-Containerizar o ambiente com Docker.
-
-Automatizar validações com GitHub Actions.
-
-Preparar a API para ser consumida posteriormente pelo projeto integration-hub.
-
-Arquitetura planejada
-
-                         ┌──────────────────────┐
-                         │       Frontend       │
-                         │ React + TypeScript   │
-                         └──────────┬───────────┘
-                                    │ HTTP / JSON
-                                    ▼
-                         ┌──────────────────────┐
-                         │       Backend        │
-                         │   Python + FastAPI   │
-                         └──────────┬───────────┘
-                                    │
-                  ┌─────────────────┼─────────────────┐
-                  │                 │                 │
-                  ▼                 ▼                 ▼
-             PostgreSQL           Redis            Workers
-
-Separação de responsabilidades
-
-Frontend
-  └── Interface, navegação e consumo da API
-
-Backend
-  ├── API
-  ├── Autenticação
-  ├── Regras de negócio
-  ├── Multi-tenancy
-  ├── Persistência
-  ├── Logs
-  └── Auditoria
-
-PostgreSQL
-  └── Dados persistentes
-
-Redis
-  └── Cache e recursos assíncronos
-
-Workers
-  └── Processamentos em segundo plano
-
-Estrutura do repositório
-
-saas-erp-platform/
-│
-├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   │   └── v1/
-│   │   ├── core/
-│   │   ├── models/
-│   │   ├── schemas/
-│   │   ├── repositories/
-│   │   ├── services/
-│   │   └── main.py
-│   │
-│   ├── tests/
-│   │   ├── unit/
-│   │   ├── integration/
-│   │   └── api/
-│   │
-│   ├── migrations/
-│   ├── pyproject.toml
-│   ├── uv.lock
-│   └── .python-version
-│
-├── frontend/
-│
-├── docs/
-│   ├── architecture/
-│   ├── api/
-│   └── database/
-│
-├── .github/
-│   └── workflows/
-│
-├── docker-compose.yml
-├── .env.example
-├── .gitignore
-└── README.md
-
-Tecnologias
-
-Backend
-
-Python 3.13
-
+```text
+Frontend (planejado)
+    |
+    | HTTP / JSON
+    v
 FastAPI
+    |
+    v
+ Services
+    |
+    v
+Repositories
+    |
+    v
+SQLAlchemy async
+    |
+    v
+PostgreSQL 17
+```
+
+Separacao de responsabilidades:
+
+- **Router** - recebe requisicoes HTTP, valida entrada, chama services
+- **Schema** - define contratos de entrada e saida (Pydantic)
+- **Service** - concentra regras de negocio
+- **Repository** - concentra operacoes de persistencia
+- **Model** - representa entidades persistidas (SQLAlchemy)
+
+## Multi-tenancy
+
+A aplicacao utiliza arquitetura multi-tenant com shared database e shared schema.
+
+- Cada empresa e representada por um **Tenant**
+- Usuarios e dados de negocio possuem `tenant_id`
+- Isolamento garantido por composite foreign keys e queries com filtro de tenant
+- O `tenant_id` e derivado do contexto autenticado (JWT), nunca enviado pelo cliente
+
+```text
+Tenant A ---+--- Users
+            +--- Customers
+            +--- Products
+            +--- Orders
+
+Tenant B ---+--- Users
+            +--- Customers
+            +--- Products
+            +--- Orders
+```
+
+Dados de um tenant nao podem ser acessados por outro tenant.
+
+## Banco de dados
+
+### Primary Keys
+
+As entidades utilizam `BIGINT GENERATED BY DEFAULT AS IDENTITY`:
+
+```sql
+id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY
+```
+
+### Tabelas
+
+| Tabela | Descricao |
+|---|---|
+| `tenants` | Empresas que utilizam a plataforma |
+| `users` | Usuarios do sistema |
+| `roles` | Papeis de acesso |
+| `permissions` | Permissoes do sistema |
+| `user_roles` | Associacao usuarios e papeis |
+| `role_permissions` | Associacao papeis e permissoes |
+| `customers` | Clientes |
+| `categories` | Categorias de produtos |
+| `products` | Produtos |
+| `inventory` | Estoque |
+| `orders` | Pedidos |
+| `order_items` | Itens do pedido |
+| `audit_logs` | Logs de auditoria |
+
+### Padroes
+
+- `TIMESTAMP WITH TIME ZONE` para todos os timestamps
+- `NUMERIC(15,2)` para valores monetarios
+- Soft delete via `deleted_at`
+- `created_at` / `updated_at` com `server_default=func.now()`
+- Composite foreign keys para isolamento multi-tenant
+- Migration atual: `b193007ff2be`
+
+## Containers e portas
+
+| Servico | Container | Porta |
+|---|---|---|
+| FastAPI | - | `8000` |
+| PostgreSQL | `saas-erp-postgres` | `5432` |
+| Redis | `saas-erp-redis` | `6379` |
+| Frontend (planejado) | - | `5173` |
+
+## Bancos de dados
+
+| Banco | Finalidade |
+|---|---|
+| `saas_erp` | Desenvolvimento |
+| `saas_erp_test` | Testes automatizados |
+
+Os testes utilizam banco proprio (`saas_erp_test`) e nao devem utilizar nem destruir `saas_erp`.
+
+## Autenticacao
 
-SQLAlchemy
+### Login
 
-Alembic
-
-Pydantic
-
-PostgreSQL
-
-asyncpg
-
-PyJWT
-
-pwdlib
-
-Qualidade e testes
-
-Pytest
-
-pytest-asyncio
-
-HTTPX
-
-Coverage
-
-Ruff
-
-Ambiente e infraestrutura
-
-Docker
-
-Docker Compose
-
-Redis
-
-Git
-
-GitHub
-
-GitHub Actions
-
-uv
-
-Frontend
-
-O frontend será desenvolvido separadamente do backend, utilizando React + TypeScript + Vite.
-
-Funcionalidades planejadas
-
-Fundação
-
-Estrutura inicial do repositório
-
-Ambiente Python com uv
-
-FastAPI
-
-Endpoint /health
-
-Primeiro teste automatizado
-
-Ruff
-
-Repositório GitHub
-
-Infraestrutura
-
-Docker Compose
-
-PostgreSQL
-
-Redis
-
-Variáveis de ambiente
-
-Health checks dos serviços
-
-Configuração de ambiente de desenvolvimento
-
-Identidade e segurança
-
-Tenant
-
-Usuário
-
-Autenticação JWT
-
-Access token
-
-Refresh token
-
-Roles
-
-Permissions
-
-RBAC
-
-Isolamento multi-tenant
-
-ERP
-
-Clientes
-
-Produtos
-
-Categorias
-
-Estoque
-
-Pedidos
-
-Itens do pedido
-
-Regras de estoque
-
-Histórico de operações
-
-Observabilidade
-
-Logging estruturado
-
-Request ID
-
-Logs de erro
-
-Auditoria de alterações
-
-Registro de eventos de negócio
-
-Testes
-
-Testes unitários
-
-Testes de API
-
-Testes de integração
-
-Testes de segurança
-
-Testes de isolamento multi-tenant
-
-Cobertura de código
-
-Frontend
-
-Estrutura React + TypeScript
-
-Autenticação
-
-Layout administrativo
-
-Dashboard
-
-Clientes
-
-Produtos
-
-Estoque
-
-Pedidos
-
-CI/CD
-
-GitHub Actions
-
-Ruff
-
-Pytest
-
-Coverage
-
-Build Docker
-
-Validação automática a cada Pull Request
-
-Estratégia de testes
-
-Os testes serão desenvolvidos junto com as funcionalidades.
-
-Exemplos de regras que deverão ser cobertas:
-
-Empresa A
-   │
-   ├── pode acessar seus clientes
-   ├── pode acessar seus produtos
-   └── NÃO pode acessar dados da Empresa B
-
-Estoque = 10
-Pedido   = 3
-
-Resultado esperado:
-Estoque = 7
-Pedido criado
-
-Estoque = 2
-Pedido   = 5
-
-Resultado esperado:
-Pedido rejeitado
-Estoque permanece = 2
-
-Os testes também serão executados automaticamente pelo GitHub Actions.
-
-Logging e auditoria
-
-O projeto terá duas categorias principais de registros.
-
-Logs técnicos
-
-Exemplo:
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
 
 {
-  "level": "ERROR",
-  "event": "order_creation_failed",
-  "tenant_id": 10,
-  "user_id": 32,
-  "request_id": "..."
+  "email": "admin@demo.com",
+  "password": "admin123"
 }
-
-Auditoria
-
-Exemplo:
-
-Usuário: João
-Ação: UPDATE_PRODUCT
-Produto: 123
-
-Antes:
-Preço = 100.00
-
-Depois:
-Preço = 120.00
-
-A auditoria ficará vinculada ao tenant, usuário, entidade e operação executada.
-
-API
-
-A API será versionada:
-
-/api/v1/
-
-Exemplos planejados:
-
-GET    /health
-
-POST   /api/v1/auth/login
-
-GET    /api/v1/customers
-POST   /api/v1/customers
-GET    /api/v1/customers/{id}
-
-GET    /api/v1/products
-POST   /api/v1/products
-
-GET    /api/v1/inventory
-
-POST   /api/v1/orders
-GET    /api/v1/orders/{id}
-
-A documentação será disponibilizada via OpenAPI/Swagger.
-
-Roadmap
-
-Fase 1 — Fundação
-
-Estrutura, FastAPI, testes, lint e GitHub.
-
-Fase 2 — Infraestrutura
-
-Docker, PostgreSQL, Redis, configuração e migrations.
-
-Fase 3 — Identidade
-
-Tenant, usuários, autenticação e RBAC.
-
-Fase 4 — Cadastro
-
-Clientes, produtos e categorias.
-
-Fase 5 — Operação
-
-Estoque, pedidos e regras de negócio.
-
-Fase 6 — Observabilidade
-
-Logs estruturados, request ID e auditoria.
-
-Fase 7 — Testes
-
-Expansão da suíte unitária, API, integração e segurança.
-
-Fase 8 — Frontend
-
-Aplicação React consumindo a API real.
-
-Fase 9 — CI/CD
-
-GitHub Actions, validações e build.
-
-Fase 10 — Integração
-
-O projeto integration-hub será desenvolvido posteriormente para consumir a API deste ERP e demonstrar integração entre sistemas.
-
-Status atual
-
-Em desenvolvimento — Fase 1
-
-O projeto já possui:
-
-Python 3.13
-FastAPI
-Uvicorn
-Pytest
-Ruff
-uv
-Git
-GitHub
-
-Primeiro endpoint:
-
-GET /health
+```
 
 Resposta:
 
+```json
 {
-  "status": "ok",
-  "service": "saas-erp-platform"
+  "access_token": "eyJ...",
+  "token_type": "bearer"
 }
+```
 
-Execução local
+Login utiliza apenas email + senha. Nao ha `tenant_slug`, `tenant_id` ou `username`.
 
-Backend
+Fluxo:
 
-cd backend
+1. Normaliza email
+2. Busca usuario pelo email
+3. Verifica senha (bcrypt)
+4. Valida `is_active` e `deleted_at`
+5. Carrega tenant e valida `is_active`
+6. Gera JWT
 
-uv sync
+### JWT
 
-uv run uvicorn app.main:app --reload
+Claims:
 
-API:
+- `sub` - user_id (string de int)
+- `tenant_id` - tenant_id (string de int)
+- `iat` - emissao (UTC)
+- `exp` - expiracao (UTC)
 
-http://127.0.0.1:8000
+### Perfil do usuario
 
-Swagger:
+```http
+GET /api/v1/auth/me
+Authorization: Bearer <token>
+```
 
-http://127.0.0.1:8000/docs
+Resposta:
 
-Testes
+```json
+{
+  "id": 1,
+  "email": "admin@demo.com",
+  "full_name": "Admin User",
+  "is_active": true,
+  "tenant_id": 1,
+  "created_at": "2026-09-18T23:28:01.685674-03:00"
+}
+```
 
-cd backend
+## Seed de desenvolvimento
 
-uv run pytest
+```bash
+uv run python -m scripts.seed_dev
+```
 
-Lint
+| Campo | Valor |
+|---|---|
+| Tenant | Demo Company |
+| Slug | `demo` |
+| Email | `admin@demo.com` |
+| Senha | `admin123` (ou `SEED_PASSWORD`) |
 
+O seed e idempotente e somente para desenvolvimento.
+
+## Timezone
+
+```text
+APP_TIMEZONE=America/Sao_Paulo
+```
+
+- PostgreSQL configurado com `timezone=America/Sao_Paulo`
+- Banco armazena internamente em UTC
+- API apresenta timestamps no horario de Sao Paulo (`-03:00`)
+- `ZoneInfo("America/Sao_Paulo")` para conversao
+- Timestamps sempre timezone-aware
+- Nao utilizar datetime naive
+- Nao criar migration para isso
+
+## Testes
+
+```bash
+uv run pytest tests/ -v
+```
+
+Resultado atual: **23 passed**
+
+| Tipo | Descricao |
+|---|---|
+| Unit | Seguranca, JWT, senhas |
+| API | Auth, health, timezone |
+| Multi-tenant | Isolamento de dados |
+
+Separados em banco `saas_erp_test` com engine por teste.
+
+## Qualidade
+
+```bash
 uv run ruff check .
+uv run ruff format --check .
+uv run pytest tests/ -v
+uv run alembic check
+```
 
-Formatação
+## Alembic
 
-uv run ruff format .
+| Revision | Descricao |
+|---|---|
+| `3966836cbfe8` | Cria tabela tenants |
+| `0fe5d090a740` | Cria tabela users |
+| `6dc6faaee0e2` | Cria tabela roles |
+| `985bba016e64` | Cria tabela permissions |
+| `1834bb2c5a09` | Cria tabela user_roles |
+| `a2360d9ad5d2` | Fix user_roles created_at |
+| `35a5e5d4146b` | Cria tabela role_permissions |
+| `6f2349b54ee2` | Cria tabela customers |
+| `f85b2840792a` | Cria tabelas de dominio ERP |
+| `b193007ff2be` | Migra UUID para BIGINT |
 
-Projeto futuro
+## Estrutura do repositorio
 
-Este ERP será a base para o segundo projeto do portfólio:
+```text
+saas-erp-platform/
++-- backend/
+|   +-- app/
+|   |   +-- api/
+|   |   |   +-- v1/
+|   |   |       +-- auth.py
+|   |   +-- core/
+|   |   |   +-- config.py
+|   |   |   +-- security.py
+|   |   |   +-- exceptions.py
+|   |   +-- db/
+|   |   |   +-- models/
+|   |   |   +-- mixins.py
+|   |   |   +-- base.py
+|   |   |   +-- database.py
+|   |   +-- schemas/
+|   |   |   +-- auth.py
+|   |   +-- repositories/
+|   |   |   +-- user.py
+|   |   |   +-- tenant.py
+|   |   +-- services/
+|   |   |   +-- auth.py
+|   |   +-- api/
+|   |   |   +-- dependencies.py
+|   |   +-- main.py
+|   +-- tests/
+|   |   +-- api/
+|   |   |   +-- test_auth.py
+|   |   |   +-- test_health.py
+|   |   |   +-- test_timezone.py
+|   |   +-- unit/
+|   |       +-- test_security.py
+|   +-- alembic/
+|   |   +-- versions/
+|   +-- scripts/
+|   |   +-- seed_dev.py
+|   +-- pyproject.toml
+|   +-- conftest.py
++-- skills/
++-- docker-compose.yml
++-- .env
++-- .env.example
++-- README.md
+```
 
-Integration Hub
+## IA / Skills
 
-O Integration Hub consumirá a API REST deste sistema para demonstrar:
+- `skills/AGENTS.md` e a regra principal para o agente
+- OpenCode e utilizado como agente integrado ao VS Code
+- A IA deve consultar as skills antes de alteracoes
+- Workflow: Understand -> Investigate -> Plan -> Implement -> Validate -> Report
 
-integração entre sistemas;
+## Funcionalidades implementadas
 
-autenticação por API;
+- [x] Infraestrutura (Docker, PostgreSQL, Redis)
+- [x] Database (SQLAlchemy async, Alembic, models)
+- [x] Multi-tenancy (shared DB, shared schema, tenant_id)
+- [x] BIGINT migration (UUID -> BIGINT GENERATED BY DEFAULT AS IDENTITY)
+- [x] Autenticacao (JWT, login, /me)
+- [x] Seed de desenvolvimento
+- [x] Testes automatizados (23 tests)
+- [x] Timezone (APP_TIMEZONE=America/Sao_Paulo)
 
-transformação de payloads;
+## Proximos passos
 
-filas;
+- [ ] RBAC (Roles + Permissions)
+- [ ] Customers CRUD
+- [ ] Categories CRUD
+- [ ] Products CRUD
+- [ ] Inventory
+- [ ] Orders
+- [ ] Audit / Observability
+- [ ] Frontend React
+- [ ] CI/CD (GitHub Actions)
+- [ ] Deployment
+- [ ] Integration Hub
 
-workers;
+## Projeto futuro
 
-retry;
+O Integration Hub consumira a API REST deste ERP para demonstrar:
 
-idempotência;
+- integracao entre sistemas
+- autenticacao por API
+- transformacao de payloads
+- filas e workers
+- retry e idempotencia
+- webhooks
+- rastreamento de integracoes
+- tratamento de falhas
 
-webhooks;
+## Licenca
 
-rastreamento de integrações;
-
-tratamento de falhas.
-
-A comunicação será baseada na API real deste ERP, evitando integrações fictícias.
-
-Licença
-
-Projeto desenvolvido para fins de estudo, portfólio e demonstração técnica.
+Projeto desenvolvido para fins de estudo, portfolio e demonstracao tecnica.

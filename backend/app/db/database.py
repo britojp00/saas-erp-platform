@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -23,4 +24,5 @@ async_session_factory = async_sessionmaker(
 
 async def get_db_session() -> AsyncGenerator[AsyncSession]:
     async with async_session_factory() as session:
+        await session.execute(text(f"SET timezone TO '{settings.app_timezone}'"))
         yield session
