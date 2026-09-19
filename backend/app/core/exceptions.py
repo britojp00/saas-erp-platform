@@ -74,6 +74,22 @@ class CategoryParentNotFoundError(DomainError):
     """Raised when the specified parent category does not exist."""
 
 
+class ProductNotFoundError(DomainError):
+    """Raised when a product is not found."""
+
+
+class DuplicateProductError(DomainError):
+    """Raised when a product SKU already exists in the tenant."""
+
+
+class ProductInUseError(DomainError):
+    """Raised when trying to delete a product that has inventory or order references."""
+
+
+class InvalidProductCategoryError(DomainError):
+    """Raised when the specified category is invalid for the product."""
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AuthenticationError)
     async def authentication_error_handler(
@@ -196,4 +212,44 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=409,
             content={"detail": "A categoria pai especificada não existe"},
+        )
+
+    @app.exception_handler(ProductNotFoundError)
+    async def product_not_found_error_handler(
+        request: Request, exc: ProductNotFoundError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Produto não encontrado"},
+        )
+
+    @app.exception_handler(DuplicateProductError)
+    async def duplicate_product_error_handler(
+        request: Request, exc: DuplicateProductError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Já existe um produto com este SKU"},
+        )
+
+    @app.exception_handler(ProductInUseError)
+    async def product_in_use_error_handler(
+        request: Request, exc: ProductInUseError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": "Não é possível excluir um produto que possui estoque ou pedidos vinculados"
+            },
+        )
+
+    @app.exception_handler(InvalidProductCategoryError)
+    async def invalid_product_category_error_handler(
+        request: Request, exc: InvalidProductCategoryError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": "A categoria especificada não é válida para este produto"
+            },
         )
