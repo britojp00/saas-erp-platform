@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Annotated
 
 import jwt
@@ -10,6 +11,7 @@ from app.core.security import decode_access_token
 from app.db.database import get_db_session
 from app.db.models.user import User
 from app.services.auth import AuthService
+from app.services.authorization import AuthorizationService
 
 bearer_scheme = HTTPBearer()
 
@@ -63,3 +65,25 @@ async def get_current_tenant(
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
 CurrentTenant = Annotated[int, Depends(get_current_tenant)]
+
+
+def require_permissions(
+    *required: str,
+) -> Callable:
+    async def _check(
+        current_user: CurrentUser,
+        db: Annotated[AsyncSession, Depends(get_db_session)],
+    ) -> User:
+        service = AuthorizationService(db)
+        user_permissions = await service.get_user_permissions(
+            current_user.id, current_user.tenant_id
+        )
+        missing = set(required) - user_permissions
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Acesso negado",
+            )
+        return current_user
+
+    return _check

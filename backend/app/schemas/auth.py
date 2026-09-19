@@ -24,6 +24,8 @@ class UserResponse(BaseModel):
     is_active: bool
     tenant_id: int
     created_at: datetime
+    roles: list[str]
+    permissions: list[str]
 
     @field_serializer("created_at")
     def _serialize_created_at(self, value: datetime, _info) -> str:

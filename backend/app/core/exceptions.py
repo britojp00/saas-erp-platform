@@ -38,6 +38,42 @@ class InactiveTenantError(DomainError):
     """Raised when a tenant is inactive."""
 
 
+class CustomerNotFoundError(DomainError):
+    """Raised when a customer is not found."""
+
+
+class DuplicateCustomerError(DomainError):
+    """Raised when a customer document already exists in the tenant."""
+
+
+class CategoryNotFoundError(DomainError):
+    """Raised when a category is not found."""
+
+
+class DuplicateCategoryError(DomainError):
+    """Raised when a category name already exists in the tenant."""
+
+
+class CategoryHasChildrenError(DomainError):
+    """Raised when trying to delete a category that has children."""
+
+
+class CategoryHasProductsError(DomainError):
+    """Raised when trying to delete a category that is used by products."""
+
+
+class CategoryCycleError(DomainError):
+    """Raised when setting a parent_id would create a cycle."""
+
+
+class CategorySelfReferenceError(DomainError):
+    """Raised when trying to set a category as its own parent."""
+
+
+class CategoryParentNotFoundError(DomainError):
+    """Raised when the specified parent category does not exist."""
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AuthenticationError)
     async def authentication_error_handler(
@@ -73,4 +109,91 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=404,
             content={"detail": "Tenant não encontrado"},
+        )
+
+    @app.exception_handler(CustomerNotFoundError)
+    async def customer_not_found_error_handler(
+        request: Request, exc: CustomerNotFoundError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Cliente não encontrado"},
+        )
+
+    @app.exception_handler(DuplicateCustomerError)
+    async def duplicate_customer_error_handler(
+        request: Request, exc: DuplicateCustomerError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Já existe um cliente com este documento"},
+        )
+
+    @app.exception_handler(CategoryNotFoundError)
+    async def category_not_found_error_handler(
+        request: Request, exc: CategoryNotFoundError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Categoria não encontrada"},
+        )
+
+    @app.exception_handler(DuplicateCategoryError)
+    async def duplicate_category_error_handler(
+        request: Request, exc: DuplicateCategoryError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Já existe uma categoria com este nome"},
+        )
+
+    @app.exception_handler(CategoryHasChildrenError)
+    async def category_has_children_error_handler(
+        request: Request, exc: CategoryHasChildrenError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": "Não é possível excluir uma categoria que possui subcategorias"
+            },
+        )
+
+    @app.exception_handler(CategoryHasProductsError)
+    async def category_has_products_error_handler(
+        request: Request, exc: CategoryHasProductsError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": "Não é possível excluir uma categoria que possui produtos vinculados"
+            },
+        )
+
+    @app.exception_handler(CategoryCycleError)
+    async def category_cycle_error_handler(
+        request: Request, exc: CategoryCycleError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": "Definir esta categoria como pai criaria um ciclo na hierarquia"
+            },
+        )
+
+    @app.exception_handler(CategorySelfReferenceError)
+    async def category_self_reference_error_handler(
+        request: Request, exc: CategorySelfReferenceError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Uma categoria não pode ser pai de si mesma"},
+        )
+
+    @app.exception_handler(CategoryParentNotFoundError)
+    async def category_parent_not_found_error_handler(
+        request: Request, exc: CategoryParentNotFoundError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "A categoria pai especificada não existe"},
         )
