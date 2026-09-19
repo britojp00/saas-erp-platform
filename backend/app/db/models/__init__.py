@@ -2,6 +2,8 @@ from app.db.models.audit_log import AuditLog
 from app.db.models.category import Category
 from app.db.models.customer import Customer
 from app.db.models.inventory import Inventory
+from app.db.models.inventory_movement import InventoryMovement
+from app.db.models.inventory_reservation import InventoryReservation
 from app.db.models.order import Order
 from app.db.models.order_item import OrderItem
 from app.db.models.permission import Permission
@@ -17,6 +19,8 @@ __all__ = [
     "Category",
     "Customer",
     "Inventory",
+    "InventoryMovement",
+    "InventoryReservation",
     "Order",
     "OrderItem",
     "Permission",

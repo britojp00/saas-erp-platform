@@ -90,6 +90,30 @@ class InvalidProductCategoryError(DomainError):
     """Raised when the specified category is invalid for the product."""
 
 
+class InventoryNotFoundError(DomainError):
+    """Raised when an inventory record is not found."""
+
+
+class InsufficientStockError(DomainError):
+    """Raised when there is not enough stock for an operation."""
+
+
+class InvalidInventoryOperationError(DomainError):
+    """Raised when an inventory operation is invalid."""
+
+
+class ReservationNotFoundError(DomainError):
+    """Raised when a reservation is not found."""
+
+
+class InvalidReservationStateError(DomainError):
+    """Raised when a reservation state transition is invalid."""
+
+
+class DuplicateIdempotencyKeyError(DomainError):
+    """Raised when an idempotency key already exists for a different request."""
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AuthenticationError)
     async def authentication_error_handler(
@@ -251,5 +275,61 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=409,
             content={
                 "detail": "A categoria especificada não é válida para este produto"
+            },
+        )
+
+    @app.exception_handler(InventoryNotFoundError)
+    async def inventory_not_found_error_handler(
+        request: Request, exc: InventoryNotFoundError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Registro de estoque não encontrado"},
+        )
+
+    @app.exception_handler(InsufficientStockError)
+    async def insufficient_stock_error_handler(
+        request: Request, exc: InsufficientStockError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Estoque insuficiente para esta operação"},
+        )
+
+    @app.exception_handler(InvalidInventoryOperationError)
+    async def invalid_inventory_operation_error_handler(
+        request: Request, exc: InvalidInventoryOperationError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Operação de estoque inválida"},
+        )
+
+    @app.exception_handler(ReservationNotFoundError)
+    async def reservation_not_found_error_handler(
+        request: Request, exc: ReservationNotFoundError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Reserva não encontrada"},
+        )
+
+    @app.exception_handler(InvalidReservationStateError)
+    async def invalid_reservation_state_error_handler(
+        request: Request, exc: InvalidReservationStateError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Transição de estado da reserva é inválida"},
+        )
+
+    @app.exception_handler(DuplicateIdempotencyKeyError)
+    async def duplicate_idempotency_key_error_handler(
+        request: Request, exc: DuplicateIdempotencyKeyError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": "Chave de idempotência já utilizada para uma operação diferente"
             },
         )
