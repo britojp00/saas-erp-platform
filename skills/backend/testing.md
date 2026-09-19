@@ -41,6 +41,8 @@ independentes;
 claros;
 focados em comportamento.
 
+Resultado atual: **226 passed**
+
 Evitar testes criados somente para aumentar cobertura numérica.
 
 O objetivo é detectar regressões reais.
@@ -69,8 +71,17 @@ Estrutura:
 
 tests/
 ├── unit/
+│   └── test_security.py
 ├── integration/
 └── api/
+    ├── test_auth.py
+    ├── test_health.py
+    ├── test_timezone.py
+    ├── test_customers.py
+    ├── test_categories.py
+    ├── test_products.py
+    ├── test_inventory.py
+    └── test_orders.py
 
 A separação representa o nível de isolamento do teste.
 
@@ -1168,18 +1179,66 @@ quantidade inválida
 produto inexistente
 produto inativo
 concorrência quando aplicável
+
+Movimentações de estoque:
+
+entrada (INCREASE)
+saída (DECREASE)
+quantidade inválida
+
+Reservas de estoque:
+
+criar reserva
+confirmar reserva
+liberar reserva
+cancelar reserva
+reserva com estoque insuficiente
+reserva de produto inexistente
+reserva de produto inativo
+
+InventoryReservation:
+
+order_item_id (nullable, FK para order_items)
+reference (formato "order:{order_id}")
+ondelete="SET NULL" para order_item_id
 78. Testes de Pedidos
 
 Pedidos devem testar estados importantes.
 
 Exemplo:
 
-draft
-confirmed
-completed
-cancelled
+DRAFT
+↓
+CONFIRMED
+↓
+COMPLETED
 
-E transições válidas e inválidas.
+e:
+
+CANCELLED
+
+Transições válidas:
+
+DRAFT → CONFIRMED
+DRAFT → CANCELLED
+CONFIRMED → COMPLETED
+CONFIRMED → CANCELLED
+
+Transições inválidas (devem falhar):
+
+DRAFT → COMPLETED
+CONFIRMED → DRAFT
+COMPLETED → qualquer estado (terminal)
+CANCELLED → qualquer estado (terminal)
+
+Também testar:
+
+order_number sequencial por tenant
+itens do pedido
+reserva de estoque
+confirmação de reserva
+cancelamento de reserva
+notas do pedido
 
 79. Testes de Integração Futura
 

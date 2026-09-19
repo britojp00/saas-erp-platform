@@ -637,6 +637,8 @@ Para o backend:
 cd backend
 uv run pytest
 
+Resultado atual: **226 passed**
+
 Coverage:
 
 uv run coverage run -m pytest

@@ -168,9 +168,9 @@ async def _create_order_with_item(
 
     order = Order(
         tenant_id=tenant_id,
-        order_number=f"ORD-{int(time.time() * 1000)}",
+        order_number=int(time.time() * 1000),
         customer_id=customer.id,
-        status="pending",
+        status="DRAFT",
         total_amount=Decimal("100.00"),
     )
     session.add(order)

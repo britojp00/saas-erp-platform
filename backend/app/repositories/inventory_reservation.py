@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.inventory_reservation import InventoryReservation
+from app.db.models.inventory_reservation import InventoryReservation, ReservationStatus
 
 
 class InventoryReservationRepository:
@@ -52,6 +54,23 @@ class InventoryReservationRepository:
         items = list(result.scalars().all())
 
         return items, total
+
+    async def list_active_by_reference(
+        self,
+        tenant_id: int,
+        reference: str,
+    ) -> list[InventoryReservation]:
+        stmt = (
+            select(InventoryReservation)
+            .where(
+                InventoryReservation.tenant_id == tenant_id,
+                InventoryReservation.reference == reference,
+                InventoryReservation.status == ReservationStatus.ACTIVE,
+            )
+            .order_by(InventoryReservation.product_id.asc())
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
 
     async def exists_by_idempotency_key(
         self,

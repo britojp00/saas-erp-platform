@@ -179,6 +179,7 @@ class InventoryService:
             reference=data.reference,
             notes=data.notes,
             idempotency_key=data.idempotency_key,
+            order_item_id=data.order_item_id,
         )
 
         return await self.reservation_repo.create(reservation)

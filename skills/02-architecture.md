@@ -359,6 +359,67 @@ POST /api/v1/customers
 
 O router não deve implementar toda essa lógica.
 
+11.1 Exemplo: criação de pedido
+
+Fluxo esperado:
+
+POST /api/v1/orders
+          |
+          v
+     OrderRouter
+          |  require_permissions("order.create")
+          v
+      OrderCreate
+          |
+          v
+     OrderService
+          |
+          +---- validar cliente
+          |
+          +---- verificar estoque
+          |
+          +---- calcular valores
+          |
+          +---- criar pedido (DRAFT)
+          |
+          +---- criar itens
+          |
+          +---- reservar estoque
+          |
+          v
+    OrderRepository
+          |
+          v
+       PostgreSQL
+
+POST /api/v1/orders/{id}/confirm
+          |
+          v
+     OrderService
+          |
+          +---- verificar status (DRAFT)
+          |
+          +---- confirmar pedido
+          |
+          +---- confirmar reservas
+          |
+          v
+       PostgreSQL
+
+POST /api/v1/orders/{id}/complete
+          |
+          v
+     OrderService
+          |
+          +---- verificar status (CONFIRMED)
+          |
+          +---- completar pedido
+          |
+          +---- Baixar estoque
+          |
+          v
+       PostgreSQL
+
 12. Multi-tenancy
 
 Multi-tenancy é um requisito estrutural do sistema.
@@ -471,7 +532,7 @@ User
 Role
   |
   v
-Permissions
+Permission
 
 Exemplo de roles:
 
@@ -480,6 +541,24 @@ MANAGER
 SELLER
 STOCK
 VIEWER
+
+Permissoes implementadas:
+
+customer.read, customer.create, customer.update, customer.delete
+category.read, category.create, category.update, category.delete
+product.read, product.create, product.update, product.delete
+inventory.read, inventory.update
+order.read, order.create, order.update, order.cancel
+
+Exemplo de uso:
+
+```python
+@router.get("/customers")
+async def list_customers(
+    current_user: CurrentUser = Depends(require_permissions("customer.read")),
+):
+    ...
+```
 
 A autenticação determina quem é o usuário.
 

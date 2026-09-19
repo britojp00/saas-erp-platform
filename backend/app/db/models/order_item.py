@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from sqlalchemy import BigInteger, ForeignKeyConstraint, Numeric
+from sqlalchemy import BigInteger, ForeignKeyConstraint, Numeric, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -20,6 +20,12 @@ class OrderItem(
     __tablename__ = "order_items"
 
     __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "order_id",
+            "product_id",
+            name="uq_order_items_tenant_order_product",
+        ),
         ForeignKeyConstraint(
             ["tenant_id", "order_id"],
             ["orders.tenant_id", "orders.id"],

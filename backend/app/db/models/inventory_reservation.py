@@ -47,6 +47,11 @@ class InventoryReservation(
             ["products.tenant_id", "products.id"],
             ondelete="RESTRICT",
         ),
+        ForeignKeyConstraint(
+            ["order_item_id"],
+            ["order_items.id"],
+            ondelete="SET NULL",
+        ),
     )
 
     product_id: Mapped[int] = mapped_column(
@@ -79,6 +84,12 @@ class InventoryReservation(
     idempotency_key: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
+    )
+
+    order_item_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        nullable=True,
+        index=True,
     )
 
     reserved_at: Mapped[datetime] = mapped_column(

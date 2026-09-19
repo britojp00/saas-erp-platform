@@ -102,13 +102,14 @@ utilizar schemas;
 chamar services;
 retornar respostas HTTP.
 
-Exemplos futuros:
+Exemplos:
 
 auth.py
 customers.py
+categories.py
 products.py
-orders.py
 inventory.py
+orders.py
 
 A camada de API não deve concentrar regras de negócio
 complexas.
@@ -144,7 +145,7 @@ backend/app/models/
 
 Contém os modelos ORM utilizados pelo SQLAlchemy.
 
-Exemplos futuros:
+Exemplos:
 
 tenant.py
 user.py
@@ -154,6 +155,7 @@ customer.py
 product.py
 category.py
 inventory.py
+inventory_reservation.py
 order.py
 order_item.py
 audit_log.py
@@ -209,8 +211,10 @@ Exemplos:
 tenant_repository.py
 customer_repository.py
 product_repository.py
+category_repository.py
 inventory_repository.py
 order_repository.py
+order_item_repository.py
 
 Responsabilidades:
 
@@ -234,6 +238,7 @@ Exemplos:
 
 customer_service.py
 product_service.py
+category_service.py
 inventory_service.py
 order_service.py
 
@@ -331,8 +336,11 @@ Exemplos:
 test_health.py
 test_auth.py
 test_customers.py
+test_categories.py
 test_products.py
+test_inventory.py
 test_orders.py
+test_timezone.py
 12. Migrations
 
 Localização:

@@ -5,6 +5,7 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     Numeric,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -45,22 +46,22 @@ class Order(
         ),
     )
 
-    order_number: Mapped[str] = mapped_column(
-        String(50),
+    order_number: Mapped[int] = mapped_column(
+        BigInteger,
         nullable=False,
     )
 
-    customer_id: Mapped[int | None] = mapped_column(
+    customer_id: Mapped[int] = mapped_column(
         BigInteger,
-        nullable=True,
+        nullable=False,
         index=True,
     )
 
     status: Mapped[str] = mapped_column(
         String(30),
         nullable=False,
-        default="pending",
-        server_default="pending",
+        default="DRAFT",
+        server_default="DRAFT",
         index=True,
     )
 
@@ -69,4 +70,9 @@ class Order(
         nullable=False,
         default=0,
         server_default="0",
+    )
+
+    notes: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
     )

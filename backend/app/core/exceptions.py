@@ -114,6 +114,42 @@ class DuplicateIdempotencyKeyError(DomainError):
     """Raised when an idempotency key already exists for a different request."""
 
 
+class OrderNotFoundError(DomainError):
+    """Raised when an order is not found."""
+
+
+class InvalidOrderStateError(DomainError):
+    """Raised when an order state transition is invalid."""
+
+
+class OrderMustHaveItemsError(DomainError):
+    """Raised when trying to persist an order without items."""
+
+
+class DuplicateOrderItemError(DomainError):
+    """Raised when a product already exists in the same order."""
+
+
+class OrderItemNotFoundError(DomainError):
+    """Raised when an order item is not found."""
+
+
+class OrderItemRemovalNotAllowedError(DomainError):
+    """Raised when trying to remove the last item from an order."""
+
+
+class OrderCustomerNotFoundError(DomainError):
+    """Raised when the customer for an order is not found."""
+
+
+class OrderProductNotFoundError(DomainError):
+    """Raised when a product for an order item is not found."""
+
+
+class OrderProductInactiveError(DomainError):
+    """Raised when trying to confirm an order with inactive products."""
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AuthenticationError)
     async def authentication_error_handler(
@@ -331,5 +367,88 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=409,
             content={
                 "detail": "Chave de idempotência já utilizada para uma operação diferente"
+            },
+        )
+
+    @app.exception_handler(OrderNotFoundError)
+    async def order_not_found_error_handler(
+        request: Request, exc: OrderNotFoundError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Pedido não encontrado"},
+        )
+
+    @app.exception_handler(InvalidOrderStateError)
+    async def invalid_order_state_error_handler(
+        request: Request, exc: InvalidOrderStateError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Transição de estado do pedido é inválida"},
+        )
+
+    @app.exception_handler(OrderMustHaveItemsError)
+    async def order_must_have_items_error_handler(
+        request: Request, exc: OrderMustHaveItemsError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "O pedido deve possuir pelo menos um item"},
+        )
+
+    @app.exception_handler(DuplicateOrderItemError)
+    async def duplicate_order_item_error_handler(
+        request: Request, exc: DuplicateOrderItemError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Já existe um item com este produto no pedido"},
+        )
+
+    @app.exception_handler(OrderItemNotFoundError)
+    async def order_item_not_found_error_handler(
+        request: Request, exc: OrderItemNotFoundError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Item do pedido não encontrado"},
+        )
+
+    @app.exception_handler(OrderItemRemovalNotAllowedError)
+    async def order_item_removal_not_allowed_error_handler(
+        request: Request, exc: OrderItemRemovalNotAllowedError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Não é possível remover o último item do pedido"},
+        )
+
+    @app.exception_handler(OrderCustomerNotFoundError)
+    async def order_customer_not_found_error_handler(
+        request: Request, exc: OrderCustomerNotFoundError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Cliente do pedido não encontrado"},
+        )
+
+    @app.exception_handler(OrderProductNotFoundError)
+    async def order_product_not_found_error_handler(
+        request: Request, exc: OrderProductNotFoundError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": "Produto do item não encontrado"},
+        )
+
+    @app.exception_handler(OrderProductInactiveError)
+    async def order_product_inactive_error_handler(
+        request: Request, exc: OrderProductInactiveError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={
+                "detail": "Todos os produtos devem estar ativos para confirmar o pedido"
             },
         )
