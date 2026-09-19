@@ -1,20 +1,19 @@
-import uuid
 from decimal import Decimal
 
-from sqlalchemy import ForeignKeyConstraint, Numeric, UniqueConstraint
+from sqlalchemy import BigInteger, ForeignKeyConstraint, Numeric, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 from app.db.mixins import (
+    BigIntPrimaryKeyMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
     TimestampMixin,
-    UUIDPrimaryKeyMixin,
 )
 
 
 class Inventory(
-    UUIDPrimaryKeyMixin,
+    BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
@@ -35,7 +34,8 @@ class Inventory(
         ),
     )
 
-    product_id: Mapped[uuid.UUID] = mapped_column(
+    product_id: Mapped[int] = mapped_column(
+        BigInteger,
         nullable=False,
         index=True,
     )

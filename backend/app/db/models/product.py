@@ -1,7 +1,7 @@
-import uuid
 from decimal import Decimal
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     ForeignKeyConstraint,
     Numeric,
@@ -13,15 +13,15 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 from app.db.mixins import (
+    BigIntPrimaryKeyMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
     TimestampMixin,
-    UUIDPrimaryKeyMixin,
 )
 
 
 class Product(
-    UUIDPrimaryKeyMixin,
+    BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
@@ -62,7 +62,8 @@ class Product(
         nullable=True,
     )
 
-    category_id: Mapped[uuid.UUID | None] = mapped_column(
+    category_id: Mapped[int | None] = mapped_column(
+        BigInteger,
         nullable=True,
         index=True,
     )

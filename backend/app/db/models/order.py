@@ -1,20 +1,25 @@
-import uuid
 from decimal import Decimal
 
-from sqlalchemy import ForeignKeyConstraint, Numeric, String, UniqueConstraint
+from sqlalchemy import (
+    BigInteger,
+    ForeignKeyConstraint,
+    Numeric,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 from app.db.mixins import (
+    BigIntPrimaryKeyMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
     TimestampMixin,
-    UUIDPrimaryKeyMixin,
 )
 
 
 class Order(
-    UUIDPrimaryKeyMixin,
+    BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
@@ -45,7 +50,8 @@ class Order(
         nullable=False,
     )
 
-    customer_id: Mapped[uuid.UUID | None] = mapped_column(
+    customer_id: Mapped[int | None] = mapped_column(
+        BigInteger,
         nullable=True,
         index=True,
     )

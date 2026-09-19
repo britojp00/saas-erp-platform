@@ -3,15 +3,15 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 from app.db.mixins import (
+    BigIntPrimaryKeyMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
     TimestampMixin,
-    UUIDPrimaryKeyMixin,
 )
 
 
 class User(
-    UUIDPrimaryKeyMixin,
+    BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
     TenantScopedMixin,

@@ -1,19 +1,18 @@
-import uuid
 from decimal import Decimal
 
-from sqlalchemy import ForeignKeyConstraint, Numeric
+from sqlalchemy import BigInteger, ForeignKeyConstraint, Numeric
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 from app.db.mixins import (
+    BigIntPrimaryKeyMixin,
     TenantScopedMixin,
     TimestampMixin,
-    UUIDPrimaryKeyMixin,
 )
 
 
 class OrderItem(
-    UUIDPrimaryKeyMixin,
+    BigIntPrimaryKeyMixin,
     TimestampMixin,
     TenantScopedMixin,
     Base,
@@ -33,12 +32,14 @@ class OrderItem(
         ),
     )
 
-    order_id: Mapped[uuid.UUID] = mapped_column(
+    order_id: Mapped[int] = mapped_column(
+        BigInteger,
         nullable=False,
         index=True,
     )
 
-    product_id: Mapped[uuid.UUID] = mapped_column(
+    product_id: Mapped[int] = mapped_column(
+        BigInteger,
         nullable=False,
         index=True,
     )

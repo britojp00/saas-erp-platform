@@ -1,16 +1,14 @@
-import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Identity, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 
-class UUIDPrimaryKeyMixin:
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+class BigIntPrimaryKeyMixin:
+    id: Mapped[int] = mapped_column(
+        BigInteger,
+        Identity(always=False),
         primary_key=True,
-        default=uuid.uuid4,
     )
 
 
@@ -38,8 +36,8 @@ class SoftDeleteMixin:
 
 
 class TenantScopedMixin:
-    tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+    tenant_id: Mapped[int] = mapped_column(
+        BigInteger,
         ForeignKey("tenants.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,

@@ -1,16 +1,15 @@
-import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKeyConstraint, String, Text, func
+from sqlalchemy import BigInteger, DateTime, ForeignKeyConstraint, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
-from app.db.mixins import TenantScopedMixin, UUIDPrimaryKeyMixin
+from app.db.mixins import BigIntPrimaryKeyMixin, TenantScopedMixin
 
 
 class AuditLog(
-    UUIDPrimaryKeyMixin,
+    BigIntPrimaryKeyMixin,
     TenantScopedMixin,
     Base,
 ):
@@ -24,7 +23,8 @@ class AuditLog(
         ),
     )
 
-    user_id: Mapped[uuid.UUID | None] = mapped_column(
+    user_id: Mapped[int | None] = mapped_column(
+        BigInteger,
         nullable=True,
         index=True,
     )
@@ -41,7 +41,8 @@ class AuditLog(
         index=True,
     )
 
-    entity_id: Mapped[uuid.UUID | None] = mapped_column(
+    entity_id: Mapped[int | None] = mapped_column(
+        BigInteger,
         nullable=True,
         index=True,
     )

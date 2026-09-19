@@ -1,19 +1,17 @@
-import uuid
-
-from sqlalchemy import ForeignKeyConstraint, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, ForeignKeyConstraint, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 from app.db.mixins import (
+    BigIntPrimaryKeyMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
     TimestampMixin,
-    UUIDPrimaryKeyMixin,
 )
 
 
 class Category(
-    UUIDPrimaryKeyMixin,
+    BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
@@ -49,7 +47,8 @@ class Category(
         nullable=True,
     )
 
-    parent_id: Mapped[uuid.UUID | None] = mapped_column(
+    parent_id: Mapped[int | None] = mapped_column(
+        BigInteger,
         nullable=True,
         index=True,
     )

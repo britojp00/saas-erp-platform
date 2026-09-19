@@ -1,7 +1,6 @@
-import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKeyConstraint, func
+from sqlalchemy import BigInteger, DateTime, ForeignKeyConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -26,11 +25,13 @@ class UserRole(TenantScopedMixin, Base):
         ),
     )
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
+    user_id: Mapped[int] = mapped_column(
+        BigInteger,
         primary_key=True,
     )
 
-    role_id: Mapped[uuid.UUID] = mapped_column(
+    role_id: Mapped[int] = mapped_column(
+        BigInteger,
         primary_key=True,
     )
 
