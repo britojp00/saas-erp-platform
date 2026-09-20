@@ -1288,3 +1288,73 @@ A visão ideal é:
                 └──────────────┘
 
 O sistema deve fornecer contexto suficiente para diagnosticar problemas técnicos e acompanhar ações de negócio, mantendo segurança, privacidade e isolamento entre tenants.
+
+## Implementação Atual
+
+### Componentes
+
+```text
+app/core/logging.py         — Formatters JSON/Text + setup_logging()
+app/core/request_context.py — Contextvars (request_id, user_id, tenant_id)
+app/api/middleware.py        — HTTPLoggingMiddleware
+app/core/exceptions.py      — Exception handlers com logging
+app/main.py                 — Integração (startup/shutdown)
+tests/api/test_observability.py — 21 testes
+```
+
+### Configuração
+
+```env
+LOG_LEVEL=INFO    # DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_JSON=true     # true=JSON, false=Text
+```
+
+### Eventos Implementados
+
+| Evento | Level | Origem |
+|---|---|---|
+| application_started | INFO | main.py startup |
+| application_shutdown | INFO | main.py shutdown |
+| request_completed | INFO/WARNING/ERROR | middleware |
+| request_failed | ERROR | middleware (exception) |
+| customer.not_found | WARNING | exceptions.py |
+| product.not_found | WARNING | exceptions.py |
+| inventory.not_found | WARNING | exceptions.py |
+| order.not_found | WARNING | exceptions.py |
+| order.invalid_state | WARNING | exceptions.py |
+| category.not_found | WARNING | exceptions.py |
+| validation_error | WARNING | exceptions.py |
+| internal_error | ERROR | exceptions.py |
+| login.success | INFO | auth.py |
+| login.failure | WARNING | auth.py |
+
+### Request ID
+
+- Gerado automaticamente (UUID v4) quando ausente ou inválido
+- Preservado do header X-Request-ID quando válido (max 128 chars)
+- Retornado no header X-Request-ID da resposta
+- Incluído em todos os logs da request via contextvars
+
+### Segurança
+
+- Senhas nunca aparecem nos logs
+- JWT tokens nunca são logados
+- Authorization headers nunca são logados
+- Request/response bodies não são logados automaticamente
+- Secrets da aplicação não são expostos
+
+### Docker/Dozzle
+
+Logs escritos em stdout (JSON format) são automaticamente capturados por:
+- Docker logs
+- Dozzle (visualização web)
+- Qualquer coletor de logs baseado em stdout
+
+### Testes
+
+21 testes em tests/api/test_observability.py cobrindo:
+- Request ID (geração, preservação, oversized, independência)
+- HTTP logging (method, path, status_code, duration_ms, request_id)
+- Error handling (404 com request_id, sem traceback)
+- Security (password, JWT, Authorization header, secrets, request body)
+- Context (user_id autenticado, tenant_id autenticado, isolamento)

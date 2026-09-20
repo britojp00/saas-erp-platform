@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     app_debug: bool = True
     app_timezone: str = "America/Sao_Paulo"
 
+    log_level: str = "INFO"
+    log_json: bool = True
+
     database_url: str
 
     redis_url: str

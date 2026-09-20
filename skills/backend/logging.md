@@ -1150,3 +1150,105 @@ contexto necessário
 O objetivo não é registrar tudo.
 
 O objetivo é registrar o que será necessário para entender o comportamento do sistema quando algo precisar ser investigado.
+
+68. Implementação Atual
+
+O backend possui logging estruturado implementado com:
+
+```text
+app/core/logging.py       — JSONFormatter, TextFormatter, setup_logging()
+app/core/request_context.py — contextvars para request_id, user_id, tenant_id
+app/api/middleware.py      — HTTPLoggingMiddleware
+app/core/exceptions.py    — logging nos exception handlers
+app/main.py               — integração no startup
+```
+
+Configuração (.env):
+
+```text
+LOG_LEVEL=INFO
+LOG_JSON=true
+```
+
+69. Setup Logging
+
+setup_logging() configura:
+
+StreamHandler em sys.stdout com JSONFormatter ou TextFormatter
+Root logger no nível configurado
+Propagação de loggers uvicorn (para usar o handler da aplicação)
+Supressão do sqlalchemy.engine (volume excessivo)
+Silenciamento de handlers uvicorn duplicados
+
+Chamado em app/main.py durante criação da aplicação.
+
+70. JSON Format
+
+Cada log JSON contém:
+
+```json
+{
+  "timestamp": "2026-09-20T02:18:09.189468-03:00",
+  "level": "INFO",
+  "logger": "app.http",
+  "message": "request_completed",
+  "request_id": "uuid",
+  "tenant_id": 1,
+  "user_id": 1,
+  "event": "request_completed",
+  "method": "GET",
+  "path": "/api/v1/customers",
+  "status_code": 200,
+  "duration_ms": 12.29
+}
+```
+
+Campos condicionais: request_id, tenant_id, user_id, exception, event, method, path, status_code, duration_ms.
+
+71. Request Context
+
+Utiliza contextvars para transportar contexto por request:
+
+```python
+from app.core.request_context import get_request_context
+
+ctx = get_request_context()
+# ctx.request_id, ctx.user_id, ctx.tenant_id
+```
+
+Vantagem: sem estado global mutável, thread-safe, suporte nativo a async.
+
+72. HTTP Logging Middleware
+
+HTTPLoggingMiddleware (BaseHTTPMiddleware):
+
+Gera UUID v4 para X-Request-ID quando ausente/inválido (>128 chars)
+Preserva X-Request-ID válido do cliente
+Decodifica JWT para extrair user_id/tenant_id (para logging apenas)
+Mede duration_ms com time.perf_counter()
+Emite request_completed com level baseado no status:
+2xx/3xx → INFO
+4xx → WARNING
+5xx → ERROR
+Adiciona X-Request-ID no response header
+Limpa request context após logging
+
+73. Exception Handlers
+
+Todos os exception handlers em app/core/exceptions.py registram WARNING com:
+
+```python
+logger.warning(
+    f"{entity}.not_found",
+    extra={"event": f"{entity}.not_found", ...},
+)
+```
+
+Nenhum handler retorna traceback ao cliente.
+
+74. Startup/Shutdown
+
+```python
+logger.info("application_started", extra={"event": "application_started"})
+logger.info("application_shutdown", extra={"event": "application_shutdown"})
+```
