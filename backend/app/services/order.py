@@ -30,6 +30,7 @@ from app.schemas.order import (
     OrderItemUpdate,
     OrderUpdate,
 )
+from app.services.audit_log import AuditLogService
 
 VALID_TRANSITIONS: dict[str, list[str]] = {
     "DRAFT": ["CONFIRMED", "CANCELLED"],
@@ -46,6 +47,7 @@ class OrderService:
         self.customer_repo = CustomerRepository(session)
         self.inventory_repo = InventoryRepository(session)
         self.reservation_repo = InventoryReservationRepository(session)
+        self.audit_service = AuditLogService(session)
 
     async def list(
         self,
@@ -118,6 +120,7 @@ class OrderService:
         self,
         tenant_id: int,
         data: OrderCreate,
+        user_id: int | None = None,
     ) -> Order:
         await self._validate_customer(tenant_id, data.customer_id)
 
@@ -158,6 +161,19 @@ class OrderService:
         await self._recalculate_total(order)
         await self.order_repo.update(order)
 
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="ORDER_CREATE",
+            entity_type="order",
+            entity_id=order.id,
+            new_values={
+                "order_number": order.order_number,
+                "customer_id": order.customer_id,
+                "status": order.status,
+            },
+        )
+
         return order
 
     async def update(
@@ -165,6 +181,7 @@ class OrderService:
         tenant_id: int,
         order_id: int,
         data: OrderUpdate,
+        user_id: int | None = None,
     ) -> Order:
         order = await self.order_repo.get_for_update(tenant_id, order_id)
         if order is None:
@@ -172,6 +189,11 @@ class OrderService:
 
         if order.status != "DRAFT":
             raise InvalidOrderStateError()
+
+        old_values = {
+            "customer_id": order.customer_id,
+            "notes": order.notes,
+        }
 
         update_data = data.model_dump(exclude_unset=True)
 
@@ -182,13 +204,31 @@ class OrderService:
         if "notes" in update_data:
             order.notes = update_data["notes"]
 
-        return await self.order_repo.update(order)
+        result = await self.order_repo.update(order)
+
+        new_values = {
+            "customer_id": result.customer_id,
+            "notes": result.notes,
+        }
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="ORDER_UPDATE",
+            entity_type="order",
+            entity_id=order_id,
+            old_values=old_values,
+            new_values=new_values,
+        )
+
+        return result
 
     async def add_item(
         self,
         tenant_id: int,
         order_id: int,
         data: OrderItemCreate,
+        user_id: int | None = None,
     ) -> OrderItem:
         order = await self.order_repo.get_for_update(tenant_id, order_id)
         if order is None:
@@ -220,6 +260,20 @@ class OrderService:
         await self._recalculate_total(order)
         await self.order_repo.update(order)
 
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="ORDER_ITEM_ADD",
+            entity_type="order_item",
+            entity_id=item.id,
+            new_values={
+                "order_id": order_id,
+                "product_id": product.id,
+                "quantity": str(data.quantity),
+                "unit_price": str(unit_price),
+            },
+        )
+
         return item
 
     async def update_item(
@@ -228,6 +282,7 @@ class OrderService:
         order_id: int,
         item_id: int,
         data: OrderItemUpdate,
+        user_id: int | None = None,
     ) -> OrderItem:
         order = await self.order_repo.get_for_update(tenant_id, order_id)
         if order is None:
@@ -239,6 +294,11 @@ class OrderService:
         item = await self.item_repo.get_by_id_and_order(tenant_id, item_id, order_id)
         if item is None:
             raise OrderItemNotFoundError()
+
+        old_values = {
+            "quantity": str(item.quantity),
+            "unit_price": str(item.unit_price),
+        }
 
         update_data = data.model_dump(exclude_unset=True)
 
@@ -255,6 +315,21 @@ class OrderService:
         await self._recalculate_total(order)
         await self.order_repo.update(order)
 
+        new_values = {
+            "quantity": str(item.quantity),
+            "unit_price": str(item.unit_price),
+        }
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="ORDER_ITEM_UPDATE",
+            entity_type="order_item",
+            entity_id=item_id,
+            old_values=old_values,
+            new_values=new_values,
+        )
+
         return item
 
     async def remove_item(
@@ -262,6 +337,7 @@ class OrderService:
         tenant_id: int,
         order_id: int,
         item_id: int,
+        user_id: int | None = None,
     ) -> None:
         order = await self.order_repo.get_for_update(tenant_id, order_id)
         if order is None:
@@ -278,15 +354,31 @@ class OrderService:
         if count <= 1:
             raise OrderItemRemovalNotAllowedError()
 
+        old_values = {
+            "product_id": item.product_id,
+            "quantity": str(item.quantity),
+            "unit_price": str(item.unit_price),
+        }
+
         await self.item_repo.delete(item)
 
         await self._recalculate_total(order)
         await self.order_repo.update(order)
 
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="ORDER_ITEM_REMOVE",
+            entity_type="order_item",
+            entity_id=item_id,
+            old_values=old_values,
+        )
+
     async def confirm(
         self,
         tenant_id: int,
         order_id: int,
+        user_id: int | None = None,
     ) -> Order:
         order = await self.order_repo.get_for_update(tenant_id, order_id)
         if order is None:
@@ -331,15 +423,29 @@ class OrderService:
             )
             await self.reservation_repo.create(reservation)
 
+        old_status = order.status
         order.status = "CONFIRMED"
         order.updated_at = datetime.now(UTC)
 
-        return await self.order_repo.update(order)
+        result = await self.order_repo.update(order)
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="ORDER_CONFIRM",
+            entity_type="order",
+            entity_id=order_id,
+            old_values={"status": old_status},
+            new_values={"status": "CONFIRMED"},
+        )
+
+        return result
 
     async def cancel(
         self,
         tenant_id: int,
         order_id: int,
+        user_id: int | None = None,
     ) -> Order:
         order = await self.order_repo.get_for_update(tenant_id, order_id)
         if order is None:
@@ -365,15 +471,29 @@ class OrderService:
             reservation.released_at = datetime.now(UTC)
             await self.reservation_repo.update(reservation)
 
+        old_status = order.status
         order.status = "CANCELLED"
         order.updated_at = datetime.now(UTC)
 
-        return await self.order_repo.update(order)
+        result = await self.order_repo.update(order)
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="ORDER_CANCEL",
+            entity_type="order",
+            entity_id=order_id,
+            old_values={"status": old_status},
+            new_values={"status": "CANCELLED"},
+        )
+
+        return result
 
     async def complete(
         self,
         tenant_id: int,
         order_id: int,
+        user_id: int | None = None,
     ) -> Order:
         order = await self.order_repo.get_for_update(tenant_id, order_id)
         if order is None:
@@ -400,7 +520,20 @@ class OrderService:
             reservation.confirmed_at = datetime.now(UTC)
             await self.reservation_repo.update(reservation)
 
+        old_status = order.status
         order.status = "COMPLETED"
         order.updated_at = datetime.now(UTC)
 
-        return await self.order_repo.update(order)
+        result = await self.order_repo.update(order)
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="ORDER_COMPLETE",
+            entity_type="order",
+            entity_id=order_id,
+            old_values={"status": old_status},
+            new_values={"status": "COMPLETED"},
+        )
+
+        return result

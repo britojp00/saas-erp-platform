@@ -83,7 +83,9 @@ async def create_customer(
     current_user: CurrentUser,
     service: Annotated[CustomerService, Depends(get_customer_service)],
 ) -> CustomerResponse:
-    customer = await service.create(current_user.tenant_id, data)
+    customer = await service.create(
+        current_user.tenant_id, data, user_id=current_user.id
+    )
     return CustomerResponse.model_validate(customer)
 
 
@@ -100,7 +102,9 @@ async def update_customer(
     current_user: CurrentUser,
     service: Annotated[CustomerService, Depends(get_customer_service)],
 ) -> CustomerResponse:
-    customer = await service.update(customer_id, current_user.tenant_id, data)
+    customer = await service.update(
+        customer_id, current_user.tenant_id, data, user_id=current_user.id
+    )
     return CustomerResponse.model_validate(customer)
 
 
@@ -116,4 +120,6 @@ async def delete_customer(
     current_user: CurrentUser,
     service: Annotated[CustomerService, Depends(get_customer_service)],
 ) -> None:
-    await service.soft_delete(customer_id, current_user.tenant_id)
+    await service.soft_delete(
+        customer_id, current_user.tenant_id, user_id=current_user.id
+    )

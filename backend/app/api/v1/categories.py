@@ -83,7 +83,9 @@ async def create_category(
     current_user: CurrentUser,
     service: Annotated[CategoryService, Depends(get_category_service)],
 ) -> CategoryResponse:
-    category = await service.create(current_user.tenant_id, data)
+    category = await service.create(
+        current_user.tenant_id, data, user_id=current_user.id
+    )
     return CategoryResponse.model_validate(category)
 
 
@@ -100,7 +102,9 @@ async def update_category(
     current_user: CurrentUser,
     service: Annotated[CategoryService, Depends(get_category_service)],
 ) -> CategoryResponse:
-    category = await service.update(category_id, current_user.tenant_id, data)
+    category = await service.update(
+        category_id, current_user.tenant_id, data, user_id=current_user.id
+    )
     return CategoryResponse.model_validate(category)
 
 
@@ -116,4 +120,6 @@ async def delete_category(
     current_user: CurrentUser,
     service: Annotated[CategoryService, Depends(get_category_service)],
 ) -> None:
-    await service.soft_delete(category_id, current_user.tenant_id)
+    await service.soft_delete(
+        category_id, current_user.tenant_id, user_id=current_user.id
+    )

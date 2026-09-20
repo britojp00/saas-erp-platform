@@ -10,12 +10,14 @@ from app.core.exceptions import (
 from app.db.models.product import Product
 from app.repositories.product import ProductRepository
 from app.schemas.product import ProductCreate, ProductUpdate
+from app.services.audit_log import AuditLogService
 
 
 class ProductService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.repo = ProductRepository(session)
+        self.audit_service = AuditLogService(session)
 
     async def _validate_category(
         self,
@@ -66,6 +68,7 @@ class ProductService:
         self,
         tenant_id: int,
         data: ProductCreate,
+        user_id: int | None = None,
     ) -> Product:
         await self._validate_category(tenant_id, data.category_id)
 
@@ -84,19 +87,43 @@ class ProductService:
         )
 
         try:
-            return await self.repo.create(product)
+            result = await self.repo.create(product)
         except IntegrityError:
             raise DuplicateProductError()
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="PRODUCT_CREATE",
+            entity_type="product",
+            entity_id=result.id,
+            new_values={
+                "sku": result.sku,
+                "name": result.name,
+                "price": str(result.price),
+                "is_active": result.is_active,
+            },
+        )
+
+        return result
 
     async def update(
         self,
         product_id: int,
         tenant_id: int,
         data: ProductUpdate,
+        user_id: int | None = None,
     ) -> Product:
         product = await self.repo.get_by_id(product_id, tenant_id)
         if product is None:
             raise ProductNotFoundError()
+
+        old_values = {
+            "sku": product.sku,
+            "name": product.name,
+            "price": str(product.price),
+            "is_active": product.is_active,
+        }
 
         update_data = data.model_dump(exclude_unset=True)
 
@@ -126,14 +153,34 @@ class ProductService:
             product.is_active = update_data["is_active"]
 
         try:
-            return await self.repo.update(product)
+            result = await self.repo.update(product)
         except IntegrityError:
             raise DuplicateProductError()
+
+        new_values = {
+            "sku": result.sku,
+            "name": result.name,
+            "price": str(result.price),
+            "is_active": result.is_active,
+        }
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="PRODUCT_UPDATE",
+            entity_type="product",
+            entity_id=result.id,
+            old_values=old_values,
+            new_values=new_values,
+        )
+
+        return result
 
     async def soft_delete(
         self,
         product_id: int,
         tenant_id: int,
+        user_id: int | None = None,
     ) -> None:
         product = await self.repo.get_by_id(product_id, tenant_id)
         if product is None:
@@ -145,4 +192,18 @@ class ProductService:
         if await self.repo.has_order_items(tenant_id, product.id):
             raise ProductInUseError()
 
+        old_values = {
+            "sku": product.sku,
+            "name": product.name,
+        }
+
         await self.repo.soft_delete(product)
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="PRODUCT_DELETE",
+            entity_type="product",
+            entity_id=product_id,
+            old_values=old_values,
+        )

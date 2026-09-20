@@ -18,6 +18,7 @@ from app.repositories.inventory_movement import InventoryMovementRepository
 from app.repositories.inventory_reservation import InventoryReservationRepository
 from app.repositories.product import ProductRepository
 from app.schemas.inventory import MovementCreate, ReservationCreate
+from app.services.audit_log import AuditLogService
 
 
 class InventoryService:
@@ -27,6 +28,7 @@ class InventoryService:
         self.movement_repo = InventoryMovementRepository(session)
         self.reservation_repo = InventoryReservationRepository(session)
         self.product_repo = ProductRepository(session)
+        self.audit_service = AuditLogService(session)
 
     async def _validate_product_exists(
         self,
@@ -100,6 +102,7 @@ class InventoryService:
         self,
         tenant_id: int,
         data: MovementCreate,
+        user_id: int | None = None,
     ) -> InventoryMovement:
         await self._validate_product_exists(tenant_id, data.product_id)
 
@@ -120,6 +123,8 @@ class InventoryService:
             )
             self.session.add(inventory)
             await self.session.flush()
+
+        old_quantity = inventory.quantity
 
         if data.movement_type == "IN":
             inventory.quantity = inventory.quantity + data.quantity
@@ -143,12 +148,31 @@ class InventoryService:
             idempotency_key=data.idempotency_key,
         )
 
-        return await self.movement_repo.create(movement)
+        result = await self.movement_repo.create(movement)
+
+        action_map = {
+            "IN": "INVENTORY_IN",
+            "OUT": "INVENTORY_OUT",
+            "ADJUSTMENT": "INVENTORY_ADJUSTMENT",
+        }
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action=action_map[data.movement_type],
+            entity_type="inventory",
+            entity_id=inventory.product_id,
+            old_values={"quantity": str(old_quantity)},
+            new_values={"quantity": str(inventory.quantity)},
+        )
+
+        return result
 
     async def create_reservation(
         self,
         tenant_id: int,
         data: ReservationCreate,
+        user_id: int | None = None,
     ) -> InventoryReservation:
         product = await self._validate_product_exists(tenant_id, data.product_id)
 
@@ -182,12 +206,28 @@ class InventoryService:
             order_item_id=data.order_item_id,
         )
 
-        return await self.reservation_repo.create(reservation)
+        result = await self.reservation_repo.create(reservation)
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="RESERVATION_CREATE",
+            entity_type="inventory_reservation",
+            entity_id=result.id,
+            new_values={
+                "product_id": data.product_id,
+                "quantity": str(data.quantity),
+                "reference": data.reference,
+            },
+        )
+
+        return result
 
     async def confirm_reservation(
         self,
         tenant_id: int,
         reservation_id: int,
+        user_id: int | None = None,
     ) -> InventoryReservation:
         reservation = await self.reservation_repo.get_by_id(tenant_id, reservation_id)
         if reservation is None:
@@ -208,12 +248,25 @@ class InventoryService:
         reservation.confirmed_at = datetime.now(UTC)
         inventory.reserved_quantity = inventory.reserved_quantity - reservation.quantity
 
-        return await self.reservation_repo.update(reservation)
+        result = await self.reservation_repo.update(reservation)
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="RESERVATION_CONFIRM",
+            entity_type="inventory_reservation",
+            entity_id=reservation_id,
+            old_values={"status": "ACTIVE"},
+            new_values={"status": "CONFIRMED"},
+        )
+
+        return result
 
     async def release_reservation(
         self,
         tenant_id: int,
         reservation_id: int,
+        user_id: int | None = None,
     ) -> InventoryReservation:
         reservation = await self.reservation_repo.get_by_id(tenant_id, reservation_id)
         if reservation is None:
@@ -234,12 +287,25 @@ class InventoryService:
         reservation.released_at = datetime.now(UTC)
         inventory.reserved_quantity = inventory.reserved_quantity - reservation.quantity
 
-        return await self.reservation_repo.update(reservation)
+        result = await self.reservation_repo.update(reservation)
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="RESERVATION_RELEASE",
+            entity_type="inventory_reservation",
+            entity_id=reservation_id,
+            old_values={"status": "ACTIVE"},
+            new_values={"status": "RELEASED"},
+        )
+
+        return result
 
     async def cancel_reservation(
         self,
         tenant_id: int,
         reservation_id: int,
+        user_id: int | None = None,
     ) -> InventoryReservation:
         reservation = await self.reservation_repo.get_by_id(tenant_id, reservation_id)
         if reservation is None:
@@ -260,4 +326,16 @@ class InventoryService:
         reservation.released_at = datetime.now(UTC)
         inventory.reserved_quantity = inventory.reserved_quantity - reservation.quantity
 
-        return await self.reservation_repo.update(reservation)
+        result = await self.reservation_repo.update(reservation)
+
+        await self.audit_service.log(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action="RESERVATION_CANCEL",
+            entity_type="inventory_reservation",
+            entity_id=reservation_id,
+            old_values={"status": "ACTIVE"},
+            new_values={"status": "CANCELLED"},
+        )
+
+        return result

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.audit_logs import router as audit_logs_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.categories import router as categories_router
 from app.api.v1.customers import router as customers_router
@@ -27,6 +28,7 @@ app.add_middleware(
 register_exception_handlers(app)
 
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(audit_logs_router, prefix="/api/v1")
 app.include_router(categories_router, prefix="/api/v1")
 app.include_router(customers_router, prefix="/api/v1")
 app.include_router(inventory_router, prefix="/api/v1")

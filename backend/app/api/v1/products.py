@@ -87,7 +87,9 @@ async def create_product(
     current_user: CurrentUser,
     service: Annotated[ProductService, Depends(get_product_service)],
 ) -> ProductResponse:
-    product = await service.create(current_user.tenant_id, data)
+    product = await service.create(
+        current_user.tenant_id, data, user_id=current_user.id
+    )
     return ProductResponse.model_validate(product)
 
 
@@ -104,7 +106,9 @@ async def update_product(
     current_user: CurrentUser,
     service: Annotated[ProductService, Depends(get_product_service)],
 ) -> ProductResponse:
-    product = await service.update(product_id, current_user.tenant_id, data)
+    product = await service.update(
+        product_id, current_user.tenant_id, data, user_id=current_user.id
+    )
     return ProductResponse.model_validate(product)
 
 
@@ -120,4 +124,6 @@ async def delete_product(
     current_user: CurrentUser,
     service: Annotated[ProductService, Depends(get_product_service)],
 ) -> None:
-    await service.soft_delete(product_id, current_user.tenant_id)
+    await service.soft_delete(
+        product_id, current_user.tenant_id, user_id=current_user.id
+    )

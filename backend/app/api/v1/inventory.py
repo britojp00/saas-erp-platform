@@ -140,7 +140,9 @@ async def create_movement(
     current_user: CurrentUser,
     service: Annotated[InventoryService, Depends(get_inventory_service)],
 ) -> MovementResponse:
-    movement = await service.create_movement(current_user.tenant_id, data)
+    movement = await service.create_movement(
+        current_user.tenant_id, data, user_id=current_user.id
+    )
     return MovementResponse.model_validate(movement)
 
 
@@ -157,7 +159,9 @@ async def create_reservation(
     current_user: CurrentUser,
     service: Annotated[InventoryService, Depends(get_inventory_service)],
 ) -> ReservationResponse:
-    reservation = await service.create_reservation(current_user.tenant_id, data)
+    reservation = await service.create_reservation(
+        current_user.tenant_id, data, user_id=current_user.id
+    )
     return ReservationResponse.model_validate(reservation)
 
 
@@ -174,7 +178,7 @@ async def confirm_reservation(
     service: Annotated[InventoryService, Depends(get_inventory_service)],
 ) -> ConfirmReservationResponse:
     reservation = await service.confirm_reservation(
-        current_user.tenant_id, reservation_id
+        current_user.tenant_id, reservation_id, user_id=current_user.id
     )
     return ConfirmReservationResponse.model_validate(reservation)
 
@@ -192,7 +196,7 @@ async def release_reservation(
     service: Annotated[InventoryService, Depends(get_inventory_service)],
 ) -> ConfirmReservationResponse:
     reservation = await service.release_reservation(
-        current_user.tenant_id, reservation_id
+        current_user.tenant_id, reservation_id, user_id=current_user.id
     )
     return ConfirmReservationResponse.model_validate(reservation)
 
@@ -210,6 +214,6 @@ async def cancel_reservation(
     service: Annotated[InventoryService, Depends(get_inventory_service)],
 ) -> ConfirmReservationResponse:
     reservation = await service.cancel_reservation(
-        current_user.tenant_id, reservation_id
+        current_user.tenant_id, reservation_id, user_id=current_user.id
     )
     return ConfirmReservationResponse.model_validate(reservation)

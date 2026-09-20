@@ -91,7 +91,7 @@ async def create_order(
     current_user: CurrentUser,
     service: Annotated[OrderService, Depends(get_order_service)],
 ) -> OrderResponse:
-    order = await service.create(current_user.tenant_id, data)
+    order = await service.create(current_user.tenant_id, data, user_id=current_user.id)
     order = await service.get_with_items(current_user.tenant_id, order.id)
     return OrderResponse.model_validate(order)
 
@@ -109,7 +109,9 @@ async def update_order(
     current_user: CurrentUser,
     service: Annotated[OrderService, Depends(get_order_service)],
 ) -> OrderResponse:
-    order = await service.update(current_user.tenant_id, order_id, data)
+    order = await service.update(
+        current_user.tenant_id, order_id, data, user_id=current_user.id
+    )
     order = await service.get_with_items(current_user.tenant_id, order.id)
     return OrderResponse.model_validate(order)
 
@@ -128,7 +130,9 @@ async def add_order_item(
     current_user: CurrentUser,
     service: Annotated[OrderService, Depends(get_order_service)],
 ) -> OrderItemResponse:
-    item = await service.add_item(current_user.tenant_id, order_id, data)
+    item = await service.add_item(
+        current_user.tenant_id, order_id, data, user_id=current_user.id
+    )
     return OrderItemResponse.model_validate(item)
 
 
@@ -146,7 +150,9 @@ async def update_order_item(
     current_user: CurrentUser,
     service: Annotated[OrderService, Depends(get_order_service)],
 ) -> OrderItemResponse:
-    item = await service.update_item(current_user.tenant_id, order_id, item_id, data)
+    item = await service.update_item(
+        current_user.tenant_id, order_id, item_id, data, user_id=current_user.id
+    )
     return OrderItemResponse.model_validate(item)
 
 
@@ -163,7 +169,9 @@ async def remove_order_item(
     current_user: CurrentUser,
     service: Annotated[OrderService, Depends(get_order_service)],
 ) -> None:
-    await service.remove_item(current_user.tenant_id, order_id, item_id)
+    await service.remove_item(
+        current_user.tenant_id, order_id, item_id, user_id=current_user.id
+    )
 
 
 @router.post(
@@ -178,7 +186,9 @@ async def confirm_order(
     current_user: CurrentUser,
     service: Annotated[OrderService, Depends(get_order_service)],
 ) -> OrderResponse:
-    order = await service.confirm(current_user.tenant_id, order_id)
+    order = await service.confirm(
+        current_user.tenant_id, order_id, user_id=current_user.id
+    )
     order = await service.get_with_items(current_user.tenant_id, order.id)
     return OrderResponse.model_validate(order)
 
@@ -195,7 +205,9 @@ async def cancel_order(
     current_user: CurrentUser,
     service: Annotated[OrderService, Depends(get_order_service)],
 ) -> OrderResponse:
-    order = await service.cancel(current_user.tenant_id, order_id)
+    order = await service.cancel(
+        current_user.tenant_id, order_id, user_id=current_user.id
+    )
     order = await service.get_with_items(current_user.tenant_id, order.id)
     return OrderResponse.model_validate(order)
 
@@ -212,6 +224,8 @@ async def complete_order(
     current_user: CurrentUser,
     service: Annotated[OrderService, Depends(get_order_service)],
 ) -> OrderResponse:
-    order = await service.complete(current_user.tenant_id, order_id)
+    order = await service.complete(
+        current_user.tenant_id, order_id, user_id=current_user.id
+    )
     order = await service.get_with_items(current_user.tenant_id, order.id)
     return OrderResponse.model_validate(order)
