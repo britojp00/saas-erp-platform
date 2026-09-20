@@ -250,7 +250,7 @@ Padrão:
 Endpoints serão adicionados conforme os módulos forem
 implementados.
 
-Exemplos implementados:
+Exemplos implementados (39 endpoints):
 
 GET    /health
 
@@ -296,6 +296,8 @@ DELETE /api/v1/orders/{id}/items/{item_id}
 POST   /api/v1/orders/{id}/confirm
 POST   /api/v1/orders/{id}/cancel
 POST   /api/v1/orders/{id}/complete
+
+GET    /api/v1/audit-logs
 Integração futura
 
 Depois da conclusão do ERP será desenvolvido o projeto:
@@ -333,10 +335,11 @@ uv;
 FastAPI;
 Uvicorn;
 SQLAlchemy async;
-Alembic;
+Alembic (13 migrations);
 PostgreSQL 17;
 Redis 7;
 Docker Compose;
+Dockerfile (backend);
 Autenticação JWT;
 RBAC (Roles + Permissions);
 Multi-tenancy;
@@ -346,19 +349,21 @@ Categories CRUD (5 endpoints);
 Products CRUD (5 endpoints);
 Inventory (9 endpoints: movements, reservations, confirm, release, cancel);
 Orders (10 endpoints: CRUD, items, confirm, cancel, complete);
+Audit Logs (1 endpoint: list);
 Seed de desenvolvimento;
-226 testes passando;
-38 API endpoints;
+269 testes passando;
+39 API endpoints;
+Logging estruturado (JSON/text, request_id, tenant_id, user_id);
+Observabilidade (HTTP middleware, request context);
+CI/CD (GitHub Actions);
 Ruff check e format;
 APP_TIMEZONE=America/Sao_Paulo;
 Timestamps timezone-aware com offset local.
 
 Próximas etapas:
 
-Logging estruturado;
-Auditoria;
 Frontend React;
-CI/CD;
+Deployment;
 Integration Hub.
 Princípios gerais
 

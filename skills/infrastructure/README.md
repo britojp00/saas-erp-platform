@@ -659,7 +659,90 @@ Validar
         |
         v
 Documentar quando necessário
-38. Princípio final
+38. CI/CD (GitHub Actions)
+
+O projeto utiliza GitHub Actions para integração contínua.
+
+Workflow principal:
+
+.github/workflows/ci.yml
+
+39. Triggers
+
+O CI é executado em:
+
+push para master
+pull request para master
+
+40. Jobs
+
+O workflow possui um único job ci que executa:
+
+1. Checkout do código
+2. Configuração do Python 3.13
+3. Instalação do uv
+4. Instalação de dependências (uv sync --frozen)
+5. Ruff check
+6. Ruff format check
+7. Alembic check
+8. Alembic upgrade head
+9. pytest
+10. Docker build
+
+41. PostgreSQL no CI
+
+O CI utiliza GitHub Actions services para PostgreSQL 17.
+
+Configuração:
+
+image: postgres:17-alpine
+POSTGRES_DB: saas_erp_ci
+POSTGRES_USER: postgres
+POSTGRES_PASSWORD: postgres
+
+O banco de teste é criado automaticamente pelo conftest.py.
+
+42. Variáveis de ambiente do CI
+
+Definidas no workflow:
+
+APP_ENV=test
+APP_TIMEZONE=America/Sao_Paulo
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/saas_erp_ci
+REDIS_URL=redis://localhost:6379/0
+JWT_SECRET_KEY=ci-test-secret-key-do-not-use-in-production
+
+Nenhum secret real é utilizado.
+
+43. Redis no CI
+
+Redis NÃO é necessário para a suíte atual.
+
+A variável REDIS_URL é fornecida apenas para satisfazer
+a configuração obrigatória do pydantic-settings.
+
+44. Dockerfile
+
+O backend possui Dockerfile propio:
+
+backend/Dockerfile
+
+O CI executa docker build para validar que a aplicação
+é empacotável. A imagem não é enviada para registry.
+
+45. Cache
+
+O CI utiliza cache do uv via astral-sh/setup-uv.
+
+46. CD
+
+O deploy automático ainda não foi implementado.
+
+O proximo estara podera incluir:
+
+GitHub -> CI -> Docker image -> Registry -> Deploy -> Health check
+
+47. Princípio final
 
 A infraestrutura deve ser:
 

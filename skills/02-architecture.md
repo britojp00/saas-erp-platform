@@ -724,15 +724,27 @@ Erros internos devem ser registrados nos logs apropriados.
 
 Logs devem seguir um padrão estruturado.
 
-Exemplo:
+Implementação atual:
+
+- JSON ou texto configurável via LOG_JSON
+- Timestamp com timezone (America/Sao_Paulo)
+- request_id, tenant_id, user_id incluídos automaticamente
+- Configuração via setup_logging() em core/logging.py
+
+Exemplo JSON:
 
 {
+  "timestamp": "2026-09-19T10:30:00-03:00",
   "level": "INFO",
-  "event": "order_created",
+  "logger": "app.http",
+  "message": "request_completed",
   "request_id": "...",
   "tenant_id": 10,
   "user_id": 32,
-  "order_id": 1842
+  "method": "GET",
+  "path": "/api/v1/customers",
+  "status_code": 200,
+  "duration_ms": 45.2
 }
 
 Não registrar:
@@ -744,20 +756,21 @@ API keys;
 secrets;
 informações sensíveis desnecessárias.
 
-As regras detalhadas de logging serão definidas em:
+As regras detalhadas de logging estão em:
 
 skills/observability/
+
 25. Request ID
 
-Requisições devem possuir um identificador que permita
-rastrear uma operação.
+Requisições possuem um identificador para rastreamento.
 
-Exemplo:
+Implementação atual:
 
-X-Request-ID
-
-O mesmo identificador deve ser utilizado nos logs relacionados
-à operação quando aplicável.
+- X-Request-ID aceito no request ou gerado automaticamente (UUID)
+- Máximo 128 caracteres
+- Incluído em todos os logs da requisição
+- Retornado no header X-Request-ID da resposta
+- Gerenciado via ContextVar em core/request_context.py
 
 26. Auditoria
 
@@ -769,14 +782,17 @@ database_connection_failed
 request_timeout
 internal_exception
 
-Auditoria:
+Auditoria (implementada):
 
-USER_UPDATED_PRODUCT
-ORDER_CANCELLED
-PRICE_CHANGED
-CUSTOMER_CREATED
+- Tabela `audit_logs` append-only
+- Registro por tenant (tenant_id)
+- Campos: action, entity_type, entity_id, user_id, tenant_id, details, ip_address, user_agent
+- Consulta via GET /api/v1/audit-logs com filtros e paginação
+- Service: services/audit_log.py
+- Repository: repositories/audit_log.py
+- Schema: schemas/audit_log.py
 
-Eventos relevantes de negócio deverão possuir registro
+Eventos relevantes de negócio devem possuir registro
 de auditoria apropriado.
 
 27. Testabilidade

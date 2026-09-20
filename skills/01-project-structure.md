@@ -46,20 +46,83 @@ backend/
 │
 ├── app/
 │   ├── api/
-│   │   └── v1/
+│   │   ├── v1/
+│   │   │   ├── auth.py
+│   │   │   ├── customers.py
+│   │   │   ├── categories.py
+│   │   │   ├── products.py
+│   │   │   ├── inventory.py
+│   │   │   ├── orders.py
+│   │   │   └── audit_logs.py
+│   │   ├── middleware.py
+│   │   └── dependencies.py
 │   ├── core/
-│   ├── models/
+│   │   ├── config.py
+│   │   ├── database.py
+│   │   ├── security.py
+│   │   ├── exceptions.py
+│   │   ├── logging.py
+│   │   └── request_context.py
+│   ├── db/
+│   │   ├── models/
+│   │   ├── base.py
+│   │   ├── database.py
+│   │   └── mixins.py
 │   ├── schemas/
+│   │   ├── auth.py
+│   │   ├── customer.py
+│   │   ├── category.py
+│   │   ├── product.py
+│   │   ├── inventory.py
+│   │   ├── order.py
+│   │   └── audit_log.py
 │   ├── repositories/
+│   │   ├── user.py
+│   │   ├── tenant.py
+│   │   ├── customer.py
+│   │   ├── category.py
+│   │   ├── product.py
+│   │   ├── inventory.py
+│   │   ├── inventory_movement.py
+│   │   ├── inventory_reservation.py
+│   │   ├── order.py
+│   │   ├── order_item.py
+│   │   ├── role.py
+│   │   ├── permission.py
+│   │   └── audit_log.py
 │   ├── services/
+│   │   ├── auth.py
+│   │   ├── authorization.py
+│   │   ├── customer.py
+│   │   ├── category.py
+│   │   ├── product.py
+│   │   ├── inventory.py
+│   │   ├── order.py
+│   │   └── audit_log.py
 │   └── main.py
 │
 ├── tests/
+│   ├── api/
+│   │   ├── test_auth.py
+│   │   ├── test_health.py
+│   │   ├── test_timezone.py
+│   │   ├── test_rbac.py
+│   │   ├── test_customers.py
+│   │   ├── test_categories.py
+│   │   ├── test_products.py
+│   │   ├── test_inventory.py
+│   │   ├── test_orders.py
+│   │   ├── test_audit_logs.py
+│   │   └── test_observability.py
 │   ├── unit/
-│   ├── integration/
-│   └── api/
+│   │   └── test_security.py
+│   └── conftest.py
 │
 ├── migrations/
+├── scripts/
+│   └── seed_dev.py
+├── Dockerfile
+├── .dockerignore
 ├── .python-version
 ├── pyproject.toml
 └── uv.lock
@@ -110,6 +173,7 @@ categories.py
 products.py
 inventory.py
 orders.py
+audit_logs.py
 
 A camada de API não deve concentrar regras de negócio
 complexas.
@@ -122,12 +186,13 @@ backend/app/core/
 
 Contém componentes centrais e configurações compartilhadas.
 
-Exemplos futuros:
+Arquivos:
 
 config.py
-database.py
 security.py
+exceptions.py
 logging.py
+request_context.py
 
 Pode conter:
 
@@ -141,20 +206,23 @@ componentes compartilhados.
 
 Localização:
 
-backend/app/models/
+backend/app/db/models/
 
 Contém os modelos ORM utilizados pelo SQLAlchemy.
 
-Exemplos:
+Arquivos:
 
 tenant.py
 user.py
+user_role.py
 role.py
+role_permission.py
 permission.py
 customer.py
-product.py
 category.py
+product.py
 inventory.py
+inventory_movement.py
 inventory_reservation.py
 order.py
 order_item.py
@@ -175,16 +243,13 @@ Contém os schemas Pydantic utilizados pelos contratos da API.
 
 Exemplos:
 
-CustomerCreate
-CustomerUpdate
-CustomerResponse
-
-ProductCreate
-ProductUpdate
-ProductResponse
-
-OrderCreate
-OrderResponse
+auth.py
+customer.py
+category.py
+product.py
+inventory.py
+order.py
+audit_log.py
 
 Responsabilidades:
 
@@ -208,13 +273,19 @@ Contém a camada responsável pela persistência.
 
 Exemplos:
 
-tenant_repository.py
-customer_repository.py
-product_repository.py
-category_repository.py
-inventory_repository.py
-order_repository.py
-order_item_repository.py
+user.py
+tenant.py
+customer.py
+category.py
+product.py
+inventory.py
+inventory_movement.py
+inventory_reservation.py
+order.py
+order_item.py
+role.py
+permission.py
+audit_log.py
 
 Responsabilidades:
 
@@ -236,11 +307,14 @@ Contém a lógica de negócio da aplicação.
 
 Exemplos:
 
-customer_service.py
-product_service.py
-category_service.py
-inventory_service.py
-order_service.py
+auth.py
+authorization.py
+customer.py
+category.py
+product.py
+inventory.py
+order.py
+audit_log.py
 
 Responsabilidades:
 
@@ -294,8 +368,21 @@ Estrutura:
 
 backend/tests/
 ├── unit/
-├── integration/
-└── api/
+│   └── test_security.py
+├── api/
+│   ├── test_auth.py
+│   ├── test_health.py
+│   ├── test_timezone.py
+│   ├── test_rbac.py
+│   ├── test_customers.py
+│   ├── test_categories.py
+│   ├── test_products.py
+│   ├── test_inventory.py
+│   ├── test_orders.py
+│   ├── test_audit_logs.py
+│   └── test_observability.py
+└── conftest.py
+
 11.1 Unit
 
 Localização:
@@ -306,24 +393,9 @@ Utilizado para testar componentes e regras de forma isolada.
 
 Exemplos:
 
-test_order_service.py
-test_inventory_service.py
-test_auth.py
-11.2 Integration
+test_security.py
 
-Localização:
-
-backend/tests/integration/
-
-Utilizado para testes que envolvem múltiplos componentes
-ou infraestrutura de teste.
-
-Exemplos:
-
-test_customer_repository.py
-test_order_repository.py
-test_database.py
-11.3 API
+11.2 API
 
 Localização:
 
@@ -333,14 +405,17 @@ Utilizado para testar endpoints HTTP.
 
 Exemplos:
 
-test_health.py
 test_auth.py
+test_health.py
+test_timezone.py
+test_rbac.py
 test_customers.py
 test_categories.py
 test_products.py
 test_inventory.py
 test_orders.py
-test_timezone.py
+test_audit_logs.py
+test_observability.py
 12. Migrations
 
 Localização:
@@ -470,23 +545,28 @@ Os workflows de CI/CD ficam em:
 
 .github/workflows/
 
-Exemplos futuros:
+Arquivo atual:
 
 ci.yml
-tests.yml
 
-Esses arquivos serão responsáveis por automações como:
+Executa em push e pull request para master:
 
-testes;
-lint;
-validações;
-build;
-outras etapas de CI/CD.
+Ruff check;
+Ruff format;
+Alembic check;
+Migrations;
+Testes;
+Docker build.
 17. Docker
 
-Arquivos relacionados à execução do ambiente em containers
-serão mantidos de acordo com as definições das skills de
-infraestrutura.
+Arquivos relacionados à execução do ambiente em containers:
+
+backend/Dockerfile
+backend/.dockerignore
+docker-compose.yml
+
+O Dockerfile do backend utiliza python:3.13-slim com uv
+para gerenciamento de dependências.
 
 O arquivo principal previsto na raiz é:
 

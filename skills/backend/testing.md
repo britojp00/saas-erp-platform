@@ -41,7 +41,7 @@ independentes;
 claros;
 focados em comportamento.
 
-Resultado atual: **226 passed**
+Resultado atual: **269 passed**
 
 Evitar testes criados somente para aumentar cobertura numérica.
 
@@ -72,16 +72,19 @@ Estrutura:
 tests/
 ├── unit/
 │   └── test_security.py
-├── integration/
-└── api/
-    ├── test_auth.py
-    ├── test_health.py
-    ├── test_timezone.py
-    ├── test_customers.py
-    ├── test_categories.py
-    ├── test_products.py
-    ├── test_inventory.py
-    └── test_orders.py
+├── api/
+│   ├── test_auth.py
+│   ├── test_health.py
+│   ├── test_timezone.py
+│   ├── test_rbac.py
+│   ├── test_customers.py
+│   ├── test_categories.py
+│   ├── test_products.py
+│   ├── test_inventory.py
+│   ├── test_orders.py
+│   ├── test_audit_logs.py
+│   └── test_observability.py
+└── conftest.py
 
 A separação representa o nível de isolamento do teste.
 

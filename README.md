@@ -242,7 +242,7 @@ Resposta:
 }
 ```
 
-## API Endpoints (38 total)
+## API Endpoints (39 total)
 
 | Metodo | Endpoint | Descricao |
 |---|---|---|
@@ -284,6 +284,7 @@ Resposta:
 | `POST` | `/api/v1/orders/{id}/confirm` | Confirma pedido |
 | `POST` | `/api/v1/orders/{id}/cancel` | Cancela pedido |
 | `POST` | `/api/v1/orders/{id}/complete` | Completa pedido |
+| `GET` | `/api/v1/audit-logs` | Lista logs de auditoria |
 
 ## Seed de desenvolvimento
 
@@ -320,7 +321,7 @@ APP_TIMEZONE=America/Sao_Paulo
 uv run pytest tests/ -v
 ```
 
-Resultado atual: **226 passed**
+Resultado atual: **269 passed**
 
 | Tipo | Descricao |
 |---|---|
@@ -338,6 +339,27 @@ uv run ruff format --check .
 uv run pytest tests/ -v
 uv run alembic check
 ```
+
+## CI/CD (GitHub Actions)
+
+O projeto possui integração contínua via GitHub Actions.
+
+Workflow: `.github/workflows/ci.yml`
+
+Executa em push e pull request para `master`:
+
+| Etapa | Comando |
+|---|---|
+| Ruff check | `uv run ruff check .` |
+| Ruff format | `uv run ruff format --check .` |
+| Alembic check | `uv run alembic check` |
+| Migrations | `uv run alembic upgrade head` |
+| Testes | `uv run pytest tests/ -q` |
+| Docker build | `docker build -t saas-erp-backend ./backend` |
+
+PostgreSQL 17 via GitHub Actions services.
+
+CD (deploy automático) ainda não implementado.
 
 ## Alembic
 
@@ -365,16 +387,21 @@ saas-erp-platform/
 |   +-- app/
 |   |   +-- api/
 |   |   |   +-- v1/
-|   |   |       +-- auth.py
-|   |   |       +-- customers.py
-|   |   |       +-- categories.py
-|   |   |       +-- products.py
-|   |   |       +-- inventory.py
-|   |   |       +-- orders.py
+|   |   |   |   +-- auth.py
+|   |   |   |   +-- customers.py
+|   |   |   |   +-- categories.py
+|   |   |   |   +-- products.py
+|   |   |   |   +-- inventory.py
+|   |   |   |   +-- orders.py
+|   |   |   |   +-- audit_logs.py
+|   |   |   +-- middleware.py
+|   |   |   +-- dependencies.py
 |   |   +-- core/
 |   |   |   +-- config.py
 |   |   |   +-- security.py
 |   |   |   +-- exceptions.py
+|   |   |   +-- logging.py
+|   |   |   +-- request_context.py
 |   |   +-- db/
 |   |   |   +-- models/
 |   |   |   +-- mixins.py
@@ -387,6 +414,7 @@ saas-erp-platform/
 |   |   |   +-- product.py
 |   |   |   +-- inventory.py
 |   |   |   +-- order.py
+|   |   |   +-- audit_log.py
 |   |   +-- repositories/
 |   |   |   +-- user.py
 |   |   |   +-- tenant.py
@@ -394,36 +422,50 @@ saas-erp-platform/
 |   |   |   +-- category.py
 |   |   |   +-- product.py
 |   |   |   +-- inventory.py
+|   |   |   +-- inventory_movement.py
+|   |   |   +-- inventory_reservation.py
 |   |   |   +-- order.py
 |   |   |   +-- order_item.py
+|   |   |   +-- role.py
+|   |   |   +-- permission.py
+|   |   |   +-- audit_log.py
 |   |   +-- services/
 |   |   |   +-- auth.py
+|   |   |   +-- authorization.py
 |   |   |   +-- customer.py
 |   |   |   +-- category.py
 |   |   |   +-- product.py
 |   |   |   +-- inventory.py
 |   |   |   +-- order.py
-|   |   +-- api/
-|   |   |   +-- dependencies.py
+|   |   |   +-- audit_log.py
 |   |   +-- main.py
 |   +-- tests/
 |   |   +-- api/
 |   |   |   +-- test_auth.py
 |   |   |   +-- test_health.py
 |   |   |   +-- test_timezone.py
+|   |   |   +-- test_rbac.py
 |   |   |   +-- test_customers.py
 |   |   |   +-- test_categories.py
 |   |   |   +-- test_products.py
 |   |   |   +-- test_inventory.py
 |   |   |   +-- test_orders.py
+|   |   |   +-- test_audit_logs.py
+|   |   |   +-- test_observability.py
 |   |   +-- unit/
-|   |       +-- test_security.py
+|   |   |   +-- test_security.py
+|   |   +-- conftest.py
 |   +-- alembic/
 |   |   +-- versions/
 |   +-- scripts/
 |   |   +-- seed_dev.py
+|   +-- Dockerfile
+|   +-- .dockerignore
 |   +-- pyproject.toml
-|   +-- conftest.py
+|   +-- uv.lock
++-- .github/
+|   +-- workflows/
+|       +-- ci.yml
 +-- skills/
 +-- docker-compose.yml
 +-- .env
@@ -452,15 +494,17 @@ saas-erp-platform/
 - [x] Products CRUD (5 endpoints)
 - [x] Inventory (9 endpoints: movements, reservations, confirm, release, cancel)
 - [x] Orders (10 endpoints: CRUD, items, confirm, cancel, complete)
-- [x] Testes automatizados (226 tests)
+- [x] Audit Logs (1 endpoint: list)
+- [x] Logging estruturado (JSON/text, request_id, tenant_id, user_id)
+- [x] Observabilidade (HTTP middleware, request context)
+- [x] CI/CD (GitHub Actions)
+- [x] Testes automatizados (269 tests)
 - [x] Timezone (APP_TIMEZONE=America/Sao_Paulo)
-- [x] 38 API endpoints
+- [x] 39 API endpoints
 
 ## Proximos passos
 
-- [ ] Audit / Observability
 - [ ] Frontend React
-- [ ] CI/CD (GitHub Actions)
 - [ ] Deployment
 - [ ] Integration Hub
 
