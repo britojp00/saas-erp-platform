@@ -355,7 +355,8 @@ Seed de desenvolvimento;
 39 API endpoints;
 Logging estruturado (JSON/text, request_id, tenant_id, user_id);
 Observabilidade (HTTP middleware, request context);
-CI/CD (GitHub Actions);
+CI (GitHub Actions: lint, format, alembic, pytest, Docker build);
+CD (GitHub Actions + Coolify Deploy Webhook: push para master);
 Ruff check e format;
 APP_TIMEZONE=America/Sao_Paulo;
 Timestamps timezone-aware com offset local.

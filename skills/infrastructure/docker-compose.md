@@ -17,12 +17,27 @@ O arquivo principal será:
 
 ```text
 docker-compose.yml
+```
 
 Localização:
 
+```text
 saas-erp-platform/docker-compose.yml
+```
 
 O arquivo deve permanecer na raiz do projeto.
+
+## Arquivo de produção
+
+O arquivo de produção é:
+
+```text
+docker-compose.prod.yml
+```
+
+Executa backend + postgres + redis para deployment.
+
+Detalhes em: `docs/architecture/deployment.md`
 
 2. Serviços planejados
 

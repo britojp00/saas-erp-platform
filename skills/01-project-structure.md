@@ -27,7 +27,9 @@ saas-erp-platform/
 ├── .github/
 │
 ├── docker-compose.yml
+├── docker-compose.prod.yml
 ├── .env.example
+├── .env.prod.example
 ├── .gitignore
 └── README.md
 2. Backend
@@ -485,11 +487,16 @@ Estrutura:
 
 docs/
 ├── architecture/
+│   └── ci-cd.md
 ├── api/
 └── database/
 architecture/
 
 Documentação de arquitetura e decisões arquiteturais.
+
+ci-cd.md
+
+Documentação de CI/CD, GitHub Actions e Coolify.
 
 api/
 
@@ -557,6 +564,10 @@ Alembic check;
 Migrations;
 Testes;
 Docker build.
+
+Em push para master, após CI passar:
+
+Deploy via Coolify Deploy Webhook (job separado).
 17. Docker
 
 Arquivos relacionados à execução do ambiente em containers:
@@ -564,9 +575,15 @@ Arquivos relacionados à execução do ambiente em containers:
 backend/Dockerfile
 backend/.dockerignore
 docker-compose.yml
+docker-compose.prod.yml
 
 O Dockerfile do backend utiliza python:3.13-slim com uv
 para gerenciamento de dependências.
+
+docker-compose.yml é o arquivo de desenvolvimento local.
+
+docker-compose.prod.yml é o arquivo de produção
+(backend + postgres + redis).
 
 O arquivo principal previsto na raiz é:
 

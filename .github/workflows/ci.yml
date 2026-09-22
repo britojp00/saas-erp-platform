@@ -74,3 +74,23 @@ jobs:
 
       - name: Docker build
         run: docker build -t saas-erp-backend ./backend
+
+  deploy:
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Deploy to Coolify
+        run: |
+          echo "Triggering Coolify deploy..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            "${{ secrets.COOLIFY_WEBHOOK }}")
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "Deploy triggered successfully (HTTP $HTTP_STATUS)"
+          else
+            echo "Deploy failed with HTTP $HTTP_STATUS"
+            exit 1
+          fi
