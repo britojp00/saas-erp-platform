@@ -482,17 +482,20 @@ Pull Requests NÃO publicam imagem no ACR e NÃO fazem deploy.
 - Os jobs de build/push e deploy possuem `permissions` mínimas
   (`contents: read`, `id-token: write`)
 
-## Secrets antigos do Coolify
+## Secrets antigos do Coolify (histórico da migração)
 
-Os secrets `COOLIFY_TOKEN` e `COOLIFY_WEBHOOK` não são mais
-utilizados por nenhum arquivo do repositório.
+Esta seção é apenas histórico da migração do Coolify para
+Azure Container Registry + Azure VM.
 
-Eles ainda NÃO devem ser apagados manualmente nesta etapa.
-Somente o uso deles foi removido do código e da documentação.
-A remoção pode ser feita depois, em:
+Os secrets `COOLIFY_TOKEN` e `COOLIFY_WEBHOOK` foram
+removidos do GitHub e não existem mais no repositório.
+
+A lista atual de secrets é somente:
 
 ```text
-Settings > Secrets and variables > Actions
+AZURE_CLIENT_ID
+AZURE_SUBSCRIPTION_ID
+AZURE_TENANT_ID
 ```
 
 # 10. Imagem Docker
@@ -677,8 +680,7 @@ Antes de ativar o deploy:
 - [ ] `docker-compose.prod.yml` presente na VM
 - [ ] PostgreSQL e Redis rodando na VM
 - [ ] Primeiro push para master testado
-- [ ] Secrets antigos do Coolify removidos (etapa posterior,
-      somente após confirmar que não são mais usados)
+- [x] Secrets antigos do Coolify removidos
 
 # 16. Referências
 
