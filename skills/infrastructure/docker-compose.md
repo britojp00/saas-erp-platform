@@ -709,21 +709,36 @@ O processo deve ser reproduzível e documentado.
 
 40. Migrations e inicialização
 
-A execução das migrations pode posteriormente
-ser realizada por:
+No deploy de produção, as migrations são executadas
+pelo GitHub Actions na Azure VM, com a NOVA imagem,
+antes de recriar o backend:
 
-comando manual
+docker compose -f docker-compose.prod.yml --env-file .env.prod \
+  run --rm --no-deps backend alembic upgrade head
 
-ou:
+Ordem do deploy:
 
-serviço/job específico
+pull da nova imagem
+    |
+    v
+alembic upgrade head (--no-deps)
+    |
+    v
+recria somente o backend (up -d --no-deps backend)
+    |
+    v
+health check (GET /health)
 
-A estratégia definitiva será definida
-quando a infraestrutura do backend estiver pronta.
+Se a migration falhar, o deploy falha e o backend
+não é recriado.
 
-Não executar migrations automaticamente
-em todo início do backend sem avaliar
-os riscos dessa abordagem.
+PostgreSQL e Redis nunca são recriados durante o deploy
+(utiliza-se --no-deps em todas as etapas).
+
+Para execução manual, consultar:
+
+docs/architecture/deployment.md
+docs/architecture/ci-cd.md
 
 41. Desenvolvimento incremental
 

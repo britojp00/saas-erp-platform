@@ -496,7 +496,7 @@ Documentação de arquitetura e decisões arquiteturais.
 
 ci-cd.md
 
-Documentação de CI/CD, GitHub Actions e Coolify.
+Documentação de CI/CD, GitHub Actions, Azure Container Registry e Azure VM.
 
 api/
 
@@ -560,14 +560,18 @@ Executa em push e pull request para master:
 
 Ruff check;
 Ruff format;
-Alembic check;
 Migrations;
+Alembic check;
 Testes;
 Docker build.
 
 Em push para master, após CI passar:
 
-Deploy via Coolify Deploy Webhook (job separado).
+Build da imagem e push para o Azure Container Registry
+(job build_and_push);
+
+Deploy na Azure VM via Run Command
+(job deploy).
 17. Docker
 
 Arquivos relacionados à execução do ambiente em containers:

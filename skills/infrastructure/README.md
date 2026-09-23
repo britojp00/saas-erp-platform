@@ -661,7 +661,8 @@ Validar
 Documentar quando necessário
 38. CI/CD (GitHub Actions)
 
-O projeto utiliza GitHub Actions para integração contínua.
+O projeto utiliza GitHub Actions para integração contínua
+e deployment contínuo.
 
 Workflow principal:
 
@@ -674,9 +675,27 @@ O CI é executado em:
 push para master
 pull request para master
 
+Build, push da imagem e deploy executam somente em:
+
+push para master
+
+Pull Requests não publicam imagem nem fazem deploy.
+
+Condição:
+
+if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
 40. Jobs
 
-O workflow possui um único job ci que executa:
+O workflow possui três jobs:
+
+ci
+↓
+build_and_push
+↓
+deploy
+
+Job ci (push e pull request):
 
 1. Checkout do código
 2. Configuração do Python 3.13
@@ -684,10 +703,26 @@ O workflow possui um único job ci que executa:
 4. Instalação de dependências (uv sync --frozen)
 5. Ruff check
 6. Ruff format check
-7. Alembic check
-8. Alembic upgrade head
+7. Alembic upgrade head
+8. Alembic check
 9. pytest
 10. Docker build
+
+Job build_and_push (somente push para master, needs: ci):
+
+1. Checkout do código
+2. Azure Login via OIDC (azure/login@v2)
+3. az acr login --name saaserpplatforma
+4. docker build com tag igual ao Git SHA
+5. docker push para o Azure Container Registry
+
+Job deploy (somente push para master, needs: build_and_push):
+
+1. Azure Login via OIDC (azure/login@v2)
+2. az vm run-command invoke na VM vm-saas-erp
+3. A VM executa: git update, az login --identity,
+   az acr login, pull da imagem, migration,
+   recriação somente do backend e health check
 
 41. PostgreSQL no CI
 
@@ -728,7 +763,15 @@ O backend possui Dockerfile propio:
 backend/Dockerfile
 
 O CI executa docker build para validar que a aplicação
-é empacotável. A imagem não é enviada para registry.
+é empacotável.
+
+O job build_and_push envia a imagem para o Azure
+Container Registry:
+
+saaserpplatforma-e6gtb8bqbgesdxgr.azurecr.io/saas-erp-backend:<git-sha>
+
+A tag é o Git SHA do commit (imutável).
+O latest não é utilizado.
 
 45. Cache
 
@@ -736,11 +779,45 @@ O CI utiliza cache do uv via astral-sh/setup-uv.
 
 46. CD
 
-O deploy automático ainda não foi implementado.
+O deploy automático é executado somente em push para master,
+após os jobs ci e build_and_push passarem.
 
-O proximo estara podera incluir:
+Fluxo:
 
-GitHub -> CI -> Docker image -> Registry -> Deploy -> Health check
+GitHub -> CI -> Docker build -> Azure Container Registry
+-> Azure VM Run Command -> docker pull -> migration
+-> backend restart -> health check
+
+Autenticação:
+
+- OIDC no GitHub Actions via azure/login@v2
+- Secrets: AZURE_CLIENT_ID, AZURE_TENANT_ID,
+  AZURE_SUBSCRIPTION_ID
+- Permissões da identidade do GitHub:
+  Container Registry Repository Writer no ACR;
+  Container Registry Configuration Reader and Data Access
+  Configuration Reader no ACR;
+  Virtual Machine Contributor somente na VM vm-saas-erp
+- Managed Identity da VM com Container Registry
+  Repository Reader
+
+Regras do deploy:
+
+- a VM executa o script como azureuser
+  (sudo -u azureuser -H bash -lc)
+- BACKEND_IMAGE é exportado somente durante o deployment;
+  o .env.prod não é alterado
+- migrations são executadas antes de recriar o backend
+- somente o backend é recriado (--no-deps);
+  PostgreSQL e Redis não são tocados
+- health check: até 30 tentativas, 2s de intervalo,
+  falha no job se exceder o limite
+- sem rollback automático
+
+Detalhes em:
+
+docs/architecture/ci-cd.md
+docs/architecture/deployment.md
 
 47. Princípio final
 

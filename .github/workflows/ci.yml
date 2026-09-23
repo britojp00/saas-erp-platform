@@ -75,22 +75,120 @@ jobs:
       - name: Docker build
         run: docker build -t saas-erp-backend ./backend
 
-  deploy:
+  build_and_push:
     needs: ci
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-24.04
 
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
-      - name: Deploy to Coolify
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure Container Registry
+        run: az acr login --name saaserpplatforma
+
+      - name: Docker build
         run: |
-          echo "Triggering Coolify deploy..."
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X POST \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            "${{ secrets.COOLIFY_WEBHOOK }}")
-          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
-            echo "Deploy triggered successfully (HTTP $HTTP_STATUS)"
-          else
-            echo "Deploy failed with HTTP $HTTP_STATUS"
+          docker build \
+            -t saaserpplatforma-e6gtb8bqbgesdxgr.azurecr.io/saas-erp-backend:${{ github.sha }} \
+            ./backend
+
+      - name: Docker push
+        run: |
+          docker push \
+            saaserpplatforma-e6gtb8bqbgesdxgr.azurecr.io/saas-erp-backend:${{ github.sha }}
+
+  deploy:
+    needs: build_and_push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy via Azure VM Run Command
+        run: |
+          set -euo pipefail
+
+          SCRIPT=$(cat <<'REMOTE'
+          set -euo pipefail
+
+          sudo -u azureuser -H bash -lc '
+          set -euo pipefail
+
+          cd /home/azureuser/saas-erp-platform
+
+          git fetch origin master
+          git reset --hard origin/master
+
+          az login --identity --output none
+          az acr login --name saaserpplatforma
+
+          export BACKEND_IMAGE=saaserpplatforma-e6gtb8bqbgesdxgr.azurecr.io/saas-erp-backend:${{ github.sha }}
+
+          docker compose -f docker-compose.prod.yml --env-file .env.prod pull backend
+
+          docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm --no-deps backend alembic upgrade head
+
+          docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --no-deps backend
+
+          attempt=1
+          while [ "$attempt" -le 30 ]; do
+            if curl --fail --silent --show-error http://127.0.0.1:8000/health; then
+              echo ""
+              echo "DEPLOY_SUCCESS"
+              exit 0
+            fi
+            echo ""
+            echo "Health check attempt $attempt/30 failed"
+            sleep 2
+            attempt=$((attempt + 1))
+          done
+
+          echo "DEPLOY_FAILED: health check exceeded 30 attempts"
+          exit 1
+          '
+          REMOTE
+          )
+
+          EXIT_CODE=0
+          OUTPUT=$(az vm run-command invoke \
+            --resource-group rg-saas-erp-platform \
+            --name vm-saas-erp \
+            --command-id RunShellScript \
+            --scripts "$SCRIPT" \
+            --output json) || EXIT_CODE=$?
+
+          echo "$OUTPUT"
+
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "az vm run-command invoke failed with exit code $EXIT_CODE"
+            exit "$EXIT_CODE"
+          fi
+
+          if ! printf '%s' "$OUTPUT" | grep -q "DEPLOY_SUCCESS"; then
+            echo "Deployment failed: DEPLOY_SUCCESS marker not found in remote script output."
             exit 1
           fi
+
+          echo "Deployment completed successfully."

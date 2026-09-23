@@ -63,6 +63,22 @@ O `docker-compose.prod.yml` NÃO deve ser utilizado em desenvolvimento.
 PostgreSQL e Redis somente são acessíveis internamente
 pela rede do Docker Compose.
 
+## Componentes Azure
+
+| Componente | Valor |
+|---|---|
+| Resource Group | `rg-saas-erp-platform` |
+| Azure VM | `vm-saas-erp` (Ubuntu 24.04, x86_64) |
+| Azure Container Registry | `saaserpplatforma` |
+| ACR Login Server | `saaserpplatforma-e6gtb8bqbgesdxgr.azurecr.io` |
+| Usuário de deploy na VM | `azureuser` |
+| Autenticação da VM no ACR | Managed Identity (`az login --identity`) |
+
+O deployment é executado remotamente pelo GitHub Actions
+utilizando Azure VM Run Command.
+
+Detalhes do fluxo: `docs/architecture/ci-cd.md`
+
 # 3. Variáveis de ambiente
 
 ## Arquivo de referência
@@ -129,11 +145,24 @@ Build:
 docker build -t saas-erp-backend:local ./backend
 ```
 
-## Azure Container Registry (futuro)
+## Azure Container Registry (produção)
 
 ```bash
-BACKEND_IMAGE=<registry>.azurecr.io/saas-erp-backend:<tag>
+BACKEND_IMAGE=saaserpplatforma-e6gtb8bqbgesdxgr.azurecr.io/saas-erp-backend:<git-sha>
 ```
+
+A tag é o SHA do commit (`${{ github.sha }}`), imutável.
+O `latest` não é utilizado.
+
+Durante o deployment, a variável é exportada no processo:
+
+```bash
+export BACKEND_IMAGE=...
+```
+
+A variável de ambiente do shell tem precedência sobre o
+`.env.prod`, então ela sobrescreve o valor do arquivo
+somente durante aquele deployment, sem alterar o `.env.prod`.
 
 A estrutura do compose permanece a mesma.
 
@@ -167,29 +196,58 @@ O backend possui `GET /health` disponível para uso externo.
 
 Migrations NÃO são executadas automaticamente pelo compose.
 
-Executar manualmente após cada deploy:
+## Deploy automatizado (GitHub Actions + Azure VM Run Command)
+
+Fluxo executado na VM durante o deploy:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec -T backend alembic upgrade head
+# 1. Atualizar repositório
+git fetch origin master
+git reset --hard origin/master
+
+# 2. Autenticar no ACR via Managed Identity
+az login --identity
+az acr login --name saaserpplatforma
+
+# 3. Definir a imagem apenas para este processo
+export BACKEND_IMAGE=saaserpplatforma-e6gtb8bqbgesdxgr.azurecr.io/saas-erp-backend:<git-sha>
+
+# 4. Baixar a nova imagem
+docker compose -f docker-compose.prod.yml --env-file .env.prod pull backend
+
+# 5. Executar migration com a nova imagem, sem recriar o backend
+docker compose -f docker-compose.prod.yml --env-file .env.prod \
+  run --rm --no-deps backend alembic upgrade head
+
+# 6. Recriar somente o backend
+docker compose -f docker-compose.prod.yml --env-file .env.prod \
+  up -d --no-deps backend
+
+# 7. Health check (30 tentativas, 2s de intervalo)
+curl --fail --silent --show-error http://127.0.0.1:8000/health
 ```
 
-Fluxo de deploy:
+Se a migration falhar, o workflow falha e o backend não é recriado.
+
+PostgreSQL e Redis nunca são recriados (`--no-deps`).
+
+Detalhes: `docs/architecture/ci-cd.md`
+
+## Execução manual (fallback)
 
 ```bash
-# 1. Parar containers antigos
-docker compose -f docker-compose.prod.yml down
+# 1. Atualizar código
+git pull origin master
 
-# 2. Atualizar imagem (se necessário)
-docker pull <nova-imagem>
-# ou: docker build -t saas-erp-backend:local ./backend
+# 2. Autenticar no ACR
+az login --identity
+az acr login --name saaserpplatforma
 
-# 3. Iniciar containers
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+# 3. Executar migrations com a imagem atual
+docker compose -f docker-compose.prod.yml --env-file .env.prod \
+  run --rm --no-deps backend alembic upgrade head
 
-# 4. Executar migrations
-docker compose -f docker-compose.prod.yml exec -T backend alembic upgrade head
-
-# 5. Verificar status
+# 4. Verificar status
 docker compose -f docker-compose.prod.yml ps
 docker compose -f docker-compose.prod.yml logs backend
 ```
@@ -318,16 +376,19 @@ Verificar:
 # 13. Checklist de deploy
 
 - [ ] `.env.prod` criado na VM com valores reais
-- [ ] Imagem do backend construída ou baixada
-- [ ] `docker compose -f docker-compose.prod.yml --env-file .env.prod up -d`
-- [ ] Containers estão healthy
+- [ ] Imagem publicada no ACR com tag igual ao Git SHA
+- [ ] Deploy executado via Azure VM Run Command
 - [ ] Migrations executadas: `alembic upgrade head`
+- [ ] Somente o backend foi recriado (`--no-deps`)
+- [ ] PostgreSQL e Redis não foram recriados
+- [ ] Containers estão healthy
 - [ ] `GET /health` retorna 200
 - [ ] Logs não contêm erros
 - [ ] PostgreSQL e Redis não estão expostos publicamente
 
 # 14. Referências
 
+- CI/CD: `docs/architecture/ci-cd.md`
 - Compose local: `docker-compose.yml`
 - Compose produção: `docker-compose.prod.yml`
 - Env exemplo produção: `.env.prod.example`

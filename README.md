@@ -359,7 +359,22 @@ Executa em push e pull request para `master`:
 
 PostgreSQL 17 via GitHub Actions services.
 
-CD (deploy automático) ainda não implementado.
+Em push para `master`, após o CI passar:
+
+| Job | O que faz |
+|---|---|
+| `build_and_push` | Azure Login (OIDC), `az acr login`, Docker build e push para o ACR |
+| `deploy` | `az vm run-command invoke` na VM `vm-saas-erp`: pull da imagem, migration, recria somente o backend, health check |
+
+Imagem publicada:
+
+```text
+saaserpplatforma-e6gtb8bqbgesdxgr.azurecr.io/saas-erp-backend:<git-sha>
+```
+
+Pull Requests não publicam imagem nem fazem deploy.
+
+Detalhes: `docs/architecture/ci-cd.md`
 
 ## Alembic
 

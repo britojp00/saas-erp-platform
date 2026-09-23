@@ -356,7 +356,7 @@ Seed de desenvolvimento;
 Logging estruturado (JSON/text, request_id, tenant_id, user_id);
 Observabilidade (HTTP middleware, request context);
 CI (GitHub Actions: lint, format, alembic, pytest, Docker build);
-CD (GitHub Actions + Coolify Deploy Webhook: push para master);
+CD (GitHub Actions + Azure Container Registry + Azure VM Run Command: push para master);
 Ruff check e format;
 APP_TIMEZONE=America/Sao_Paulo;
 Timestamps timezone-aware com offset local.
