@@ -1,44 +1,28 @@
-import { useEffect, useState } from 'react'
-import { api } from './services/api'
-
-interface HealthResponse {
-  status: string
-  service: string
-}
-
-type ApiStatus = 'checking' | 'online' | 'offline'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import AppLayout from './layouts/AppLayout'
+import CustomersPage from './pages/CustomersPage'
+import DashboardPage from './pages/DashboardPage'
+import InventoryPage from './pages/InventoryPage'
+import LoginPage from './pages/LoginPage'
+import OrdersPage from './pages/OrdersPage'
+import ProductsPage from './pages/ProductsPage'
+import ProtectedRoute from './routes/ProtectedRoute'
 
 export default function App() {
-  const [apiStatus, setApiStatus] = useState<ApiStatus>('checking')
-
-  useEffect(() => {
-    let active = true
-
-    api
-      .get<HealthResponse>('/health')
-      .then(() => {
-        if (active) setApiStatus('online')
-      })
-      .catch(() => {
-        if (active) setApiStatus('offline')
-      })
-
-    return () => {
-      active = false
-    }
-  }, [])
-
   return (
-    <main className="app">
-      <h1>SaaS ERP Platform</h1>
-      <p>Frontend inicial — React + TypeScript + Vite.</p>
-      <p className="muted">Fase 2.2: API client e ambiente.</p>
-      <p>
-        API:{' '}
-        {apiStatus === 'checking' && 'verificando...'}
-        {apiStatus === 'online' && 'online'}
-        {apiStatus === 'offline' && 'indisponível'}
-      </p>
-    </main>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/customers" element={<CustomersPage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
+        </Route>
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }

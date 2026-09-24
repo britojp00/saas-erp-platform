@@ -9,6 +9,17 @@ if (!baseUrl) {
 const API_BASE_URL = baseUrl.replace(/\/+$/, '')
 const DEFAULT_TIMEOUT_MS = 10_000
 
+let authToken: string | null = null
+let unauthorizedHandler: (() => void) | null = null
+
+export function setAuthToken(token: string | null): void {
+  authToken = token
+}
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler
+}
+
 export class ApiError extends Error {
   readonly status: number
   readonly detail: string | null
@@ -75,6 +86,7 @@ async function request<T>(
 ): Promise<T> {
   const headers: Record<string, string> = {
     Accept: 'application/json',
+    ...(authToken !== null ? { Authorization: `Bearer ${authToken}` } : {}),
     ...(options.body !== undefined
       ? { 'Content-Type': 'application/json' }
       : {}),
@@ -104,7 +116,11 @@ async function request<T>(
   }
 
   if (!response.ok) {
-    throw await readError(response)
+    const apiError = await readError(response)
+    if (apiError.status === 401 && authToken !== null) {
+      unauthorizedHandler?.()
+    }
+    throw apiError
   }
 
   if (response.status === 204) {
