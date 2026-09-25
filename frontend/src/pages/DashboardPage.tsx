@@ -1,50 +1,38 @@
+import RecentActivity from '../components/dashboard/RecentActivity'
+import RecentOrders from '../components/dashboard/RecentOrders'
+import SummaryPanel from '../components/dashboard/SummaryPanel'
 import { useAuth } from '../contexts/AuthContext'
+import { useDashboardData } from '../hooks/useDashboardData'
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const { summary, recentOrders, recentActivity, retry } = useDashboardData()
 
-  if (user === null) {
-    return null
-  }
+  const contextLabel =
+    user === null
+      ? 'Visão geral da operação'
+      : `Tenant ${user.tenant_id}${
+          user.roles.length > 0 ? ` · ${user.roles.join(', ')}` : ''
+        }`
 
   return (
-    <section className="dashboard">
+    <section className="dashboard-page">
       <header className="page-header">
         <div>
           <h1>Dashboard</h1>
-          <p className="muted">Visão geral — Fase 2.4.</p>
+          <p className="muted">{contextLabel}</p>
         </div>
       </header>
 
-      <section>
-        <h2>Usuário</h2>
-        <dl className="detail-list">
-          <dt>Nome</dt>
-          <dd>{user.full_name}</dd>
-          <dt>E-mail</dt>
-          <dd>{user.email}</dd>
-          <dt>Tenant</dt>
-          <dd>{user.tenant_id}</dd>
-        </dl>
-      </section>
+      <SummaryPanel state={summary} onRetry={() => retry('summary')} />
 
-      <section>
-        <h2>Roles</h2>
-        <ul className="tag-list">
-          {user.roles.map((role) => (
-            <li key={role}>{role}</li>
-          ))}
-        </ul>
-      </section>
-
-      <section>
-        <h2>Permissions</h2>
-        <ul className="tag-list">
-          {user.permissions.map((permission) => (
-            <li key={permission}>{permission}</li>
-          ))}
-        </ul>
-      </section>
+      <div className="panel-grid">
+        <RecentOrders state={recentOrders} onRetry={() => retry('orders')} />
+        <RecentActivity
+          state={recentActivity}
+          onRetry={() => retry('activity')}
+        />
+      </div>
     </section>
   )
 }
