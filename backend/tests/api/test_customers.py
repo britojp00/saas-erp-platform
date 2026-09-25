@@ -380,6 +380,62 @@ async def test_list_customers_sort(
     assert data["items"][1]["name"] == "Zebra"
 
 
+@pytest.mark.asyncio
+async def test_list_customers_sort_by_id_desc(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    test_tenant: Tenant,
+    admin_headers: dict[str, str],
+):
+    first = await _create_customer_in_db(db_session, test_tenant.id, "Primeiro")
+    second = await _create_customer_in_db(db_session, test_tenant.id, "Segundo")
+    third = await _create_customer_in_db(db_session, test_tenant.id, "Terceiro")
+    # created_at invertido em relacao aos ids (id maior = created_at mais
+    # antigo): se sort=id caisse no fallback de created_at, a ordem seria
+    # a inversa da esperada.
+    first.created_at = datetime(2026, 1, 3, tzinfo=UTC)
+    second.created_at = datetime(2026, 1, 2, tzinfo=UTC)
+    third.created_at = datetime(2026, 1, 1, tzinfo=UTC)
+    await db_session.commit()
+
+    response = await client.get(
+        "/api/v1/customers",
+        headers=admin_headers,
+        params={"sort": "id", "order": "desc"},
+    )
+    assert response.status_code == 200
+    ids = [item["id"] for item in response.json()["items"]]
+    assert ids == [third.id, second.id, first.id]
+
+
+@pytest.mark.asyncio
+async def test_list_customers_sort_by_id_asc(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    test_tenant: Tenant,
+    admin_headers: dict[str, str],
+):
+    first = await _create_customer_in_db(db_session, test_tenant.id, "Primeiro")
+    second = await _create_customer_in_db(db_session, test_tenant.id, "Segundo")
+    third = await _create_customer_in_db(db_session, test_tenant.id, "Terceiro")
+    # created_at invertido em relacao aos ids (id maior = created_at mais
+    # antigo): se sort=id caisse no fallback de created_at, a ordem seria
+    # a inversa da esperada.
+    first.created_at = datetime(2026, 1, 3, tzinfo=UTC)
+    second.created_at = datetime(2026, 1, 2, tzinfo=UTC)
+    third.created_at = datetime(2026, 1, 1, tzinfo=UTC)
+    await db_session.commit()
+
+    response = await client.get(
+        "/api/v1/customers",
+        headers=admin_headers,
+        params={"sort": "id", "order": "asc"},
+    )
+    assert response.status_code == 200
+    ids = [item["id"] for item in response.json()["items"]]
+    assert ids == [first.id, second.id, third.id]
+
+
 # --- GET BY ID ---
 
 

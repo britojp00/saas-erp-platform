@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.customer import Customer
 
 SORT_FIELDS = {
+    "id": Customer.id,
     "name": Customer.name,
     "created_at": Customer.created_at,
 }
