@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type {
   Customer,
   CustomerSortField,
@@ -101,7 +102,9 @@ export default function CustomerList({
           {items.map((customer) => (
             <tr key={customer.id}>
               <td>{customer.id}</td>
-              <td>{customer.name}</td>
+              <td>
+                <Link to={`/customers/${customer.id}`}>{customer.name}</Link>
+              </td>
               <td>
                 <OptionalValue value={customer.document} />
               </td>
