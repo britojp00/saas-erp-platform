@@ -1,4 +1,5 @@
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../hooks/useTheme'
 
 interface AppHeaderProps {
   onToggleSidebar: () => void
@@ -6,6 +7,9 @@ interface AppHeaderProps {
 
 export default function AppHeader({ onToggleSidebar }: AppHeaderProps) {
   const { user, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
+  const themeLabel = theme === 'light' ? 'claro' : 'escuro'
+  const nextThemeLabel = theme === 'light' ? 'escuro' : 'claro'
 
   return (
     <header className="topbar">
@@ -27,6 +31,15 @@ export default function AppHeader({ onToggleSidebar }: AppHeaderProps) {
           </>
         )}
       </div>
+
+      <button
+        type="button"
+        className="topbar__theme"
+        onClick={toggleTheme}
+        aria-label={`Tema ${themeLabel} — alternar para tema ${nextThemeLabel}`}
+      >
+        Tema {themeLabel}
+      </button>
 
       <button type="button" className="topbar__logout" onClick={logout}>
         Sair
