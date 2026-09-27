@@ -25,6 +25,14 @@ export interface CustomerCreatePayload {
   notes: string | null
 }
 
+export interface CustomerUpdatePayload {
+  name: string
+  document: string | null
+  email: string | null
+  phone: string | null
+  notes: string | null
+}
+
 export interface CustomerFormValues {
   name: string
   document: string

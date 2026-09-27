@@ -17,7 +17,17 @@ export default function CustomerDetailPage() {
           <h1>{customer !== null ? customer.name : 'Cliente'}</h1>
           <p className="muted">Cliente #{id}</p>
         </div>
-        <Link to="/customers">← Voltar</Link>
+        <div className="page-header__actions">
+          {customer !== null && (
+            <Link
+              className="button-link"
+              to={`/customers/${customer.id}/edit`}
+            >
+              Editar
+            </Link>
+          )}
+          <Link to="/customers">← Voltar</Link>
+        </div>
       </header>
 
       {notFound ? (
