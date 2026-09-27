@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import CustomerList from '../components/customers/CustomerList'
 import CustomerSearch from '../components/customers/CustomerSearch'
 import Pagination from '../components/customers/Pagination'
@@ -25,6 +26,9 @@ export default function CustomersPage() {
           <h1>Clientes</h1>
           <p className="muted">Gestão de clientes da empresa autenticada.</p>
         </div>
+        <Link className="button-link" to="/customers/new">
+          Novo cliente
+        </Link>
       </header>
 
       <div className="customers-toolbar">

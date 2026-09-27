@@ -20,15 +20,27 @@ export function setUnauthorizedHandler(handler: (() => void) | null): void {
   unauthorizedHandler = handler
 }
 
+export interface ApiFieldError {
+  field: string
+  message: string
+}
+
 export class ApiError extends Error {
   readonly status: number
   readonly detail: string | null
+  readonly errors: ApiFieldError[]
 
-  constructor(status: number, message: string, detail: string | null = null) {
+  constructor(
+    status: number,
+    message: string,
+    detail: string | null = null,
+    errors: ApiFieldError[] = [],
+  ) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.detail = detail
+    this.errors = errors
   }
 }
 
@@ -64,11 +76,34 @@ function extractDetail(payload: unknown): string | null {
   return messages.length > 0 ? messages.join(' ') : null
 }
 
+function extractFieldErrors(payload: unknown): ApiFieldError[] {
+  if (typeof payload !== 'object' || payload === null) return []
+  const { detail } = payload as { detail?: unknown }
+  if (!Array.isArray(detail)) return []
+
+  const errors: ApiFieldError[] = []
+  for (const item of detail) {
+    if (typeof item !== 'object' || item === null) continue
+    const { loc, msg } = item as { loc?: unknown; msg?: unknown }
+    if (!Array.isArray(loc) || typeof msg !== 'string') continue
+    const bodyIndex = loc.indexOf('body')
+    if (bodyIndex === -1) continue
+    const field = loc[bodyIndex + 1]
+    if (typeof field !== 'string' || field === '') continue
+    errors.push({ field, message: msg })
+  }
+  return errors
+}
+
 async function readError(response: Response): Promise<ApiError> {
   let detail: string | null = null
+  let errors: ApiFieldError[] = []
   try {
     const payload: unknown = await response.json()
     detail = extractDetail(payload)
+    if (response.status === 422) {
+      errors = extractFieldErrors(payload)
+    }
   } catch {
     detail = null
   }
@@ -76,6 +111,7 @@ async function readError(response: Response): Promise<ApiError> {
     response.status,
     detail ?? defaultMessage(response.status),
     detail,
+    errors,
   )
 }
 

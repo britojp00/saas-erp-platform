@@ -16,3 +16,19 @@ export type CustomerListResponse = PaginatedResponse<Customer>
 export type CustomerSortField = 'id' | 'name' | 'created_at'
 
 export type SortOrder = 'asc' | 'desc'
+
+export interface CustomerCreatePayload {
+  name: string
+  document: string | null
+  email: string | null
+  phone: string | null
+  notes: string | null
+}
+
+export interface CustomerFormValues {
+  name: string
+  document: string
+  email: string
+  phone: string
+  notes: string
+}
