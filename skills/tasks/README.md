@@ -182,7 +182,7 @@ ClienteRepository
 
 pode ser referência para:
 
-ProductRepository
+ProdutoRepository
 
 quando a estrutura for equivalente.
 

@@ -591,7 +591,7 @@ Exemplos:
 
 login
 cliente creation
-product creation
+produto creation
 order creation
 inventory movement
 permission management

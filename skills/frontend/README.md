@@ -334,7 +334,7 @@ pages/
 ├── Login
 ├── Dashboard
 ├── Clientes
-├── Products
+├── Produtos
 ├── Inventory
 └── Orders
 
@@ -382,7 +382,7 @@ Exemplos:
 
 useAuth()
 useClientes()
-useProducts()
+useProdutos()
 usePagination()
 
 Evitar transformar hooks em arquivos gigantes.
@@ -433,7 +433,7 @@ Dados vindos da API possuem características diferentes do estado local da inter
 Exemplos:
 
 clientes
-products
+produtos
 orders
 inventory
 
@@ -689,7 +689,7 @@ digitou "cam"
 ↓
 aguarda
 ↓
-GET /products?search=cam
+GET /produtos?search=cam
 
 Usar quando melhorar performance e experiência.
 
@@ -702,7 +702,7 @@ Exemplo:
 /login
 /dashboard
 /clientes
-/products
+/produtos
 /inventory
 /orders
 
@@ -940,7 +940,7 @@ Exemplo conceitual:
 Login
 Dashboard
 Clientes
-Products
+Produtos
 Orders
 
 Não é necessário dividir componentes pequenos artificialmente.

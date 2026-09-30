@@ -161,7 +161,7 @@ Tenant
    |
    +---- Users
    +---- Clientes
-   +---- Products
+   +---- Produtos
    +---- Orders
    +---- Inventory
 

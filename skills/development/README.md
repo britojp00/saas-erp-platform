@@ -115,7 +115,7 @@ Exemplo:
 Cliente
 → observar padrão
 
-Product
+Produto
 → seguir padrão quando aplicável
 
 Order
@@ -306,7 +306,7 @@ Tenant
 ↓
 Cliente
 ↓
-Product
+Produto
 ↓
 Inventory
 ↓

@@ -28,7 +28,7 @@ PostgreSQL
                 ├── tenants
                 ├── users
                 ├── clientes
-                ├── products
+                ├── produtos
                 ├── orders
                 └── inventory
 
@@ -94,7 +94,7 @@ email
 created_at
 updated_at
 deleted_at
-products
+produtos
 
 id
 tenant_id
@@ -130,7 +130,7 @@ da própria plataforma.
 Exemplos que normalmente pertencem a um tenant:
 
 clientes
-products
+produtos
 orders
 inventory
 
@@ -309,16 +309,16 @@ Atualizações devem validar o tenant do registro.
 
 Exemplo:
 
-PUT /api/v1/products/{id}
+PUT /api/v1/produtos/{id}
 
 A operação deve localizar o produto dentro do contexto
 do tenant atual.
 
 Conceito:
 
-product.id
+produto.id
 +
-product.tenant_id
+produto.tenant_id
 
 Não realizar alteração somente utilizando o ID quando
 a entidade for multi-tenant.
@@ -441,7 +441,7 @@ Produtos e estoques são dados pertencentes ao tenant.
 
 Exemplo:
 
-products
+produtos
 
 id
 tenant_id
@@ -455,7 +455,7 @@ inventory
 
 id
 tenant_id
-product_id
+produto_id
 quantity
 created_at
 updated_at
@@ -497,7 +497,7 @@ quando o dado não precisa ser globalmente único.
 
 Exemplo:
 
-products
+produtos
 
 tenant_id
 sku
@@ -746,7 +746,7 @@ considerar o tenant quando necessário.
 
 Exemplo:
 
-tenant:{tenant_id}:products:{product_id}
+tenant:{tenant_id}:produtos:{produto_id}
 
 Evitar chaves genéricas que possam causar colisão
 ou exposição de dados entre tenants.

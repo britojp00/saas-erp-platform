@@ -102,7 +102,7 @@ Estrutura conceitual:
 
 schemas/
 ├── cliente.py
-├── product.py
+├── produto.py
 ├── order.py
 └── ...
 
@@ -146,7 +146,7 @@ Estrutura conceitual:
 
 services/
 ├── cliente.py
-├── product.py
+├── produto.py
 ├── inventory.py
 ├── order.py
 └── ...
@@ -180,7 +180,7 @@ Estrutura conceitual:
 
 repositories/
 ├── cliente.py
-├── product.py
+├── produto.py
 ├── inventory.py
 └── order.py
 

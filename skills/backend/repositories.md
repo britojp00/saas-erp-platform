@@ -51,7 +51,7 @@ Exemplo:
 
 repositories/
 ├── cliente.py
-├── product.py
+├── produto.py
 ├── categoria.py
 ├── inventory.py
 ├── order.py

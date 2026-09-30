@@ -147,7 +147,7 @@ Role
 Permission
 Cliente
 Categoria
-Product
+Produto
 Inventory
 InventoryMovement
 InventoryReservation
@@ -224,7 +224,7 @@ Permissoes implementadas:
 
 cliente.ler, cliente.criar, cliente.atualizar, cliente.excluir
 categoria.ler, categoria.criar, categoria.atualizar, categoria.excluir
-product.read, product.create, product.update, product.delete
+produto.ler, produto.criar, produto.atualizar, produto.excluir
 inventory.read, inventory.update
 order.read, order.create, order.update, order.cancel
 
@@ -415,7 +415,7 @@ Módulos com testes:
 auth (unit + api)
 clientes (api)
 categorias (api)
-products (api)
+produtos (api)
 inventory (api)
 orders (api)
 

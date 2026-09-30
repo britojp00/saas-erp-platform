@@ -79,7 +79,7 @@ tests/
 │   ├── test_rbac.py
 │   ├── test_clientes.py
 │   ├── test_categorias.py
-│   ├── test_products.py
+│   ├── test_produtos.py
 │   ├── test_inventory.py
 │   ├── test_orders.py
 │   ├── test_audit_logs.py
@@ -276,7 +276,7 @@ user
 role
 permissions
 clientes
-products
+produtos
 orders
 
 para todos os testes.

@@ -46,7 +46,7 @@ users
 roles
 permissions
 clientes
-products
+produtos
 categorias
 orders
 order_items
@@ -73,7 +73,7 @@ created_at
 updated_at
 deleted_at
 tenant_id
-product_id
+produto_id
 unit_price
 
 Não utilizar:
@@ -119,7 +119,7 @@ Relacionamentos devem utilizar foreign keys reais no banco.
 Exemplo:
 
 cliente_id
-product_id
+produto_id
 tenant_id
 user_id
 order_id
@@ -140,7 +140,7 @@ tenant_id
 Exemplo:
 
 clientes
-products
+produtos
 orders
 inventory
 
@@ -192,7 +192,7 @@ da entidade devem utilizar NOT NULL.
 
 Exemplo:
 
-products
+produtos
 
 id
 tenant_id
@@ -434,7 +434,7 @@ orders
 
 e:
 
-products
+produtos
     |
     +---- order_items
 
@@ -736,7 +736,7 @@ deleted_at
 
 Exemplo:
 
-products
+produtos
 
 id
 tenant_id
@@ -781,7 +781,7 @@ updated_at
 deleted_at
 
 
-products
+produtos
 --------
 id
 tenant_id
@@ -810,7 +810,7 @@ tenants
    |
    +---- clientes
    |
-   +---- products
+   +---- produtos
    |
    +---- orders
 
