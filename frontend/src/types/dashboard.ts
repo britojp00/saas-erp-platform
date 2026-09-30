@@ -35,7 +35,7 @@ export interface OrderListItem {
 export interface InventoryItem {
   id: number
   tenant_id: number
-  product_id: number
+  produto_id: number
   quantity: number | string
   reserved_quantity: number | string
   created_at: string
@@ -63,8 +63,8 @@ export interface InventorySummary {
 
 export interface DashboardSummary {
   clientesTotal: number
-  productsTotal: number
-  activeProductsTotal: number
+  produtosTotal: number
+  produtosAtivosTotal: number
   ordersTotal: number
   ordersByStatus: Record<OrderStatus, number>
   ordersUnclassified: number

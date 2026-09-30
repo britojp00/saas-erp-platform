@@ -82,8 +82,8 @@ async function fetchInventorySummary(): Promise<InventorySummary> {
 async function fetchSummary(): Promise<DashboardSummary> {
   const [
     clientesRes,
-    productsRes,
-    activeProductsRes,
+    produtosRes,
+    activeProdutosRes,
     ordersRes,
     draftRes,
     confirmedRes,
@@ -96,9 +96,9 @@ async function fetchSummary(): Promise<DashboardSummary> {
     api.get<PaginatedResponse<unknown>>(
       '/api/v1/clientes?page=1&page_size=1',
     ),
-    api.get<PaginatedResponse<unknown>>('/api/v1/products?page=1&page_size=1'),
+    api.get<PaginatedResponse<unknown>>('/api/v1/produtos?page=1&page_size=1'),
     api.get<PaginatedResponse<unknown>>(
-      '/api/v1/products?page=1&page_size=1&is_active=true',
+      '/api/v1/produtos?page=1&page_size=1&is_active=true',
     ),
     api.get<PaginatedResponse<unknown>>('/api/v1/orders?page=1&page_size=1'),
     api.get<PaginatedResponse<unknown>>(
@@ -136,8 +136,8 @@ async function fetchSummary(): Promise<DashboardSummary> {
 
   return {
     clientesTotal: clientesRes.total,
-    productsTotal: productsRes.total,
-    activeProductsTotal: activeProductsRes.total,
+    produtosTotal: produtosRes.total,
+    produtosAtivosTotal: activeProdutosRes.total,
     ordersTotal: ordersRes.total,
     ordersByStatus,
     ordersUnclassified: Math.max(ordersRes.total - classified, 0),

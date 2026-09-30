@@ -34,8 +34,8 @@ export default function SummaryPanel({ state, onRetry }: SummaryPanelProps) {
         />
         <StatCard
           label="Produtos"
-          value={formatNumber(data.productsTotal)}
-          hint={`${formatNumber(data.activeProductsTotal)} ativos`}
+          value={formatNumber(data.produtosTotal)}
+          hint={`${formatNumber(data.produtosAtivosTotal)} ativos`}
         />
         <StatCard
           label="Pedidos"
