@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
     DuplicateProductError,
-    InvalidProductCategoryError,
+    ErroProdutoCategoriaInvalida,
     ProductInUseError,
     ProductNotFoundError,
 )
@@ -19,16 +19,16 @@ class ProductService:
         self.repo = ProductRepository(session)
         self.audit_service = AuditLogService(session)
 
-    async def _validate_category(
+    async def _validate_categoria(
         self,
         tenant_id: int,
-        category_id: int | None,
+        categoria_id: int | None,
     ) -> None:
-        if category_id is None:
+        if categoria_id is None:
             return
-        category = await self.repo.get_category_by_id(category_id, tenant_id)
-        if category is None:
-            raise InvalidProductCategoryError()
+        categoria = await self.repo.get_categoria_by_id(categoria_id, tenant_id)
+        if categoria is None:
+            raise ErroProdutoCategoriaInvalida()
 
     async def list(
         self,
@@ -39,7 +39,7 @@ class ProductService:
         search: str | None = None,
         sort: str = "created_at",
         order: str = "desc",
-        category_id: int | None = None,
+        categoria_id: int | None = None,
         is_active: bool | None = None,
     ) -> tuple[list[Product], int]:
         offset = (page - 1) * page_size
@@ -50,7 +50,7 @@ class ProductService:
             search=search,
             sort=sort,
             order=order,
-            category_id=category_id,
+            categoria_id=categoria_id,
             is_active=is_active,
         )
 
@@ -70,7 +70,7 @@ class ProductService:
         data: ProductCreate,
         user_id: int | None = None,
     ) -> Product:
-        await self._validate_category(tenant_id, data.category_id)
+        await self._validate_categoria(tenant_id, data.categoria_id)
 
         if await self.repo.exists_by_sku(tenant_id, data.sku.strip()):
             raise DuplicateProductError()
@@ -80,7 +80,7 @@ class ProductService:
             sku=data.sku.strip(),
             name=data.name.strip(),
             description=data.description,
-            category_id=data.category_id,
+            categoria_id=data.categoria_id,
             price=data.price,
             cost_price=data.cost_price,
             is_active=data.is_active,
@@ -127,11 +127,11 @@ class ProductService:
 
         update_data = data.model_dump(exclude_unset=True)
 
-        if "category_id" in update_data:
-            new_category_id = update_data["category_id"]
-            if new_category_id is not None:
-                await self._validate_category(tenant_id, new_category_id)
-            product.category_id = new_category_id
+        if "categoria_id" in update_data:
+            new_categoria_id = update_data["categoria_id"]
+            if new_categoria_id is not None:
+                await self._validate_categoria(tenant_id, new_categoria_id)
+            product.categoria_id = new_categoria_id
 
         if "sku" in update_data:
             new_sku = update_data["sku"].strip()

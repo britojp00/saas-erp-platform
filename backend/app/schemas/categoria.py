@@ -5,19 +5,19 @@ from pydantic import BaseModel, Field, field_serializer
 from app.core.config import settings
 
 
-class CategoryCreate(BaseModel):
+class CategoriaCriarPayload(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     description: str | None = Field(default=None, max_length=5000)
     parent_id: int | None = Field(default=None)
 
 
-class CategoryUpdate(BaseModel):
+class CategoriaAtualizarPayload(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     description: str | None = Field(default=None, max_length=5000)
     parent_id: int | None = Field(default=None)
 
 
-class CategoryResponse(BaseModel):
+class CategoriaResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
@@ -44,8 +44,8 @@ class CategoryResponse(BaseModel):
         return value.astimezone(settings.tz).isoformat()
 
 
-class CategoryListResponse(BaseModel):
-    items: list[CategoryResponse]
+class ListaCategoriasResposta(BaseModel):
+    items: list[CategoriaResposta]
     page: int
     page_size: int
     total: int

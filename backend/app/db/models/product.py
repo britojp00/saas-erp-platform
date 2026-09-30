@@ -41,8 +41,9 @@ class Product(
             name="uq_products_tenant_id",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "category_id"],
-            ["categories.tenant_id", "categories.id"],
+            ["tenant_id", "categoria_id"],
+            ["categorias.tenant_id", "categorias.id"],
+            name="fk_products_tenant_categoria",
             ondelete="RESTRICT",
         ),
     )
@@ -62,7 +63,7 @@ class Product(
         nullable=True,
     )
 
-    category_id: Mapped[int | None] = mapped_column(
+    categoria_id: Mapped[int | None] = mapped_column(
         BigInteger,
         nullable=True,
         index=True,

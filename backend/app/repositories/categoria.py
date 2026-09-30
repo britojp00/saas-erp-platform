@@ -3,16 +3,16 @@ from datetime import UTC, datetime
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.category import Category
+from app.db.models.categoria import Categoria
 from app.db.models.product import Product
 
 SORT_FIELDS = {
-    "name": Category.name,
-    "created_at": Category.created_at,
+    "name": Categoria.name,
+    "created_at": Categoria.created_at,
 }
 
 
-class CategoryRepository:
+class CategoriaRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -25,23 +25,23 @@ class CategoryRepository:
         search: str | None = None,
         sort: str = "created_at",
         order: str = "desc",
-    ) -> tuple[list[Category], int]:
-        base_stmt = select(Category).where(
-            Category.tenant_id == tenant_id,
-            Category.deleted_at.is_(None),
+    ) -> tuple[list[Categoria], int]:
+        base_stmt = select(Categoria).where(
+            Categoria.tenant_id == tenant_id,
+            Categoria.deleted_at.is_(None),
         )
         if search:
-            base_stmt = base_stmt.where(Category.name.ilike(f"%{search}%"))
+            base_stmt = base_stmt.where(Categoria.name.ilike(f"%{search}%"))
 
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
         total_result = await self.session.execute(count_stmt)
         total = total_result.scalar_one()
 
-        sort_column = SORT_FIELDS.get(sort, Category.created_at)
+        sort_column = SORT_FIELDS.get(sort, Categoria.created_at)
         if order == "asc":
-            base_stmt = base_stmt.order_by(sort_column.asc(), Category.id.asc())
+            base_stmt = base_stmt.order_by(sort_column.asc(), Categoria.id.asc())
         else:
-            base_stmt = base_stmt.order_by(sort_column.desc(), Category.id.desc())
+            base_stmt = base_stmt.order_by(sort_column.desc(), Categoria.id.desc())
 
         base_stmt = base_stmt.offset(offset).limit(limit)
         result = await self.session.execute(base_stmt)
@@ -51,13 +51,13 @@ class CategoryRepository:
 
     async def get_by_id(
         self,
-        category_id: int,
+        categoria_id: int,
         tenant_id: int,
-    ) -> Category | None:
-        stmt = select(Category).where(
-            Category.id == category_id,
-            Category.tenant_id == tenant_id,
-            Category.deleted_at.is_(None),
+    ) -> Categoria | None:
+        stmt = select(Categoria).where(
+            Categoria.id == categoria_id,
+            Categoria.tenant_id == tenant_id,
+            Categoria.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -68,12 +68,12 @@ class CategoryRepository:
         name: str,
         exclude_id: int | None = None,
     ) -> bool:
-        stmt = select(Category).where(
-            Category.tenant_id == tenant_id,
-            Category.name == name,
+        stmt = select(Categoria).where(
+            Categoria.tenant_id == tenant_id,
+            Categoria.name == name,
         )
         if exclude_id is not None:
-            stmt = stmt.where(Category.id != exclude_id)
+            stmt = stmt.where(Categoria.id != exclude_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none() is not None
 
@@ -82,10 +82,10 @@ class CategoryRepository:
         tenant_id: int,
         parent_id: int,
     ) -> set[int]:
-        stmt = select(Category.id).where(
-            Category.tenant_id == tenant_id,
-            Category.parent_id == parent_id,
-            Category.deleted_at.is_(None),
+        stmt = select(Categoria.id).where(
+            Categoria.tenant_id == tenant_id,
+            Categoria.parent_id == parent_id,
+            Categoria.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
         return set(result.scalars().all())
@@ -93,15 +93,15 @@ class CategoryRepository:
     async def get_ancestor_ids(
         self,
         tenant_id: int,
-        category_id: int,
+        categoria_id: int,
     ) -> set[int]:
         ancestors: set[int] = set()
-        current_parent_id = category_id
+        current_parent_id = categoria_id
         while True:
-            stmt = select(Category.parent_id).where(
-                Category.id == current_parent_id,
-                Category.tenant_id == tenant_id,
-                Category.deleted_at.is_(None),
+            stmt = select(Categoria.parent_id).where(
+                Categoria.id == current_parent_id,
+                Categoria.tenant_id == tenant_id,
+                Categoria.deleted_at.is_(None),
             )
             result = await self.session.execute(stmt)
             parent_id = result.scalar_one_or_none()
@@ -116,21 +116,21 @@ class CategoryRepository:
     async def has_children(
         self,
         tenant_id: int,
-        category_id: int,
+        categoria_id: int,
     ) -> bool:
-        children = await self.get_children_ids(tenant_id, category_id)
+        children = await self.get_children_ids(tenant_id, categoria_id)
         return len(children) > 0
 
     async def has_products(
         self,
         tenant_id: int,
-        category_id: int,
+        categoria_id: int,
     ) -> bool:
         stmt = (
             select(Product)
             .where(
                 Product.tenant_id == tenant_id,
-                Product.category_id == category_id,
+                Product.categoria_id == categoria_id,
                 Product.deleted_at.is_(None),
             )
             .limit(1)
@@ -138,16 +138,16 @@ class CategoryRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none() is not None
 
-    async def create(self, category: Category) -> Category:
-        self.session.add(category)
+    async def create(self, categoria: Categoria) -> Categoria:
+        self.session.add(categoria)
         await self.session.flush()
-        return category
+        return categoria
 
-    async def update(self, category: Category) -> Category:
+    async def update(self, categoria: Categoria) -> Categoria:
         await self.session.flush()
-        await self.session.refresh(category)
-        return category
+        await self.session.refresh(categoria)
+        return categoria
 
-    async def soft_delete(self, category: Category) -> None:
-        category.deleted_at = datetime.now(UTC)
+    async def soft_delete(self, categoria: Categoria) -> None:
+        categoria.deleted_at = datetime.now(UTC)
         await self.session.flush()

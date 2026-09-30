@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.category import Category
+from app.db.models.categoria import Categoria
 from app.db.models.inventory import Inventory
 from app.db.models.order_item import OrderItem
 from app.db.models.product import Product
@@ -30,7 +30,7 @@ class ProductRepository:
         search: str | None = None,
         sort: str = "created_at",
         order: str = "desc",
-        category_id: int | None = None,
+        categoria_id: int | None = None,
         is_active: bool | None = None,
     ) -> tuple[list[Product], int]:
         base_stmt = select(Product).where(
@@ -41,8 +41,8 @@ class ProductRepository:
             base_stmt = base_stmt.where(
                 Product.name.ilike(f"%{search}%") | Product.sku.ilike(f"%{search}%")
             )
-        if category_id is not None:
-            base_stmt = base_stmt.where(Product.category_id == category_id)
+        if categoria_id is not None:
+            base_stmt = base_stmt.where(Product.categoria_id == categoria_id)
         if is_active is not None:
             base_stmt = base_stmt.where(Product.is_active == is_active)
 
@@ -75,15 +75,15 @@ class ProductRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_category_by_id(
+    async def get_categoria_by_id(
         self,
-        category_id: int,
+        categoria_id: int,
         tenant_id: int,
-    ) -> Category | None:
-        stmt = select(Category).where(
-            Category.id == category_id,
-            Category.tenant_id == tenant_id,
-            Category.deleted_at.is_(None),
+    ) -> Categoria | None:
+        stmt = select(Categoria).where(
+            Categoria.id == categoria_id,
+            Categoria.tenant_id == tenant_id,
+            Categoria.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()

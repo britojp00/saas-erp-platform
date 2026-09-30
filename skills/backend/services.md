@@ -74,7 +74,7 @@ services/
 ├── auth.py
 ├── cliente.py
 ├── product.py
-├── category.py
+├── categoria.py
 ├── inventory.py
 ├── order.py
 └── ...
