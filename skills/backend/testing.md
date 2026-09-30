@@ -78,7 +78,7 @@ tests/
 │   ├── test_timezone.py
 │   ├── test_rbac.py
 │   ├── test_clientes.py
-│   ├── test_categories.py
+│   ├── test_categorias.py
 │   ├── test_products.py
 │   ├── test_inventory.py
 │   ├── test_orders.py

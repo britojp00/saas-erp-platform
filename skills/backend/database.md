@@ -129,7 +129,7 @@ models/
 ├── user.py
 ├── cliente.py
 ├── product.py
-├── category.py
+├── categoria.py
 ├── inventory.py
 ├── order.py
 └── audit_log.py

@@ -72,7 +72,7 @@ Exemplo:
 
 /clientes
 /products
-/categories
+/categorias
 /inventory
 /orders
 

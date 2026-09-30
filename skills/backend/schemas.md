@@ -40,7 +40,7 @@ schemas/
 ├── user.py
 ├── cliente.py
 ├── product.py
-├── category.py
+├── categoria.py
 ├── inventory.py
 ├── order.py
 └── common.py

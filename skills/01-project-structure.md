@@ -51,7 +51,7 @@ backend/
 │   │   ├── v1/
 │   │   │   ├── auth.py
 │   │   │   ├── clientes.py
-│   │   │   ├── categories.py
+│   │   │   ├── categorias.py
 │   │   │   ├── products.py
 │   │   │   ├── inventory.py
 │   │   │   ├── orders.py
@@ -73,7 +73,7 @@ backend/
 │   ├── schemas/
 │   │   ├── auth.py
 │   │   ├── cliente.py
-│   │   ├── category.py
+│   │   ├── categoria.py
 │   │   ├── product.py
 │   │   ├── inventory.py
 │   │   ├── order.py
@@ -82,7 +82,7 @@ backend/
 │   │   ├── user.py
 │   │   ├── tenant.py
 │   │   ├── cliente.py
-│   │   ├── category.py
+│   │   ├── categoria.py
 │   │   ├── product.py
 │   │   ├── inventory.py
 │   │   ├── inventory_movement.py
@@ -96,7 +96,7 @@ backend/
 │   │   ├── auth.py
 │   │   ├── authorization.py
 │   │   ├── cliente.py
-│   │   ├── category.py
+│   │   ├── categoria.py
 │   │   ├── product.py
 │   │   ├── inventory.py
 │   │   ├── order.py
@@ -110,7 +110,7 @@ backend/
 │   │   ├── test_timezone.py
 │   │   ├── test_rbac.py
 │   │   ├── test_clientes.py
-│   │   ├── test_categories.py
+│   │   ├── test_categorias.py
 │   │   ├── test_products.py
 │   │   ├── test_inventory.py
 │   │   ├── test_orders.py
@@ -171,7 +171,7 @@ Exemplos:
 
 auth.py
 clientes.py
-categories.py
+categorias.py
 products.py
 inventory.py
 orders.py
@@ -221,7 +221,7 @@ role.py
 role_permission.py
 permission.py
 cliente.py
-category.py
+categoria.py
 product.py
 inventory.py
 inventory_movement.py
@@ -247,7 +247,7 @@ Exemplos:
 
 auth.py
 cliente.py
-category.py
+categoria.py
 product.py
 inventory.py
 order.py
@@ -278,7 +278,7 @@ Exemplos:
 user.py
 tenant.py
 cliente.py
-category.py
+categoria.py
 product.py
 inventory.py
 inventory_movement.py
@@ -312,7 +312,7 @@ Exemplos:
 auth.py
 authorization.py
 cliente.py
-category.py
+categoria.py
 product.py
 inventory.py
 order.py
@@ -377,7 +377,7 @@ backend/tests/
 │   ├── test_timezone.py
 │   ├── test_rbac.py
 │   ├── test_clientes.py
-│   ├── test_categories.py
+│   ├── test_categorias.py
 │   ├── test_products.py
 │   ├── test_inventory.py
 │   ├── test_orders.py
@@ -412,7 +412,7 @@ test_health.py
 test_timezone.py
 test_rbac.py
 test_clientes.py
-test_categories.py
+test_categorias.py
 test_products.py
 test_inventory.py
 test_orders.py

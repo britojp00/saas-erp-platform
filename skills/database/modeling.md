@@ -47,7 +47,7 @@ roles
 permissions
 clientes
 products
-categories
+categorias
 orders
 order_items
 inventory
@@ -740,7 +740,7 @@ products
 
 id
 tenant_id
-category_id
+categoria_id
 sku
 name
 description

@@ -146,7 +146,7 @@ User
 Role
 Permission
 Cliente
-Category
+Categoria
 Product
 Inventory
 InventoryMovement
@@ -223,7 +223,7 @@ Permissoes devem representar ações do sistema.
 Permissoes implementadas:
 
 cliente.ler, cliente.criar, cliente.atualizar, cliente.excluir
-category.read, category.create, category.update, category.delete
+categoria.ler, categoria.criar, categoria.atualizar, categoria.excluir
 product.read, product.create, product.update, product.delete
 inventory.read, inventory.update
 order.read, order.create, order.update, order.cancel
@@ -414,7 +414,7 @@ Módulos com testes:
 
 auth (unit + api)
 clientes (api)
-categories (api)
+categorias (api)
 products (api)
 inventory (api)
 orders (api)

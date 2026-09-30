@@ -1322,7 +1322,7 @@ LOG_JSON=true     # true=JSON, false=Text
 | inventory.not_found | WARNING | exceptions.py |
 | order.not_found | WARNING | exceptions.py |
 | order.invalid_state | WARNING | exceptions.py |
-| category.not_found | WARNING | exceptions.py |
+| categoria.nao_encontrada | WARNING | exceptions.py |
 | validation_error | WARNING | exceptions.py |
 | internal_error | ERROR | exceptions.py |
 | login.success | INFO | auth.py |

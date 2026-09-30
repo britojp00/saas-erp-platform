@@ -225,7 +225,7 @@ Role
 Permission
 Cliente
 Product
-Category
+Categoria
 Inventory
 Order
 OrderItem
@@ -545,7 +545,7 @@ VIEWER
 Permissoes implementadas:
 
 cliente.ler, cliente.criar, cliente.atualizar, cliente.excluir
-category.read, category.create, category.update, category.delete
+categoria.ler, categoria.criar, categoria.atualizar, categoria.excluir
 product.read, product.create, product.update, product.delete
 inventory.read, inventory.update
 order.read, order.create, order.update, order.cancel
