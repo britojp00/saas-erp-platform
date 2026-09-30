@@ -78,16 +78,16 @@ class ErroCategoriaPaiNaoEncontrada(DomainError):
     """Levantado quando a categoria pai especificada não existe."""
 
 
-class ProductNotFoundError(DomainError):
-    """Raised when a product is not found."""
+class ErroProdutoNaoEncontrado(DomainError):
+    """Levantado quando um produto não é encontrado."""
 
 
-class DuplicateProductError(DomainError):
-    """Raised when a product SKU already exists in the tenant."""
+class ErroProdutoDuplicado(DomainError):
+    """Levantado quando o SKU de um produto já existe no tenant."""
 
 
-class ProductInUseError(DomainError):
-    """Raised when trying to delete a product that has inventory or order references."""
+class ErroProdutoEmUso(DomainError):
+    """Levantado ao tentar excluir um produto que possui estoque ou itens de pedido vinculados."""
 
 
 class ErroProdutoCategoriaInvalida(DomainError):
@@ -131,7 +131,7 @@ class OrderMustHaveItemsError(DomainError):
 
 
 class DuplicateOrderItemError(DomainError):
-    """Raised when a product already exists in the same order."""
+    """Levantado quando um produto já existe no mesmo pedido."""
 
 
 class OrderItemNotFoundError(DomainError):
@@ -146,12 +146,12 @@ class ErroPedidoClienteNaoEncontrado(DomainError):
     """Levantado quando o cliente de um pedido não é encontrado."""
 
 
-class OrderProductNotFoundError(DomainError):
-    """Raised when a product for an order item is not found."""
+class ErroPedidoProdutoNaoEncontrado(DomainError):
+    """Levantado quando o produto de um item de pedido não é encontrado."""
 
 
-class OrderProductInactiveError(DomainError):
-    """Raised when trying to confirm an order with inactive products."""
+class ErroPedidoProdutoInativo(DomainError):
+    """Levantado ao tentar confirmar um pedido com produtos inativos."""
 
 
 def register_exception_handlers(app: FastAPI) -> None:
@@ -330,39 +330,39 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={"detail": "A categoria pai especificada não existe"},
         )
 
-    @app.exception_handler(ProductNotFoundError)
-    async def product_not_found_error_handler(
-        request: Request, exc: ProductNotFoundError
+    @app.exception_handler(ErroProdutoNaoEncontrado)
+    async def produto_nao_encontrado_error_handler(
+        request: Request, exc: ErroProdutoNaoEncontrado
     ) -> JSONResponse:
         logger.warning(
-            "product.not_found",
-            extra={"event": "product.not_found"},
+            "produto.nao_encontrado",
+            extra={"event": "produto.nao_encontrado"},
         )
         return JSONResponse(
             status_code=404,
             content={"detail": "Produto não encontrado"},
         )
 
-    @app.exception_handler(DuplicateProductError)
-    async def duplicate_product_error_handler(
-        request: Request, exc: DuplicateProductError
+    @app.exception_handler(ErroProdutoDuplicado)
+    async def produto_duplicado_error_handler(
+        request: Request, exc: ErroProdutoDuplicado
     ) -> JSONResponse:
         logger.warning(
-            "product.duplicate",
-            extra={"event": "product.duplicate"},
+            "produto.duplicado",
+            extra={"event": "produto.duplicado"},
         )
         return JSONResponse(
             status_code=409,
             content={"detail": "Já existe um produto com este SKU"},
         )
 
-    @app.exception_handler(ProductInUseError)
-    async def product_in_use_error_handler(
-        request: Request, exc: ProductInUseError
+    @app.exception_handler(ErroProdutoEmUso)
+    async def produto_em_uso_error_handler(
+        request: Request, exc: ErroProdutoEmUso
     ) -> JSONResponse:
         logger.warning(
-            "product.in_use",
-            extra={"event": "product.in_use"},
+            "produto.em_uso",
+            extra={"event": "produto.em_uso"},
         )
         return JSONResponse(
             status_code=409,
@@ -376,8 +376,8 @@ def register_exception_handlers(app: FastAPI) -> None:
         request: Request, exc: ErroProdutoCategoriaInvalida
     ) -> JSONResponse:
         logger.warning(
-            "product.categoria_invalida",
-            extra={"event": "product.categoria_invalida"},
+            "produto.categoria_invalida",
+            extra={"event": "produto.categoria_invalida"},
         )
         return JSONResponse(
             status_code=409,
@@ -557,26 +557,26 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={"detail": "Cliente do pedido não encontrado"},
         )
 
-    @app.exception_handler(OrderProductNotFoundError)
-    async def order_product_not_found_error_handler(
-        request: Request, exc: OrderProductNotFoundError
+    @app.exception_handler(ErroPedidoProdutoNaoEncontrado)
+    async def pedido_produto_nao_encontrado_error_handler(
+        request: Request, exc: ErroPedidoProdutoNaoEncontrado
     ) -> JSONResponse:
         logger.warning(
-            "order.product_not_found",
-            extra={"event": "order.product_not_found"},
+            "order.produto_nao_encontrado",
+            extra={"event": "order.produto_nao_encontrado"},
         )
         return JSONResponse(
             status_code=409,
             content={"detail": "Produto do item não encontrado"},
         )
 
-    @app.exception_handler(OrderProductInactiveError)
-    async def order_product_inactive_error_handler(
-        request: Request, exc: OrderProductInactiveError
+    @app.exception_handler(ErroPedidoProdutoInativo)
+    async def pedido_produto_inativo_error_handler(
+        request: Request, exc: ErroPedidoProdutoInativo
     ) -> JSONResponse:
         logger.warning(
-            "order.product_inactive",
-            extra={"event": "order.product_inactive"},
+            "order.produto_inativo",
+            extra={"event": "order.produto_inativo"},
         )
         return JSONResponse(
             status_code=409,

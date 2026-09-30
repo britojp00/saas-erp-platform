@@ -5,25 +5,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import (
     DuplicateOrderItemError,
     ErroPedidoClienteNaoEncontrado,
+    ErroPedidoProdutoInativo,
+    ErroPedidoProdutoNaoEncontrado,
     InvalidOrderStateError,
     OrderItemNotFoundError,
     OrderItemRemovalNotAllowedError,
     OrderMustHaveItemsError,
     OrderNotFoundError,
-    OrderProductInactiveError,
-    OrderProductNotFoundError,
 )
 from app.db.models.cliente import Cliente
 from app.db.models.inventory_reservation import InventoryReservation, ReservationStatus
 from app.db.models.order import Order
 from app.db.models.order_item import OrderItem
-from app.db.models.product import Product
+from app.db.models.produto import Produto
 from app.repositories.cliente import ClienteRepository
 from app.repositories.inventory import InventoryRepository
 from app.repositories.inventory_reservation import InventoryReservationRepository
 from app.repositories.order import OrderRepository
 from app.repositories.order_item import OrderItemRepository
-from app.repositories.product import ProductRepository
+from app.repositories.produto import ProdutoRepository
 from app.schemas.order import (
     OrderCreate,
     OrderItemCreate,
@@ -43,7 +43,7 @@ class OrderService:
         self.session = session
         self.order_repo = OrderRepository(session)
         self.item_repo = OrderItemRepository(session)
-        self.product_repo = ProductRepository(session)
+        self.produto_repo = ProdutoRepository(session)
         self.cliente_repo = ClienteRepository(session)
         self.inventory_repo = InventoryRepository(session)
         self.reservation_repo = InventoryReservationRepository(session)
@@ -102,15 +102,15 @@ class OrderService:
             raise ErroPedidoClienteNaoEncontrado()
         return cliente
 
-    async def _validate_product(
+    async def _validate_produto(
         self,
         tenant_id: int,
-        product_id: int,
-    ) -> Product:
-        product = await self.product_repo.get_by_id(product_id, tenant_id)
-        if product is None:
-            raise OrderProductNotFoundError()
-        return product
+        produto_id: int,
+    ) -> Produto:
+        produto = await self.produto_repo.get_by_id(produto_id, tenant_id)
+        if produto is None:
+            raise ErroPedidoProdutoNaoEncontrado()
+        return produto
 
     async def _recalculate_total(self, order: Order) -> None:
         items = await self.item_repo.list_by_order(order.tenant_id, order.id)
@@ -124,8 +124,8 @@ class OrderService:
     ) -> Order:
         await self._validate_cliente(tenant_id, data.cliente_id)
 
-        product_ids = [item.product_id for item in data.items]
-        if len(product_ids) != len(set(product_ids)):
+        produto_ids = [item.produto_id for item in data.items]
+        if len(produto_ids) != len(set(produto_ids)):
             raise DuplicateOrderItemError()
 
         order_number = await self.order_repo.next_order_number(tenant_id)
@@ -139,19 +139,19 @@ class OrderService:
         await self.order_repo.create(order)
 
         for item_data in data.items:
-            product = await self._validate_product(tenant_id, item_data.product_id)
+            produto = await self._validate_produto(tenant_id, item_data.produto_id)
 
             unit_price = (
                 item_data.unit_price
                 if item_data.unit_price is not None
-                else product.price
+                else produto.price
             )
             total_price = unit_price * item_data.quantity
 
             item = OrderItem(
                 tenant_id=tenant_id,
                 order_id=order.id,
-                product_id=product.id,
+                produto_id=produto.id,
                 quantity=item_data.quantity,
                 unit_price=unit_price,
                 total_price=total_price,
@@ -237,20 +237,20 @@ class OrderService:
         if order.status != "DRAFT":
             raise InvalidOrderStateError()
 
-        if await self.item_repo.exists_product_in_order(
-            tenant_id, order_id, data.product_id
+        if await self.item_repo.exists_produto_in_order(
+            tenant_id, order_id, data.produto_id
         ):
             raise DuplicateOrderItemError()
 
-        product = await self._validate_product(tenant_id, data.product_id)
+        produto = await self._validate_produto(tenant_id, data.produto_id)
 
-        unit_price = data.unit_price if data.unit_price is not None else product.price
+        unit_price = data.unit_price if data.unit_price is not None else produto.price
         total_price = unit_price * data.quantity
 
         item = OrderItem(
             tenant_id=tenant_id,
             order_id=order_id,
-            product_id=product.id,
+            produto_id=produto.id,
             quantity=data.quantity,
             unit_price=unit_price,
             total_price=total_price,
@@ -268,7 +268,7 @@ class OrderService:
             entity_id=item.id,
             new_values={
                 "order_id": order_id,
-                "product_id": product.id,
+                "produto_id": produto.id,
                 "quantity": str(data.quantity),
                 "unit_price": str(unit_price),
             },
@@ -355,7 +355,7 @@ class OrderService:
             raise OrderItemRemovalNotAllowedError()
 
         old_values = {
-            "product_id": item.product_id,
+            "produto_id": item.produto_id,
             "quantity": str(item.quantity),
             "unit_price": str(item.unit_price),
         }
@@ -392,29 +392,29 @@ class OrderService:
             raise OrderMustHaveItemsError()
 
         for item in items:
-            product = await self.product_repo.get_by_id(item.product_id, tenant_id)
+            produto = await self.produto_repo.get_by_id(item.produto_id, tenant_id)
             if (
-                product is None
-                or not product.is_active
-                or product.deleted_at is not None
+                produto is None
+                or not produto.is_active
+                or produto.deleted_at is not None
             ):
-                raise OrderProductInactiveError()
+                raise ErroPedidoProdutoInativo()
 
             inventory = await self.inventory_repo.get_for_update(
-                tenant_id, item.product_id
+                tenant_id, item.produto_id
             )
             if inventory is None:
-                raise OrderProductInactiveError()
+                raise ErroPedidoProdutoInativo()
 
             available = inventory.quantity - inventory.reserved_quantity
             if available < item.quantity:
-                raise OrderProductInactiveError()
+                raise ErroPedidoProdutoInativo()
 
             inventory.reserved_quantity = inventory.reserved_quantity + item.quantity
 
             reservation = InventoryReservation(
                 tenant_id=tenant_id,
-                product_id=item.product_id,
+                produto_id=item.produto_id,
                 quantity=item.quantity,
                 status=ReservationStatus.ACTIVE,
                 reference=f"order:{order.id}",
@@ -460,7 +460,7 @@ class OrderService:
         )
         for reservation in reservations:
             inventory = await self.inventory_repo.get_for_update(
-                tenant_id, reservation.product_id
+                tenant_id, reservation.produto_id
             )
             if inventory is not None:
                 inventory.reserved_quantity = (
@@ -508,7 +508,7 @@ class OrderService:
         )
         for reservation in reservations:
             inventory = await self.inventory_repo.get_for_update(
-                tenant_id, reservation.product_id
+                tenant_id, reservation.produto_id
             )
             if inventory is not None:
                 inventory.quantity = inventory.quantity - reservation.quantity

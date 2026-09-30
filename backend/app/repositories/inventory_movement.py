@@ -19,13 +19,13 @@ class InventoryMovementRepository:
         *,
         offset: int,
         limit: int,
-        product_id: int | None = None,
+        produto_id: int | None = None,
     ) -> tuple[list[InventoryMovement], int]:
         base_stmt = select(InventoryMovement).where(
             InventoryMovement.tenant_id == tenant_id,
         )
-        if product_id is not None:
-            base_stmt = base_stmt.where(InventoryMovement.product_id == product_id)
+        if produto_id is not None:
+            base_stmt = base_stmt.where(InventoryMovement.produto_id == produto_id)
 
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
         total_result = await self.session.execute(count_stmt)

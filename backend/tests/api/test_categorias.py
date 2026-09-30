@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import create_access_token, get_password_hash
 from app.db.models.categoria import Categoria
 from app.db.models.permission import Permission
-from app.db.models.product import Product
+from app.db.models.produto import Produto
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
 from app.db.models.tenant import Tenant
@@ -110,22 +110,22 @@ async def _create_categoria_in_db(
     return categoria
 
 
-async def _create_product_in_db(
+async def _create_produto_in_db(
     session: AsyncSession,
     tenant_id: int,
     name: str,
     categoria_id: int | None = None,
-) -> Product:
-    product = Product(
+) -> Produto:
+    produto = Produto(
         tenant_id=tenant_id,
         sku=f"SKU-{name.upper().replace(' ', '-')}",
         name=name,
         price=10.00,
         categoria_id=categoria_id,
     )
-    session.add(product)
+    session.add(produto)
     await session.flush()
-    return product
+    return produto
 
 
 @pytest.fixture
@@ -986,14 +986,14 @@ async def test_delete_categoria_with_children_blocked(
 
 
 @pytest.mark.asyncio
-async def test_delete_categoria_with_products_blocked(
+async def test_delete_categoria_with_produtos_blocked(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
-    await _create_product_in_db(
+    await _create_produto_in_db(
         db_session, test_tenant.id, "Laptop", categoria_id=categoria.id
     )
     await db_session.commit()

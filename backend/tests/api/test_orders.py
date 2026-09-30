@@ -9,7 +9,7 @@ from app.db.models.cliente import Cliente
 from app.db.models.inventory import Inventory
 from app.db.models.order import Order
 from app.db.models.permission import Permission
-from app.db.models.product import Product
+from app.db.models.produto import Produto
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
 from app.db.models.tenant import Tenant
@@ -109,53 +109,53 @@ async def _create_cliente_in_db(
     return cliente
 
 
-async def _create_product_in_db(
+async def _create_produto_in_db(
     session: AsyncClient,
     tenant_id: int,
     name: str,
     price: Decimal = Decimal("10.00"),
     is_active: bool = True,
-) -> Product:
-    product = Product(
+) -> Produto:
+    produto = Produto(
         tenant_id=tenant_id,
         sku=f"SKU-{name.upper().replace(' ', '-')}",
         name=name,
         price=price,
         is_active=is_active,
     )
-    session = product  # type: ignore[assignment]
+    session = produto  # type: ignore[assignment]
     session = None  # noqa: F841  # will be passed as parameter
-    return product
+    return produto
 
 
-async def _create_product(
+async def _create_produto(
     session: AsyncSession,
     tenant_id: int,
     name: str,
     price: Decimal = Decimal("10.00"),
     is_active: bool = True,
-) -> Product:
-    product = Product(
+) -> Produto:
+    produto = Produto(
         tenant_id=tenant_id,
         sku=f"SKU-{name.upper().replace(' ', '-')}",
         name=name,
         price=price,
         is_active=is_active,
     )
-    session.add(product)
+    session.add(produto)
     await session.flush()
-    return product
+    return produto
 
 
 async def _create_inventory(
     session: AsyncSession,
     tenant_id: int,
-    product_id: int,
+    produto_id: int,
     quantity: Decimal = Decimal("100.000"),
 ) -> Inventory:
     inventory = Inventory(
         tenant_id=tenant_id,
-        product_id=product_id,
+        produto_id=produto_id,
         quantity=quantity,
     )
     session.add(inventory)
@@ -169,29 +169,29 @@ async def cliente(db_session: AsyncSession, test_tenant: Tenant) -> Cliente:
 
 
 @pytest.fixture
-async def product(db_session: AsyncSession, test_tenant: Tenant) -> Product:
-    return await _create_product(db_session, test_tenant.id, "Produto Teste")
+async def produto(db_session: AsyncSession, test_tenant: Tenant) -> Produto:
+    return await _create_produto(db_session, test_tenant.id, "Produto Teste")
 
 
 @pytest.fixture
-async def product_b(db_session: AsyncSession, test_tenant: Tenant) -> Product:
-    return await _create_product(
+async def produto_b(db_session: AsyncSession, test_tenant: Tenant) -> Produto:
+    return await _create_produto(
         db_session, test_tenant.id, "Produto B", price=Decimal("25.00")
     )
 
 
 @pytest.fixture
 async def inventory(
-    db_session: AsyncSession, test_tenant: Tenant, product: Product
+    db_session: AsyncSession, test_tenant: Tenant, produto: Produto
 ) -> Inventory:
-    return await _create_inventory(db_session, test_tenant.id, product.id)
+    return await _create_inventory(db_session, test_tenant.id, produto.id)
 
 
 @pytest.fixture
 async def inventory_b(
-    db_session: AsyncSession, test_tenant: Tenant, product_b: Product
+    db_session: AsyncSession, test_tenant: Tenant, produto_b: Produto
 ) -> Inventory:
-    return await _create_inventory(db_session, test_tenant.id, product_b.id)
+    return await _create_inventory(db_session, test_tenant.id, produto_b.id)
 
 
 @pytest.fixture
@@ -200,7 +200,7 @@ async def order_with_items(
     test_tenant: Tenant,
     test_user: User,
     cliente: Cliente,
-    product: Product,
+    produto: Produto,
     inventory: Inventory,
 ) -> Order:
     role = await _create_role_with_perms(
@@ -227,7 +227,7 @@ class TestOrderCreate:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -248,7 +248,7 @@ class TestOrderCreate:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 2}],
+                "items": [{"produto_id": produto.id, "quantity": 2}],
             },
             headers=authenticated_headers,
         )
@@ -257,10 +257,10 @@ class TestOrderCreate:
         assert data["status"] == "DRAFT"
         assert data["cliente_id"] == cliente.id
         assert len(data["items"]) == 1
-        assert data["items"][0]["product_id"] == product.id
+        assert data["items"][0]["produto_id"] == produto.id
         assert data["items"][0]["quantity"] == 2.0
-        assert data["items"][0]["unit_price"] == float(product.price)
-        assert data["total_amount"] == float(product.price) * 2
+        assert data["items"][0]["unit_price"] == float(produto.price)
+        assert data["total_amount"] == float(produto.price) * 2
         assert isinstance(data["order_number"], int)
 
     async def test_create_order_multiple_items(
@@ -270,8 +270,8 @@ class TestOrderCreate:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
-        product_b: Product,
+        produto: Produto,
+        produto_b: Produto,
         inventory: Inventory,
         inventory_b: Inventory,
     ) -> None:
@@ -294,8 +294,8 @@ class TestOrderCreate:
             json={
                 "cliente_id": cliente.id,
                 "items": [
-                    {"product_id": product.id, "quantity": 2},
-                    {"product_id": product_b.id, "quantity": 1},
+                    {"produto_id": produto.id, "quantity": 2},
+                    {"produto_id": produto_b.id, "quantity": 1},
                 ],
             },
             headers=authenticated_headers,
@@ -303,7 +303,7 @@ class TestOrderCreate:
         assert response.status_code == 201
         data = response.json()
         assert len(data["items"]) == 2
-        expected_total = float(product.price) * 2 + float(product_b.price) * 1
+        expected_total = float(produto.price) * 2 + float(produto_b.price) * 1
         assert float(Decimal(str(data["total_amount"]))) == expected_total
 
     async def test_create_order_empty_items_fails(
@@ -341,7 +341,7 @@ class TestOrderCreate:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -362,13 +362,13 @@ class TestOrderCreate:
             "/api/v1/orders",
             json={
                 "cliente_id": 99999,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
         assert response.status_code == 409
 
-    async def test_create_order_nonexistent_product_fails(
+    async def test_create_order_nonexistent_produto_fails(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -394,20 +394,20 @@ class TestOrderCreate:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": 99999, "quantity": 1}],
+                "items": [{"produto_id": 99999, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
         assert response.status_code == 409
 
-    async def test_create_order_duplicate_product_fails(
+    async def test_create_order_duplicate_produto_fails(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -429,8 +429,8 @@ class TestOrderCreate:
             json={
                 "cliente_id": cliente.id,
                 "items": [
-                    {"product_id": product.id, "quantity": 1},
-                    {"product_id": product.id, "quantity": 2},
+                    {"produto_id": produto.id, "quantity": 1},
+                    {"produto_id": produto.id, "quantity": 2},
                 ],
             },
             headers=authenticated_headers,
@@ -444,7 +444,7 @@ class TestOrderCreate:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -468,7 +468,7 @@ class TestOrderCreate:
                 "cliente_id": cliente.id,
                 "items": [
                     {
-                        "product_id": product.id,
+                        "produto_id": produto.id,
                         "quantity": 3,
                         "unit_price": str(custom_price),
                     }
@@ -492,7 +492,7 @@ class TestOrderNumber:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -513,7 +513,7 @@ class TestOrderNumber:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -524,7 +524,7 @@ class TestOrderNumber:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -542,7 +542,7 @@ class TestOrderListAndDetail:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -563,7 +563,7 @@ class TestOrderListAndDetail:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -584,7 +584,7 @@ class TestOrderListAndDetail:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -605,7 +605,7 @@ class TestOrderListAndDetail:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -626,7 +626,7 @@ class TestOrderListAndDetail:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -647,7 +647,7 @@ class TestOrderListAndDetail:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -698,7 +698,7 @@ class TestOrderUpdate:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -719,7 +719,7 @@ class TestOrderUpdate:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -745,7 +745,7 @@ class TestOrderUpdate:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -766,7 +766,7 @@ class TestOrderUpdate:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -793,8 +793,8 @@ class TestOrderItems:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
-        product_b: Product,
+        produto: Produto,
+        produto_b: Produto,
         inventory: Inventory,
         inventory_b: Inventory,
     ) -> None:
@@ -816,7 +816,7 @@ class TestOrderItems:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -824,12 +824,12 @@ class TestOrderItems:
 
         response = await client.post(
             f"/api/v1/orders/{order_id}/items",
-            json={"product_id": product_b.id, "quantity": 3},
+            json={"produto_id": produto_b.id, "quantity": 3},
             headers=authenticated_headers,
         )
         assert response.status_code == 201
         data = response.json()
-        assert data["product_id"] == product_b.id
+        assert data["produto_id"] == produto_b.id
         assert data["quantity"] == 3.0
 
         detail_resp = await client.get(
@@ -839,14 +839,14 @@ class TestOrderItems:
         assert detail_resp.status_code == 200
         assert len(detail_resp.json()["items"]) == 2
 
-    async def test_add_duplicate_product_to_order_fails(
+    async def test_add_duplicate_produto_to_order_fails(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -867,7 +867,7 @@ class TestOrderItems:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -875,7 +875,7 @@ class TestOrderItems:
 
         response = await client.post(
             f"/api/v1/orders/{order_id}/items",
-            json={"product_id": product.id, "quantity": 2},
+            json={"produto_id": produto.id, "quantity": 2},
             headers=authenticated_headers,
         )
         assert response.status_code == 409
@@ -887,7 +887,7 @@ class TestOrderItems:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -908,7 +908,7 @@ class TestOrderItems:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -929,7 +929,7 @@ class TestOrderItems:
         )
         assert (
             float(Decimal(str(detail_resp.json()["total_amount"])))
-            == float(product.price) * 5
+            == float(produto.price) * 5
         )
 
     async def test_remove_item_from_order(
@@ -939,8 +939,8 @@ class TestOrderItems:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
-        product_b: Product,
+        produto: Produto,
+        produto_b: Produto,
         inventory: Inventory,
         inventory_b: Inventory,
     ) -> None:
@@ -963,8 +963,8 @@ class TestOrderItems:
             json={
                 "cliente_id": cliente.id,
                 "items": [
-                    {"product_id": product.id, "quantity": 1},
-                    {"product_id": product_b.id, "quantity": 2},
+                    {"produto_id": produto.id, "quantity": 1},
+                    {"produto_id": produto_b.id, "quantity": 2},
                 ],
             },
             headers=authenticated_headers,
@@ -991,7 +991,7 @@ class TestOrderItems:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -1012,7 +1012,7 @@ class TestOrderItems:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -1032,8 +1032,8 @@ class TestOrderItems:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
-        product_b: Product,
+        produto: Produto,
+        produto_b: Produto,
         inventory: Inventory,
         inventory_b: Inventory,
     ) -> None:
@@ -1055,7 +1055,7 @@ class TestOrderItems:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -1068,7 +1068,7 @@ class TestOrderItems:
 
         response = await client.post(
             f"/api/v1/orders/{order_id}/items",
-            json={"product_id": product_b.id, "quantity": 1},
+            json={"produto_id": produto_b.id, "quantity": 1},
             headers=authenticated_headers,
         )
         assert response.status_code == 409
@@ -1082,7 +1082,7 @@ class TestOrderStateMachine:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -1109,7 +1109,7 @@ class TestOrderStateMachine:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 5}],
+                "items": [{"produto_id": produto.id, "quantity": 5}],
             },
             headers=authenticated_headers,
         )
@@ -1123,7 +1123,7 @@ class TestOrderStateMachine:
         assert response.json()["status"] == "CONFIRMED"
 
         inv_resp = await client.get(
-            f"/api/v1/inventory/{product.id}",
+            f"/api/v1/inventory/{produto.id}",
             headers=authenticated_headers,
         )
         assert inv_resp.status_code == 200
@@ -1136,7 +1136,7 @@ class TestOrderStateMachine:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -1157,7 +1157,7 @@ class TestOrderStateMachine:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 5}],
+                "items": [{"produto_id": produto.id, "quantity": 5}],
             },
             headers=authenticated_headers,
         )
@@ -1176,7 +1176,7 @@ class TestOrderStateMachine:
         assert response.json()["status"] == "COMPLETED"
 
         inv_resp = await client.get(
-            f"/api/v1/inventory/{product.id}",
+            f"/api/v1/inventory/{produto.id}",
             headers=authenticated_headers,
         )
         assert inv_resp.status_code == 200
@@ -1190,7 +1190,7 @@ class TestOrderStateMachine:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -1211,7 +1211,7 @@ class TestOrderStateMachine:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 5}],
+                "items": [{"produto_id": produto.id, "quantity": 5}],
             },
             headers=authenticated_headers,
         )
@@ -1231,7 +1231,7 @@ class TestOrderStateMachine:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -1258,7 +1258,7 @@ class TestOrderStateMachine:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 5}],
+                "items": [{"produto_id": produto.id, "quantity": 5}],
             },
             headers=authenticated_headers,
         )
@@ -1277,7 +1277,7 @@ class TestOrderStateMachine:
         assert response.json()["status"] == "CANCELLED"
 
         inv_resp = await client.get(
-            f"/api/v1/inventory/{product.id}",
+            f"/api/v1/inventory/{produto.id}",
             headers=authenticated_headers,
         )
         assert inv_resp.status_code == 200
@@ -1290,7 +1290,7 @@ class TestOrderStateMachine:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -1311,7 +1311,7 @@ class TestOrderStateMachine:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -1330,7 +1330,7 @@ class TestOrderStateMachine:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -1351,7 +1351,7 @@ class TestOrderStateMachine:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -1379,7 +1379,7 @@ class TestOrderStateMachine:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -1400,7 +1400,7 @@ class TestOrderStateMachine:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 1}],
+                "items": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
@@ -1427,7 +1427,7 @@ class TestOrderRBAC:
     ) -> None:
         response = await client.post(
             "/api/v1/orders",
-            json={"cliente_id": 1, "items": [{"product_id": 1, "quantity": 1}]},
+            json={"cliente_id": 1, "items": [{"produto_id": 1, "quantity": 1}]},
             headers=authenticated_headers,
         )
         assert response.status_code == 403
@@ -1466,7 +1466,7 @@ class TestOrderMultiTenancy:
         test_user: User,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         from app.core.security import create_access_token
@@ -1479,18 +1479,18 @@ class TestOrderMultiTenancy:
         db_session.add(other_cliente)
         await db_session.flush()
 
-        other_product = Product(
+        other_produto = Produto(
             tenant_id=other_tenant.id,
             sku="SKU-OUTRO",
             name="Outro Produto",
             price=Decimal("50.00"),
         )
-        db_session.add(other_product)
+        db_session.add(other_produto)
         await db_session.flush()
 
         other_inventory = Inventory(
             tenant_id=other_tenant.id,
-            product_id=other_product.id,
+            produto_id=other_produto.id,
             quantity=Decimal("100.000"),
         )
         db_session.add(other_inventory)
@@ -1553,7 +1553,7 @@ class TestOrderMultiTenancy:
             "/api/v1/orders",
             json={
                 "cliente_id": other_cliente.id,
-                "items": [{"product_id": other_product.id, "quantity": 1}],
+                "items": [{"produto_id": other_produto.id, "quantity": 1}],
             },
             headers=other_headers,
         )
@@ -1575,7 +1575,7 @@ class TestOrderInventoryIntegration:
         test_tenant: Tenant,
         authenticated_headers: dict,
         cliente: Cliente,
-        product: Product,
+        produto: Produto,
         inventory: Inventory,
     ) -> None:
         role = await _create_role_with_perms(
@@ -1596,7 +1596,7 @@ class TestOrderInventoryIntegration:
             "/api/v1/orders",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"product_id": product.id, "quantity": 200}],
+                "items": [{"produto_id": produto.id, "quantity": 200}],
             },
             headers=authenticated_headers,
         )

@@ -7,7 +7,7 @@ from app.db.models.inventory_reservation import InventoryReservation
 from app.db.models.order import Order
 from app.db.models.order_item import OrderItem
 from app.db.models.permission import Permission
-from app.db.models.product import Product
+from app.db.models.produto import Produto
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
 from app.db.models.tenant import Tenant
@@ -24,7 +24,7 @@ __all__ = [
     "Order",
     "OrderItem",
     "Permission",
-    "Product",
+    "Produto",
     "Role",
     "RolePermission",
     "Tenant",

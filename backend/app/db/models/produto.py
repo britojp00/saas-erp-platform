@@ -20,30 +20,30 @@ from app.db.mixins import (
 )
 
 
-class Product(
+class Produto(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
     Base,
 ):
-    __tablename__ = "products"
+    __tablename__ = "produtos"
 
     __table_args__ = (
         UniqueConstraint(
             "tenant_id",
             "sku",
-            name="uq_products_tenant_sku",
+            name="uq_produtos_tenant_sku",
         ),
         UniqueConstraint(
             "tenant_id",
             "id",
-            name="uq_products_tenant_id",
+            name="uq_produtos_tenant_id",
         ),
         ForeignKeyConstraint(
             ["tenant_id", "categoria_id"],
             ["categorias.tenant_id", "categorias.id"],
-            name="fk_products_tenant_categoria",
+            name="fk_produtos_tenant_categoria",
             ondelete="RESTRICT",
         ),
     )

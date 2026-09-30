@@ -102,10 +102,10 @@ ALL_AUDIT_PERMS = [
     "categoria.criar",
     "categoria.atualizar",
     "categoria.excluir",
-    "product.read",
-    "product.create",
-    "product.update",
-    "product.delete",
+    "produto.ler",
+    "produto.criar",
+    "produto.atualizar",
+    "produto.excluir",
     "inventory.read",
     "inventory.update",
     "order.read",
@@ -381,37 +381,37 @@ async def test_categoria_create_generates_audit(
     assert audit.entity_type == "categoria"
 
 
-# --- AUDIT FROM PRODUCT OPERATIONS ---
+# --- AUDIT DE OPERAÇÕES DE PRODUTO ---
 
 
 @pytest.mark.asyncio
-async def test_product_create_generates_audit(
+async def test_produto_create_generates_audit(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
     test_tenant: Tenant,
 ):
     response = await client.post(
-        "/api/v1/products",
+        "/api/v1/produtos",
         headers=admin_headers,
         json={
             "sku": "AUDIT-001",
-            "name": "Audit Product",
+            "name": "Produto de Auditoria",
             "price": 99.90,
         },
     )
     assert response.status_code == 201
-    product_id = response.json()["id"]
+    produto_id = response.json()["id"]
 
     stmt = select(AuditLog).where(
         AuditLog.tenant_id == test_tenant.id,
-        AuditLog.action == "PRODUCT_CREATE",
-        AuditLog.entity_id == product_id,
+        AuditLog.action == "PRODUTO_CRIAR",
+        AuditLog.entity_id == produto_id,
     )
     result = await db_session.execute(stmt)
     audit = result.scalar_one_or_none()
     assert audit is not None
-    assert audit.entity_type == "product"
+    assert audit.entity_type == "produto"
     assert audit.new_values is not None
     assert audit.new_values["sku"] == "AUDIT-001"
 

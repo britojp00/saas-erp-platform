@@ -7,7 +7,7 @@ from app.core.config import settings
 
 
 class OrderItemCreate(BaseModel):
-    product_id: int
+    produto_id: int
     quantity: Decimal = Field(max_digits=15, decimal_places=3)
     unit_price: Decimal | None = Field(default=None, max_digits=15, decimal_places=2)
 
@@ -62,7 +62,7 @@ class OrderItemResponse(BaseModel):
     id: int
     tenant_id: int
     order_id: int
-    product_id: int
+    produto_id: int
     quantity: Decimal
     unit_price: Decimal
     total_price: Decimal

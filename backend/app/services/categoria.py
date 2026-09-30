@@ -184,7 +184,7 @@ class CategoriaService:
         if await self.repo.has_children(tenant_id, categoria.id):
             raise ErroCategoriaPossuiFilhos()
 
-        if await self.repo.has_products(tenant_id, categoria.id):
+        if await self.repo.has_produtos(tenant_id, categoria.id):
             raise ErroCategoriaPossuiProdutos()
 
         old_values = {

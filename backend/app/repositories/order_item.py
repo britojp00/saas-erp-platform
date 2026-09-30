@@ -50,17 +50,17 @@ class OrderItemRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def exists_product_in_order(
+    async def exists_produto_in_order(
         self,
         tenant_id: int,
         order_id: int,
-        product_id: int,
+        produto_id: int,
         exclude_item_id: int | None = None,
     ) -> bool:
         stmt = select(OrderItem).where(
             OrderItem.tenant_id == tenant_id,
             OrderItem.order_id == order_id,
-            OrderItem.product_id == product_id,
+            OrderItem.produto_id == produto_id,
         )
         if exclude_item_id is not None:
             stmt = stmt.where(OrderItem.id != exclude_item_id)

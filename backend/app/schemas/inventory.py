@@ -7,7 +7,7 @@ from app.core.config import settings
 
 
 class MovementCreate(BaseModel):
-    product_id: int
+    produto_id: int
     movement_type: str = Field(pattern=r"^(IN|OUT|ADJUSTMENT)$")
     quantity: Decimal = Field(max_digits=15, decimal_places=3)
     reference: str | None = Field(default=None, max_length=255)
@@ -27,7 +27,7 @@ class MovementResponse(BaseModel):
 
     id: int
     tenant_id: int
-    product_id: int
+    produto_id: int
     movement_type: str
     quantity: Decimal
     reference: str | None
@@ -58,7 +58,7 @@ class MovementListResponse(BaseModel):
 
 
 class ReservationCreate(BaseModel):
-    product_id: int
+    produto_id: int
     quantity: Decimal = Field(max_digits=15, decimal_places=3)
     reference: str | None = Field(default=None, max_length=255)
     notes: str | None = Field(default=None, max_length=500)
@@ -78,7 +78,7 @@ class ReservationResponse(BaseModel):
 
     id: int
     tenant_id: int
-    product_id: int
+    produto_id: int
     quantity: Decimal
     status: str
     reference: str | None
@@ -128,7 +128,7 @@ class InventoryResponse(BaseModel):
 
     id: int
     tenant_id: int
-    product_id: int
+    produto_id: int
     quantity: Decimal
     reserved_quantity: Decimal
     created_at: datetime
@@ -155,7 +155,7 @@ class ConfirmReservationResponse(BaseModel):
 
     id: int
     tenant_id: int
-    product_id: int
+    produto_id: int
     quantity: Decimal
     status: str
     reference: str | None
