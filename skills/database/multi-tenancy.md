@@ -27,7 +27,7 @@ PostgreSQL
                 |
                 ├── tenants
                 ├── users
-                ├── customers
+                ├── clientes
                 ├── products
                 ├── orders
                 └── inventory
@@ -85,7 +85,7 @@ tenant_id
 
 Exemplo:
 
-customers
+clientes
 
 id
 tenant_id
@@ -108,7 +108,7 @@ orders
 
 id
 tenant_id
-customer_id
+cliente_id
 status
 total_amount
 created_at
@@ -129,7 +129,7 @@ da própria plataforma.
 
 Exemplos que normalmente pertencem a um tenant:
 
-customers
+clientes
 products
 orders
 inventory
@@ -169,7 +169,7 @@ quando aplicável.
 
 Conceito:
 
-customers.tenant_id
+clientes.tenant_id
         |
         v
    tenants.id
@@ -189,7 +189,7 @@ enviado pelo cliente.
 
 Exemplo incorreto:
 
-POST /api/v1/customers
+POST /api/v1/clientes
 
 {
     "tenant_id": "tenant-da-empresa-B",
@@ -256,14 +256,14 @@ tenant atual
 Exemplo conceitual:
 
 SELECT *
-FROM customers
-WHERE id = :customer_id
+FROM clientes
+WHERE id = :cliente_id
   AND tenant_id = :tenant_id
   AND deleted_at IS NULL
 
 A aplicação não deve buscar somente:
 
-WHERE id = :customer_id
+WHERE id = :cliente_id
 
 quando o recurso pertence a um tenant.
 
@@ -274,7 +274,7 @@ considerar o tenant atual.
 
 Exemplo:
 
-GET /api/v1/customers
+GET /api/v1/clientes
 
 deve resultar conceitualmente em:
 
@@ -292,13 +292,13 @@ Uma busca por ID deve respeitar o tenant.
 
 Exemplo:
 
-GET /api/v1/customers/{id}
+GET /api/v1/clientes/{id}
 
 A aplicação deve validar:
 
-customer.id
+cliente.id
 +
-customer.tenant_id
+cliente.tenant_id
 
 O fato de o usuário conhecer o ID de outro tenant
 não deve conceder acesso ao registro.
@@ -382,10 +382,10 @@ Usuário autenticado
 Tenant = A
         |
         v
-POST /customers
+POST /clientes
         |
         v
-customer.tenant_id = A
+cliente.tenant_id = A
 19. Relações entre entidades multi-tenant
 
 Ao trabalhar com duas ou mais entidades multi-tenant,
@@ -396,12 +396,12 @@ Exemplo:
 Order
    |
    v
-Customer
+Cliente
 
 Ao criar um pedido:
 
 order.tenant_id
-customer.tenant_id
+cliente.tenant_id
 
 devem representar o mesmo tenant.
 
@@ -410,7 +410,7 @@ Não permitir:
 Order
 Tenant A
 
-Customer
+Cliente
 Tenant B
 
 como uma relação válida.
@@ -419,13 +419,13 @@ como uma relação válida.
 
 Conceito:
 
-Criar Order para Customer
+Criar Order para Cliente
         |
         v
-Customer existe?
+Cliente existe?
         |
         v
-Customer pertence ao tenant atual?
+Cliente pertence ao tenant atual?
         |
         +---- NÃO → rejeitar
         |
@@ -474,7 +474,7 @@ orders
 
 id
 tenant_id
-customer_id
+cliente_id
 status
 total_amount
 created_at
@@ -485,7 +485,7 @@ Ao criar um pedido:
 
 Order Tenant
       =
-Customer Tenant
+Cliente Tenant
 
 Os itens do pedido também devem pertencer ao contexto
 do pedido.
@@ -604,7 +604,7 @@ de tenant de forma consistente.
 
 Uma operação como:
 
-get_customer(customer_id)
+get_cliente(cliente_id)
 
 não deve ignorar o tenant quando estiver sendo utilizada
 para dados multi-tenant.
@@ -661,19 +661,19 @@ Exemplo conceitual:
 Criar:
 
 Tenant A
-Customer A
+Cliente A
 
 Tenant B
-Customer B
+Cliente B
 
 Depois:
 
 Autenticar como Tenant A
 
-GET Customer A
+GET Cliente A
 → permitido
 
-GET Customer B
+GET Cliente B
 → bloqueado
 
 O teste deve validar explicitamente o isolamento.
@@ -703,19 +703,19 @@ O produto do Tenant B não deve ser alterado.
 Exemplo:
 
 Tenant A
-Customer A
+Cliente A
 
 Tenant B
-Customer B
+Cliente B
 
 Usuário do Tenant A tenta excluir logicamente
-o Customer B.
+o Cliente B.
 
 Resultado:
 
 operação bloqueada
 
-O deleted_at do Customer B não deve ser alterado.
+O deleted_at do Cliente B não deve ser alterado.
 
 34. Background Jobs e Tenant
 
@@ -759,7 +759,7 @@ identificar o contexto do tenant quando aplicável.
 Exemplo:
 
 {
-  "event": "customer_created",
+  "event": "cliente_created",
   "tenant_id": "...",
   "user_id": "...",
   "request_id": "..."
@@ -846,7 +846,7 @@ uma autorização suficiente.
 
 Exemplo:
 
-/customer/{id}
+/cliente/{id}
 
 deve considerar o contexto do tenant quando o recurso
 for multi-tenant.

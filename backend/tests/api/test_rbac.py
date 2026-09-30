@@ -107,7 +107,7 @@ async def test_me_returns_roles_and_permissions(
     authenticated_headers: dict[str, str],
 ):
     role = await _create_role(db_session, test_tenant.id, "admin")
-    perm = await _create_permission(db_session, test_tenant.id, "customer.read")
+    perm = await _create_permission(db_session, test_tenant.id, "cliente.ler")
     await _assign_permission(db_session, test_tenant.id, role.id, perm.id)
     await _assign_role_to_user(db_session, test_tenant.id, test_user.id, role.id)
     await db_session.commit()
@@ -119,7 +119,7 @@ async def test_me_returns_roles_and_permissions(
     assert response.status_code == 200
     data = response.json()
     assert "admin" in data["roles"]
-    assert "customer.read" in data["permissions"]
+    assert "cliente.ler" in data["permissions"]
 
 
 @pytest.mark.asyncio
@@ -175,7 +175,7 @@ async def test_roles_endpoint_without_permission(
     test_user: User,
 ):
     role = await _create_role(db_session, test_tenant.id, "noperm")
-    perm = await _create_permission(db_session, test_tenant.id, "customer.read")
+    perm = await _create_permission(db_session, test_tenant.id, "cliente.ler")
     await _assign_permission(db_session, test_tenant.id, role.id, perm.id)
     await _assign_role_to_user(db_session, test_tenant.id, test_user.id, role.id)
     await db_session.commit()
@@ -250,7 +250,7 @@ async def test_multiple_permissions_required(
     test_tenant: Tenant,
     test_user: User,
 ):
-    perm_a = await _create_permission(db_session, test_tenant.id, "customer.read")
+    perm_a = await _create_permission(db_session, test_tenant.id, "cliente.ler")
     role = await _create_role(db_session, test_tenant.id, "partial")
     await _assign_permission(db_session, test_tenant.id, role.id, perm_a.id)
     await _assign_role_to_user(db_session, test_tenant.id, test_user.id, role.id)

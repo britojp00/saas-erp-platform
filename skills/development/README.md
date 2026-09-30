@@ -112,7 +112,7 @@ Antes de criar uma implementação nova, procurar implementações existentes do
 
 Exemplo:
 
-Customer
+Cliente
 → observar padrão
 
 Product
@@ -304,7 +304,7 @@ Authentication
 ↓
 Tenant
 ↓
-Customer
+Cliente
 ↓
 Product
 ↓
@@ -320,7 +320,7 @@ Quando possível, implementar funcionalidades completas por domínio.
 
 Exemplo:
 
-Customer
+Cliente
 ├── Model
 ├── Migration
 ├── Schema
@@ -337,11 +337,11 @@ Commits devem representar alterações coerentes.
 
 Preferir:
 
-feat: add customer model
+feat: add cliente model
 
 e depois:
 
-feat: add customer API
+feat: add cliente API
 
 quando essas forem mudanças distintas.
 
@@ -365,10 +365,10 @@ type: description
 
 Exemplos:
 
-feat: add customer management
+feat: add cliente management
 fix: prevent cross-tenant access
 test: add order service tests
-refactor: simplify customer repository
+refactor: simplify cliente repository
 docs: update database guidelines
 chore: update dependencies
 23. Types de Commit
@@ -449,7 +449,7 @@ feature/nome-da-feature
 
 Exemplo:
 
-feature/customer-management
+feature/cliente-management
 30. Fix Branch
 
 Correções podem utilizar:
@@ -999,7 +999,7 @@ Nomes devem comunicar intenção.
 Preferir:
 
 get_current_user
-create_customer
+create_cliente
 cancel_order
 reserve_stock
 
@@ -1027,8 +1027,8 @@ Exemplo útil:
 
 Evitar comentários óbvios como:
 
-# Add customer
-customer = ...
+# Add cliente
+cliente = ...
 76. TODO
 
 TODOs devem representar trabalho real futuro.

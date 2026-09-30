@@ -78,13 +78,13 @@ retornar respostas HTTP.
 
 Exemplo:
 
-POST /api/v1/customers
+POST /api/v1/clientes
         |
         v
-customers.py
+clientes.py
         |
         v
-CustomerService
+ClienteService
 Regras
 
 Routers não devem:
@@ -113,9 +113,9 @@ desserializar dados.
 
 Exemplo:
 
-CustomerCreate
-CustomerUpdate
-CustomerResponse
+ClienteCriarPayload
+ClienteAtualizarPayload
+ClienteResposta
 Regras
 
 Schemas não devem:
@@ -182,7 +182,7 @@ Responsável pela persistência.
 
 Exemplos:
 
-CustomerRepository
+ClienteRepository
 ProductRepository
 InventoryRepository
 OrderRepository
@@ -223,7 +223,7 @@ Tenant
 User
 Role
 Permission
-Customer
+Cliente
 Product
 Category
 Inventory
@@ -334,16 +334,16 @@ HTTP Response
 
 Fluxo esperado:
 
-POST /api/v1/customers
+POST /api/v1/clientes
           |
           v
-     CustomerRouter
+     ClienteRouter
           |
           v
-      CustomerCreate
+      ClienteCriarPayload
           |
           v
-     CustomerService
+     ClienteService
           |
           +---- validar regras
           |
@@ -352,7 +352,7 @@ POST /api/v1/customers
           +---- verificar duplicidade
           |
           v
-    CustomerRepository
+    ClienteRepository
           |
           v
        PostgreSQL
@@ -429,7 +429,7 @@ Conceito:
 Tenant
   |
   +---- Users
-  +---- Customers
+  +---- Clientes
   +---- Products
   +---- Orders
   +---- Inventory
@@ -439,7 +439,7 @@ referência ao tenant correspondente quando aplicável.
 
 Exemplo:
 
-customers
+clientes
 
 id
 tenant_id
@@ -463,7 +463,7 @@ Usuário autenticado
 Tenant = 10
        |
        v
-GET /api/v1/customers
+GET /api/v1/clientes
        |
        v
 Clientes do Tenant 10
@@ -489,8 +489,8 @@ Recurso
 Exemplo conceitual:
 
 query.where(
-    Customer.id == customer_id,
-    Customer.tenant_id == tenant_id,
+    Cliente.id == cliente_id,
+    Cliente.tenant_id == tenant_id,
 )
 
 A implementação concreta deve seguir as abstrações definidas
@@ -544,7 +544,7 @@ VIEWER
 
 Permissoes implementadas:
 
-customer.read, customer.create, customer.update, customer.delete
+cliente.ler, cliente.criar, cliente.atualizar, cliente.excluir
 category.read, category.create, category.update, category.delete
 product.read, product.create, product.update, product.delete
 inventory.read, inventory.update
@@ -553,9 +553,9 @@ order.read, order.create, order.update, order.cancel
 Exemplo de uso:
 
 ```python
-@router.get("/customers")
-async def list_customers(
-    current_user: CurrentUser = Depends(require_permissions("customer.read")),
+@router.get("/clientes")
+async def list_clientes(
+    current_user: CurrentUser = Depends(require_permissions("cliente.ler")),
 ):
     ...
 ```
@@ -679,7 +679,7 @@ Padrão:
 
 Exemplo:
 
-/api/v1/customers
+/api/v1/clientes
 /api/v1/products
 /api/v1/orders
 
@@ -742,7 +742,7 @@ Exemplo JSON:
   "tenant_id": 10,
   "user_id": 32,
   "method": "GET",
-  "path": "/api/v1/customers",
+  "path": "/api/v1/clientes",
   "status_code": 200,
   "duration_ms": 45.2
 }

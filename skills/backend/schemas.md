@@ -38,7 +38,7 @@ schemas/
 ├── auth.py
 ├── tenant.py
 ├── user.py
-├── customer.py
+├── cliente.py
 ├── product.py
 ├── category.py
 ├── inventory.py
@@ -90,11 +90,11 @@ Filter
 
 Exemplo:
 
-CustomerCreate
-CustomerUpdate
-CustomerResponse
-CustomerList
-CustomerFilter
+ClienteCriarPayload
+ClienteAtualizarPayload
+ClienteResposta
+ListaClientes
+ClienteFilter
 
 Nem todo recurso obrigatoriamente precisará de todos eles.
 
@@ -104,7 +104,7 @@ Schemas Create representam os dados necessários para criar um recurso.
 
 Exemplo:
 
-class CustomerCreate(BaseModel):
+class ClienteCriarPayload(BaseModel):
     name: str
     email: str | None = None
 
@@ -124,7 +124,7 @@ Schemas Update representam alterações parciais ou completas conforme o contrat
 
 Exemplo:
 
-class CustomerUpdate(BaseModel):
+class ClienteAtualizarPayload(BaseModel):
     name: str | None = None
     email: str | None = None
 
@@ -146,7 +146,7 @@ Schemas Response representam os dados que podem ser expostos pela API.
 
 Exemplo:
 
-class CustomerResponse(BaseModel):
+class ClienteResposta(BaseModel):
     id: UUID
     name: str
     email: str | None
@@ -190,7 +190,7 @@ Exemplo:
 
 from uuid import UUID
 
-class CustomerResponse(BaseModel):
+class ClienteResposta(BaseModel):
     id: UUID
 
 Isso permite validação estrutural automática.
@@ -383,7 +383,7 @@ Schemas não devem consultar banco para validar regras de negócio.
 
 Evitar:
 
-class CustomerCreate(BaseModel):
+class ClienteCriarPayload(BaseModel):
 
     def validate_email_unique(self):
         ...
@@ -523,8 +523,8 @@ Para endpoints de listagem, considerar um schema específico.
 
 Exemplo:
 
-class CustomerListResponse(BaseModel):
-    items: list[CustomerResponse]
+class ListaClientesResposta(BaseModel):
+    items: list[ClienteResposta]
     page: int
     page_size: int
     total: int
@@ -537,7 +537,7 @@ Filtros complexos podem utilizar schemas próprios.
 
 Exemplo:
 
-class CustomerFilter(BaseModel):
+class ClienteFilter(BaseModel):
     search: str | None = None
     active: bool | None = None
 
@@ -555,7 +555,7 @@ Para filtros simples, FastAPI pode receber parâmetros diretamente.
 
 Exemplo:
 
-async def list_customers(
+async def list_clientes(
     search: str | None = None,
     page: int = 1,
 ):
@@ -582,7 +582,7 @@ Valores de ordenação podem ser representados por enum quando o conjunto for co
 
 Exemplo:
 
-class CustomerSortField(str, Enum):
+class CampoOrdenacaoCliente(str, Enum):
     name = "name"
     created_at = "created_at"
 
@@ -665,7 +665,7 @@ Quando um response schema precisar ser criado a partir de um objeto SQLAlchemy, 
 
 Exemplo conceitual:
 
-class CustomerResponse(BaseModel):
+class ClienteResposta(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 Isso deve ser utilizado somente quando fizer sentido para o padrão adotado.
@@ -810,7 +810,7 @@ Normalmente tenant_id não precisa fazer parte dos schemas públicos de criaçã
 
 Exemplo:
 
-POST /customers
+POST /clientes
 
 Request:
 
@@ -904,7 +904,7 @@ Um schema deve ser fácil de ler.
 
 Preferir:
 
-class CustomerCreate(BaseModel):
+class ClienteCriarPayload(BaseModel):
     name: str
     email: EmailStr | None = None
 

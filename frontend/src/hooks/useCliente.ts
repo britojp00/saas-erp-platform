@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError, api } from '../services/api'
-import type { Customer } from '../types/customers'
+import type { Cliente } from '../types/clientes'
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) return error.message
   return 'Não foi possível carregar os dados da API.'
 }
 
-export function useCustomer(id: string) {
-  const [customer, setCustomer] = useState<Customer | null>(null)
+export function useCliente(id: string) {
+  const [cliente, setCliente] = useState<Cliente | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
@@ -21,7 +21,7 @@ export function useCustomer(id: string) {
     if (!/^\d+$/.test(id)) {
       setNotFound(true)
       setError(null)
-      setCustomer(null)
+      setCliente(null)
       setLoading(false)
       return
     }
@@ -31,16 +31,16 @@ export function useCustomer(id: string) {
     setNotFound(false)
 
     try {
-      const response = await api.get<Customer>(`/api/v1/customers/${id}`)
+      const response = await api.get<Cliente>(`/api/v1/clientes/${id}`)
       if (current === sequence.current) {
-        setCustomer(response)
+        setCliente(response)
         setLoading(false)
       }
     } catch (err) {
       if (current === sequence.current) {
         if (err instanceof ApiError && err.status === 404) {
           setNotFound(true)
-          setCustomer(null)
+          setCliente(null)
           setError(null)
         } else {
           setError(errorMessage(err))
@@ -51,7 +51,7 @@ export function useCustomer(id: string) {
   }, [id])
 
   useEffect(() => {
-    setCustomer(null)
+    setCliente(null)
   }, [id])
 
   useEffect(() => {
@@ -62,5 +62,5 @@ export function useCustomer(id: string) {
     void load()
   }, [load])
 
-  return { customer, loading, error, notFound, retry }
+  return { cliente, loading, error, notFound, retry }
 }

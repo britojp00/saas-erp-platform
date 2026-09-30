@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, get_password_hash
 from app.db.models.category import Category
-from app.db.models.customer import Customer
+from app.db.models.cliente import Cliente
 from app.db.models.inventory import Inventory
 from app.db.models.order import Order
 from app.db.models.order_item import OrderItem
@@ -159,17 +159,17 @@ async def _create_order_with_item(
     tenant_id: int,
     product_id: int,
 ) -> tuple[Order, OrderItem]:
-    customer = Customer(
+    cliente = Cliente(
         tenant_id=tenant_id,
-        name="Test Customer",
+        name="Test Cliente",
     )
-    session.add(customer)
+    session.add(cliente)
     await session.flush()
 
     order = Order(
         tenant_id=tenant_id,
         order_number=int(time.time() * 1000),
-        customer_id=customer.id,
+        cliente_id=cliente.id,
         status="DRAFT",
         total_amount=Decimal("100.00"),
     )

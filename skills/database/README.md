@@ -160,7 +160,7 @@ Conceito:
 Tenant
    |
    +---- Users
-   +---- Customers
+   +---- Clientes
    +---- Products
    +---- Orders
    +---- Inventory

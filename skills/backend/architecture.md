@@ -62,13 +62,13 @@ chamada dos services.
 Exemplo conceitual:
 
 @router.post(
-    "/customers",
-    response_model=CustomerResponse,
+    "/clientes",
+    response_model=ClienteResposta,
     status_code=status.HTTP_201_CREATED,
 )
-async def create_customer(
-    data: CustomerCreate,
-    service: CustomerService = Depends(get_customer_service),
+async def create_cliente(
+    data: ClienteCriarPayload,
+    service: ClienteService = Depends(get_cliente_service),
 ):
     return await service.create(data)
 
@@ -101,7 +101,7 @@ Os schemas devem representar os contratos da API.
 Estrutura conceitual:
 
 schemas/
-├── customer.py
+├── cliente.py
 ├── product.py
 ├── order.py
 └── ...
@@ -116,12 +116,12 @@ Filter
 
 Exemplo:
 
-class CustomerCreate(BaseModel):
+class ClienteCriarPayload(BaseModel):
     name: str
     email: str | None = None
 
 
-class CustomerResponse(BaseModel):
+class ClienteResposta(BaseModel):
     id: UUID
     name: str
     email: str | None = None
@@ -130,7 +130,7 @@ O schema não deve conhecer detalhes de infraestrutura.
 
 Evitar:
 
-class CustomerCreate(BaseModel):
+class ClienteCriarPayload(BaseModel):
     async def save_to_database(self):
         ...
 
@@ -145,7 +145,7 @@ Services representam os casos de uso da aplicação.
 Estrutura conceitual:
 
 services/
-├── customer.py
+├── cliente.py
 ├── product.py
 ├── inventory.py
 ├── order.py
@@ -179,7 +179,7 @@ Repositories isolam o acesso aos dados.
 Estrutura conceitual:
 
 repositories/
-├── customer.py
+├── cliente.py
 ├── product.py
 ├── inventory.py
 └── order.py
@@ -198,7 +198,7 @@ Mas não deve decidir regras de negócio que pertencem ao service.
 
 Exemplo:
 
-customer = await repository.get_by_id(customer_id)
+cliente = await repository.get_by_id(cliente_id)
 
 O repository pode determinar como buscar o registro.
 
@@ -325,7 +325,7 @@ como fonte de autorização.
 Exemplo conceitual:
 
 await repository.get_by_id(
-    entity_id=customer_id,
+    entity_id=cliente_id,
     tenant_id=current_tenant.id,
 )
 
@@ -336,16 +336,16 @@ A filtragem pelo tenant deve fazer parte do padrão das operações multi-tenant
 Uma consulta como:
 
 SELECT *
-FROM customers
-WHERE id = :customer_id;
+FROM clientes
+WHERE id = :cliente_id;
 
 pode ser insuficiente em um sistema multi-tenant.
 
 Quando a entidade pertence a um tenant, a consulta deve considerar o contexto:
 
 SELECT *
-FROM customers
-WHERE id = :customer_id
+FROM clientes
+WHERE id = :cliente_id
   AND tenant_id = :tenant_id;
 
 O mesmo princípio vale para:
@@ -421,10 +421,10 @@ Business Operation
 
 Exemplo conceitual:
 
-customer.read
-customer.create
-customer.update
-customer.delete
+cliente.ler
+cliente.criar
+cliente.atualizar
+cliente.excluir
 
 A regra deve ser centralizada o máximo possível para evitar verificações inconsistentes.
 
@@ -476,10 +476,10 @@ Regras de negócio que falham devem possuir representação consistente.
 
 Exemplos:
 
-CustomerNotFound
+ErroClienteNaoEncontrado
 ProductNotFound
 InsufficientStock
-DuplicateCustomer
+ErroClienteDuplicado
 OrderAlreadyProcessed
 PermissionDenied
 
@@ -531,7 +531,7 @@ Filtros devem ser explícitos e validados.
 
 Exemplo conceitual:
 
-GET /customers?search=joao&status=active
+GET /clientes?search=joao&status=active
 
 Evitar montar SQL diretamente utilizando strings fornecidas pelo cliente.
 
@@ -556,13 +556,13 @@ Quando Redis for utilizado para cache, a chave deve considerar o contexto necess
 
 Em dados multi-tenant, evitar:
 
-customer:123
+cliente:123
 
 quando 123 puder existir em diferentes contextos.
 
 Preferir uma estrutura que isole o tenant, por exemplo:
 
-tenant:{tenant_id}:customer:{customer_id}
+tenant:{tenant_id}:cliente:{cliente_id}
 
 A estratégia final deve considerar a natureza do dado.
 

@@ -166,7 +166,7 @@ Exemplo:
   "job_id": "uuid",
   "tenant_id": "uuid",
   "entity_id": "uuid",
-  "operation": "sync_customer"
+  "operation": "sync_cliente"
 }
 
 Evitar colocar no payload:
@@ -1174,7 +1174,7 @@ Os tipos de job devem possuir nomes claros.
 
 Exemplos:
 
-customer.sync
+cliente.sync
 product.sync
 order.export
 inventory.recalculate
@@ -1195,11 +1195,11 @@ Cada tipo de job deve possuir um handler claramente identificado.
 
 Conceito:
 
-customer.sync
+cliente.sync
     ↓
-CustomerSyncJob
+ClienteSyncJob
     ↓
-CustomerService
+ClienteService
 
 Isso mantém a organização previsível.
 

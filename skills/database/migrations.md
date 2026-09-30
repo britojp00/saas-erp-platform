@@ -110,7 +110,7 @@ da aplicação e o schema do banco.
 
 Exemplo:
 
-alembic revision --autogenerate -m "create customers table"
+alembic revision --autogenerate -m "create clientes table"
 
 A migration gerada deve ser sempre revisada manualmente.
 
@@ -150,10 +150,10 @@ Exemplos:
 
 create tenants table
 create users table
-add tenant_id to customers
+add tenant_id to clientes
 create orders table
 add order status constraint
-create customer email index
+create cliente email index
 
 Evitar mensagens genéricas como:
 
@@ -192,7 +192,7 @@ tenants
 users
    |
    v
-customers
+clientes
    |
    v
 orders
@@ -226,11 +226,11 @@ Existing Data
 
 Exemplo:
 
-Adicionar tenant_id em customers
+Adicionar tenant_id em clientes
 
 não deve ser tratado apenas como:
 
-ALTER TABLE customers
+ALTER TABLE clientes
 ADD COLUMN tenant_id ...
 
 É necessário considerar:
@@ -254,7 +254,7 @@ que já possui dados exige cuidado.
 
 Exemplo conceitual:
 
-customers
+clientes
 
 já possui registros.
 

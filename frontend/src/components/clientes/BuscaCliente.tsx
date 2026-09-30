@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 
 const DEBOUNCE_MS = 350
 
-interface CustomerSearchProps {
+interface BuscaClienteProps {
   value: string
   onChange: (term: string) => void
 }
 
-export default function CustomerSearch({ value, onChange }: CustomerSearchProps) {
+export default function BuscaCliente({ value, onChange }: BuscaClienteProps) {
   const [draft, setDraft] = useState(value)
 
   useEffect(() => {
@@ -22,11 +22,11 @@ export default function CustomerSearch({ value, onChange }: CustomerSearchProps)
   }
 
   return (
-    <div className="customers-search">
+    <div className="clientes-search">
       <div className="field">
-        <label htmlFor="customer-search">Buscar por nome</label>
+        <label htmlFor="cliente-search">Buscar por nome</label>
         <input
-          id="customer-search"
+          id="cliente-search"
           type="search"
           placeholder="Nome do cliente"
           value={draft}

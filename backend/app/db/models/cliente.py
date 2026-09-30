@@ -10,25 +10,25 @@ from app.db.mixins import (
 )
 
 
-class Customer(
+class Cliente(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
     Base,
 ):
-    __tablename__ = "customers"
+    __tablename__ = "clientes"
 
     __table_args__ = (
         UniqueConstraint(
             "tenant_id",
             "document",
-            name="uq_customers_tenant_document",
+            name="uq_clientes_tenant_document",
         ),
         UniqueConstraint(
             "tenant_id",
             "id",
-            name="uq_customers_tenant_id",
+            name="uq_clientes_tenant_id",
         ),
     )
 

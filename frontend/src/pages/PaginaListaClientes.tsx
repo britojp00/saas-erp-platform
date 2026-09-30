@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
-import CustomerList from '../components/customers/CustomerList'
-import CustomerSearch from '../components/customers/CustomerSearch'
-import Pagination from '../components/customers/Pagination'
+import ListaClientes from '../components/clientes/ListaClientes'
+import BuscaCliente from '../components/clientes/BuscaCliente'
+import Pagination from '../components/clientes/Pagination'
 import { SectionError, SectionLoading } from '../components/dashboard/SectionState'
-import { useCustomers } from '../hooks/useCustomers'
+import { useClientes } from '../hooks/useClientes'
 
-export default function CustomersPage() {
+export default function PaginaListaClientes() {
   const {
     data,
     loading,
@@ -17,22 +17,22 @@ export default function CustomersPage() {
     setSearch,
     toggleSort,
     retry,
-  } = useCustomers()
+  } = useClientes()
 
   return (
-    <section className="customers-page">
+    <section className="clientes-page">
       <header className="page-header">
         <div>
           <h1>Clientes</h1>
           <p className="muted">Gestão de clientes da empresa autenticada.</p>
         </div>
-        <Link className="button-link" to="/customers/new">
+        <Link className="button-link" to="/clientes/new">
           Novo cliente
         </Link>
       </header>
 
-      <div className="customers-toolbar">
-        <CustomerSearch value={search} onChange={setSearch} />
+      <div className="clientes-toolbar">
+        <BuscaCliente value={search} onChange={setSearch} />
         {loading && data !== null && (
           <p className="section-state" role="status">
             Carregando clientes...
@@ -52,7 +52,7 @@ export default function CustomersPage() {
         </p>
       ) : (
         <>
-          <CustomerList
+          <ListaClientes
             items={data.items}
             sort={sort}
             order={order}

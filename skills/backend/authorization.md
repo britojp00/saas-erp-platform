@@ -63,14 +63,14 @@ Exemplo:
 
 JWT válido
 +
-customer.read
+cliente.ler
 → acesso permitido
 
 Mas:
 
 JWT válido
 +
-sem customer.delete
+sem cliente.excluir
 → 403 Forbidden
 3. Modelo RBAC
 
@@ -136,10 +136,10 @@ resource.action
 
 Exemplos:
 
-customer.read
-customer.create
-customer.update
-customer.delete
+cliente.ler
+cliente.criar
+cliente.atualizar
+cliente.excluir
 
 Produtos:
 
@@ -165,11 +165,11 @@ relacionados ao domínio.
 
 Preferir:
 
-customer.read
+cliente.ler
 
 em vez de:
 
-can_manage_customer_screen
+can_manage_cliente_screen
 
 Evitar nomes vinculados exclusivamente à interface gráfica.
 
@@ -193,8 +193,8 @@ User João
     ↓
 Role Seller
     ↓
-customer.read
-customer.create
+cliente.ler
+cliente.criar
 order.read
 order.create
 
@@ -242,15 +242,15 @@ Autorização não substitui isolamento de dados.
 
 Mesmo que um usuário possua:
 
-customer.read
+cliente.ler
 
 isso significa:
 
-pode ler customers autorizados
+pode ler clientes autorizados
 
 e não:
 
-pode ler qualquer customer do banco
+pode ler qualquer cliente do banco
 
 O acesso deve respeitar:
 
@@ -290,7 +290,7 @@ A aplicação deve possuir uma forma consistente de verificar permissões.
 
 Conceito:
 
-require_permission("customer.read")
+require_permission("cliente.ler")
 
 ou através de uma dependency equivalente do FastAPI.
 
@@ -305,10 +305,10 @@ FastAPI dependencies podem ser utilizadas para proteger endpoints.
 Conceito:
 
 @router.get(
-    "/customers",
-    dependencies=[Depends(require_permission("customer.read"))],
+    "/clientes",
+    dependencies=[Depends(require_permission("cliente.ler"))],
 )
-async def list_customers():
+async def list_clientes():
     ...
 
 A implementação real deve respeitar a estrutura e o padrão de dependencies do projeto.
@@ -319,17 +319,17 @@ O router pode declarar qual permissão o endpoint exige.
 
 Exemplo conceitual:
 
-GET /customers
-→ customer.read
+GET /clientes
+→ cliente.ler
 
-POST /customers
-→ customer.create
+POST /clientes
+→ cliente.criar
 
-PATCH /customers/{id}
-→ customer.update
+PATCH /clientes/{id}
+→ cliente.atualizar
 
-DELETE /customers/{id}
-→ customer.delete
+DELETE /clientes/{id}
+→ cliente.excluir
 
 O router não deve implementar manualmente toda a lógica de RBAC.
 
@@ -467,10 +467,10 @@ Uma role administrativa poderá possuir várias permissões.
 Exemplo:
 
 Administrator
-├── customer.read
-├── customer.create
-├── customer.update
-├── customer.delete
+├── cliente.ler
+├── cliente.criar
+├── cliente.atualizar
+├── cliente.excluir
 ├── product.read
 ├── product.create
 ├── product.update
@@ -502,14 +502,14 @@ As permissions devem possuir granularidade suficiente para controlar as ações 
 
 Evitar uma única permissão:
 
-customer.manage
+cliente.manage
 
 quando o sistema precisar diferenciar:
 
-customer.read
-customer.create
-customer.update
-customer.delete
+cliente.ler
+cliente.criar
+cliente.atualizar
+cliente.excluir
 
 Por outro lado, não criar permissões excessivamente específicas sem uma necessidade real.
 
@@ -530,7 +530,7 @@ Botão "Excluir"
 
 não impede:
 
-DELETE /customers/{id}
+DELETE /clientes/{id}
 
 O backend sempre deve validar a autorização.
 
@@ -548,7 +548,7 @@ Também não confiar em:
 
 {
   "permissions": [
-    "customer.delete"
+    "cliente.excluir"
   ]
 }
 
@@ -684,7 +684,7 @@ Quando a regra de acesso depender do estado ou conteúdo do recurso, a decisão 
 
 Exemplo:
 
-customer.update
+cliente.atualizar
 +
 cliente pertence ao tenant
 +
@@ -746,14 +746,14 @@ usuário com role removida
 
 Exemplo:
 
-customer.read
-→ GET /customers
-customer.create
-→ POST /customers
-customer.update
-→ PATCH /customers/{id}
-customer.delete
-→ DELETE /customers/{id}
+cliente.ler
+→ GET /clientes
+cliente.criar
+→ POST /clientes
+cliente.atualizar
+→ PATCH /clientes/{id}
+cliente.excluir
+→ DELETE /clientes/{id}
 
 Verificar que permissions diferentes realmente produzem comportamentos diferentes.
 
@@ -765,19 +765,19 @@ Exemplo:
 
 Tenant A
 User A
-customer.read
+cliente.ler
 
 User A deve conseguir:
 
-ler Customer A
+ler Cliente A
 
 mas não:
 
-ler Customer B
+ler Cliente B
 
 Mesmo possuindo:
 
-customer.read
+cliente.ler
 
 A permission não pode ultrapassar o isolamento do tenant.
 

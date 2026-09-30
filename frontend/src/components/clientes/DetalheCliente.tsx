@@ -1,8 +1,8 @@
-import type { Customer } from '../../types/customers'
+import type { Cliente } from '../../types/clientes'
 import { formatDateTime } from '../../utils/format'
 
-interface CustomerDetailProps {
-  customer: Customer
+interface DetalheClienteProps {
+  cliente: Cliente
 }
 
 function OptionalValue({ value }: { value: string | null }) {
@@ -12,34 +12,34 @@ function OptionalValue({ value }: { value: string | null }) {
   return <>{value}</>
 }
 
-export default function CustomerDetail({ customer }: CustomerDetailProps) {
+export default function DetalheCliente({ cliente }: DetalheClienteProps) {
   return (
     <div className="panel">
       <dl className="detail-list">
         <dt>ID</dt>
-        <dd>{customer.id}</dd>
+        <dd>{cliente.id}</dd>
         <dt>Nome</dt>
-        <dd>{customer.name}</dd>
+        <dd>{cliente.name}</dd>
         <dt>Documento</dt>
         <dd>
-          <OptionalValue value={customer.document} />
+          <OptionalValue value={cliente.document} />
         </dd>
         <dt>E-mail</dt>
         <dd>
-          <OptionalValue value={customer.email} />
+          <OptionalValue value={cliente.email} />
         </dd>
         <dt>Telefone</dt>
         <dd>
-          <OptionalValue value={customer.phone} />
+          <OptionalValue value={cliente.phone} />
         </dd>
         <dt>Observações</dt>
         <dd className="detail-list__notes">
-          <OptionalValue value={customer.notes} />
+          <OptionalValue value={cliente.notes} />
         </dd>
         <dt>Criado em</dt>
-        <dd>{formatDateTime(customer.created_at)}</dd>
+        <dd>{formatDateTime(cliente.created_at)}</dd>
         <dt>Atualizado em</dt>
-        <dd>{formatDateTime(customer.updated_at)}</dd>
+        <dd>{formatDateTime(cliente.updated_at)}</dd>
       </dl>
     </div>
   )

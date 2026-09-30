@@ -2,9 +2,9 @@ import { useId, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { ApiError } from '../../services/api'
 import type { ApiFieldError } from '../../services/api'
-import type { CustomerCreatePayload, CustomerFormValues } from '../../types/customers'
+import type { ClienteCriarPayload, ValoresFormularioCliente } from '../../types/clientes'
 
-type FieldName = keyof CustomerFormValues
+type FieldName = keyof ValoresFormularioCliente
 
 type FieldErrors = Record<FieldName, string | null>
 
@@ -24,9 +24,9 @@ const NO_ERRORS: FieldErrors = {
   notes: null,
 }
 
-export interface CustomerFormProps {
-  initialValues: CustomerFormValues
-  submit: (values: CustomerCreatePayload) => Promise<unknown>
+export interface FormularioClienteProps {
+  initialValues: ValoresFormularioCliente
+  submit: (values: ClienteCriarPayload) => Promise<unknown>
   submitLabel: string
   onCancel: () => void
 }
@@ -73,7 +73,7 @@ function FieldShell({ id, label, error, hint, children }: FieldShellProps) {
   )
 }
 
-function validate(values: CustomerFormValues): FieldErrors {
+function validate(values: ValoresFormularioCliente): FieldErrors {
   const errors: FieldErrors = { ...NO_ERRORS }
 
   const name = values.name.trim()
@@ -99,7 +99,7 @@ function validate(values: CustomerFormValues): FieldErrors {
   return errors
 }
 
-function toPayload(values: CustomerFormValues): CustomerCreatePayload {
+function toPayload(values: ValoresFormularioCliente): ClienteCriarPayload {
   const optional = (value: string): string | null =>
     value.trim() === '' ? null : value.trim()
 
@@ -125,14 +125,14 @@ function toFieldErrors(errors: ApiFieldError[]): FieldErrors | null {
   return mapped ? next : null
 }
 
-export default function CustomerForm({
+export default function FormularioCliente({
   initialValues,
   submit,
   submitLabel,
   onCancel,
-}: CustomerFormProps) {
+}: FormularioClienteProps) {
   const formId = useId()
-  const [values, setValues] = useState<CustomerFormValues>(initialValues)
+  const [values, setValues] = useState<ValoresFormularioCliente>(initialValues)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>(NO_ERRORS)
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)

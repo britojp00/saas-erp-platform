@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import (
 from app.core.config import settings
 from app.db.base import Base
 from app.db.database import get_db_session
-from app.db.models.customer import Customer
+from app.db.models.cliente import Cliente
 from app.db.models.tenant import Tenant
 
 
@@ -116,18 +116,18 @@ async def test_commit_persists_record_on_normal_exit(
     tenant_id: int,
 ) -> None:
     async with _boundary_session() as session:
-        customer = Customer(
+        cliente = Cliente(
             tenant_id=tenant_id,
             name="Cliente Commit Boundary",
             document="BOUNDARY-COMMIT-001",
         )
-        session.add(customer)
+        session.add(cliente)
         await session.flush()
-        assert customer.id is not None
+        assert cliente.id is not None
 
     async with transaction_boundary.independent() as check_session:
         result = await check_session.execute(
-            select(Customer).where(Customer.document == "BOUNDARY-COMMIT-001"),
+            select(Cliente).where(Cliente.document == "BOUNDARY-COMMIT-001"),
         )
         persisted = result.scalar_one_or_none()
 
@@ -143,21 +143,21 @@ async def test_rollback_discards_record_after_exception(
 ) -> None:
     with pytest.raises(RuntimeError, match="falha após o flush"):
         async with _boundary_session() as session:
-            customer = Customer(
+            cliente = Cliente(
                 tenant_id=tenant_id,
                 name="Cliente Rollback Boundary",
                 document="BOUNDARY-ROLLBACK-001",
             )
-            session.add(customer)
+            session.add(cliente)
             await session.flush()
-            assert customer.id is not None
+            assert cliente.id is not None
             raise RuntimeError("falha após o flush")
 
     async with transaction_boundary.independent() as check_session:
         persisted = (
             await check_session.execute(
-                select(Customer).where(
-                    Customer.document == "BOUNDARY-ROLLBACK-001",
+                select(Cliente).where(
+                    Cliente.document == "BOUNDARY-ROLLBACK-001",
                 ),
             )
         ).scalar_one_or_none()

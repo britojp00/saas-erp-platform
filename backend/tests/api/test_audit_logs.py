@@ -94,10 +94,10 @@ async def _assign_role_to_user(
 
 
 ALL_AUDIT_PERMS = [
-    "customer.read",
-    "customer.create",
-    "customer.update",
-    "customer.delete",
+    "cliente.ler",
+    "cliente.criar",
+    "cliente.atualizar",
+    "cliente.excluir",
     "category.read",
     "category.create",
     "category.update",
@@ -255,53 +255,53 @@ async def test_list_audit_logs_without_auth(
     assert response.status_code == 401
 
 
-# --- AUDIT FROM CUSTOMER OPERATIONS ---
+# --- AUDIT DE OPERAÇÕES DE CLIENTE ---
 
 
 @pytest.mark.asyncio
-async def test_customer_create_generates_audit(
+async def test_cliente_create_generates_audit(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
     test_tenant: Tenant,
 ):
     response = await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
-        json={"name": "Audit Customer"},
+        json={"name": "Audit Cliente"},
     )
     assert response.status_code == 201
-    customer_id = response.json()["id"]
+    cliente_id = response.json()["id"]
 
     stmt = select(AuditLog).where(
         AuditLog.tenant_id == test_tenant.id,
-        AuditLog.action == "CUSTOMER_CREATE",
-        AuditLog.entity_id == customer_id,
+        AuditLog.action == "CLIENTE_CRIAR",
+        AuditLog.entity_id == cliente_id,
     )
     result = await db_session.execute(stmt)
     audit = result.scalar_one_or_none()
     assert audit is not None
-    assert audit.entity_type == "customer"
+    assert audit.entity_type == "cliente"
     assert audit.new_values is not None
-    assert audit.new_values["name"] == "Audit Customer"
+    assert audit.new_values["name"] == "Audit Cliente"
 
 
 @pytest.mark.asyncio
-async def test_customer_update_generates_audit(
+async def test_cliente_update_generates_audit(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
     test_tenant: Tenant,
 ):
     create_resp = await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         json={"name": "Original Name"},
     )
-    customer_id = create_resp.json()["id"]
+    cliente_id = create_resp.json()["id"]
 
     response = await client.patch(
-        f"/api/v1/customers/{customer_id}",
+        f"/api/v1/clientes/{cliente_id}",
         headers=admin_headers,
         json={"name": "Updated Name"},
     )
@@ -309,8 +309,8 @@ async def test_customer_update_generates_audit(
 
     stmt = select(AuditLog).where(
         AuditLog.tenant_id == test_tenant.id,
-        AuditLog.action == "CUSTOMER_UPDATE",
-        AuditLog.entity_id == customer_id,
+        AuditLog.action == "CLIENTE_ATUALIZAR",
+        AuditLog.entity_id == cliente_id,
     )
     result = await db_session.execute(stmt)
     audit = result.scalar_one_or_none()
@@ -321,29 +321,29 @@ async def test_customer_update_generates_audit(
 
 
 @pytest.mark.asyncio
-async def test_customer_delete_generates_audit(
+async def test_cliente_delete_generates_audit(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
     test_tenant: Tenant,
 ):
     create_resp = await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         json={"name": "To Delete"},
     )
-    customer_id = create_resp.json()["id"]
+    cliente_id = create_resp.json()["id"]
 
     response = await client.delete(
-        f"/api/v1/customers/{customer_id}",
+        f"/api/v1/clientes/{cliente_id}",
         headers=admin_headers,
     )
     assert response.status_code == 204
 
     stmt = select(AuditLog).where(
         AuditLog.tenant_id == test_tenant.id,
-        AuditLog.action == "CUSTOMER_DELETE",
-        AuditLog.entity_id == customer_id,
+        AuditLog.action == "CLIENTE_EXCLUIR",
+        AuditLog.entity_id == cliente_id,
     )
     result = await db_session.execute(stmt)
     audit = result.scalar_one_or_none()
@@ -428,14 +428,14 @@ async def test_audit_log_has_correct_user_id(
     test_user: User,
 ):
     await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         json={"name": "User Check"},
     )
 
     stmt = select(AuditLog).where(
         AuditLog.tenant_id == test_tenant.id,
-        AuditLog.action == "CUSTOMER_CREATE",
+        AuditLog.action == "CLIENTE_CRIAR",
     )
     result = await db_session.execute(stmt)
     audit = result.scalar_one_or_none()
@@ -451,13 +451,13 @@ async def test_audit_log_has_correct_tenant_id(
     test_tenant: Tenant,
 ):
     await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         json={"name": "Tenant Check"},
     )
 
     stmt = select(AuditLog).where(
-        AuditLog.action == "CUSTOMER_CREATE",
+        AuditLog.action == "CLIENTE_CRIAR",
     )
     result = await db_session.execute(stmt)
     audit = result.scalar_one_or_none()
@@ -476,7 +476,7 @@ async def test_password_not_in_audit_log(
     test_tenant: Tenant,
 ):
     await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         json={"name": "Security Check"},
     )
@@ -507,9 +507,9 @@ async def test_tenant_isolation(
     test_tenant: Tenant,
 ):
     await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
-        json={"name": "Tenant A Customer"},
+        json={"name": "Tenant A Cliente"},
     )
 
     response = await client.get(
@@ -559,7 +559,7 @@ async def test_list_with_pagination(
     admin_headers: dict[str, str],
 ):
     await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         json={"name": "Paginated"},
     )
@@ -584,7 +584,7 @@ async def test_list_with_action_filter(
     test_tenant: Tenant,
 ):
     await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         json={"name": "Filter Test"},
     )
@@ -592,13 +592,13 @@ async def test_list_with_action_filter(
     response = await client.get(
         "/api/v1/audit-logs",
         headers=admin_headers,
-        params={"action": "CUSTOMER_CREATE"},
+        params={"action": "CLIENTE_CRIAR"},
     )
     assert response.status_code == 200
     data = response.json()
     assert data["total"] >= 1
     for item in data["items"]:
-        assert item["action"] == "CUSTOMER_CREATE"
+        assert item["action"] == "CLIENTE_CRIAR"
 
 
 @pytest.mark.asyncio
@@ -607,7 +607,7 @@ async def test_list_with_entity_type_filter(
     admin_headers: dict[str, str],
 ):
     await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         json={"name": "Entity Filter"},
     )
@@ -615,13 +615,13 @@ async def test_list_with_entity_type_filter(
     response = await client.get(
         "/api/v1/audit-logs",
         headers=admin_headers,
-        params={"entity_type": "customer"},
+        params={"entity_type": "cliente"},
     )
     assert response.status_code == 200
     data = response.json()
     assert data["total"] >= 1
     for item in data["items"]:
-        assert item["entity_type"] == "customer"
+        assert item["entity_type"] == "cliente"
 
 
 @pytest.mark.asyncio
@@ -653,7 +653,7 @@ async def test_failed_operation_no_audit_log(
     count_before = len(list(result.scalars().all()))
 
     response = await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         json={"name": ""},
     )

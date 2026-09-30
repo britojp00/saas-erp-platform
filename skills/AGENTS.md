@@ -461,8 +461,8 @@ Exemplo:
 
 Alterações:
 - criado endpoint de clientes;
-- criado CustomerService;
-- criado CustomerRepository.
+- criado ClienteService;
+- criado ClienteRepository.
 
 Testes:
 - pytest: 12 passed

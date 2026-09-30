@@ -42,7 +42,7 @@ async def list_orders(
     sort: str = Query(default="created_at"),
     order: str = Query(default="desc"),
     status: str | None = Query(default=None),
-    customer_id: int | None = Query(default=None),
+    cliente_id: int | None = Query(default=None),
 ) -> OrderListResponse:
     items, total = await service.list(
         current_user.tenant_id,
@@ -52,7 +52,7 @@ async def list_orders(
         sort=sort,
         order=order,
         status=status,
-        customer_id=customer_id,
+        cliente_id=cliente_id,
     )
     return OrderListResponse(
         items=[OrderListItem.model_validate(i) for i in items],

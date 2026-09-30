@@ -79,9 +79,9 @@ External errors
 
 Exemplo conceitual:
 
-CustomerSyncService
+ClienteSyncService
        ↓
-ExternalCustomerClient
+ExternalClienteClient
        ↓
 External API
 
@@ -295,7 +295,7 @@ Quando necessário, respostas externas devem ser validadas com schemas específi
 
 Exemplo conceitual:
 
-ExternalCustomerResponse
+ExternalClienteResposta
 ExternalOrderResponse
 
 Não confiar cegamente em dict arbitrários.
@@ -306,11 +306,11 @@ Quando um sistema externo possuir contrato específico, considerar schemas ou DT
 
 Exemplo:
 
-Internal Customer
+Internal Cliente
       ↓
 Transformation
       ↓
-ExternalCustomerPayload
+ExternalClientePayload
 
 Não obrigar o model interno a possuir exatamente o mesmo formato da API externa.
 
@@ -335,9 +335,9 @@ Não alterar o domínio interno somente para acomodar o formato externo.
 
 Nunca assumir que:
 
-ERP Customer
+ERP Cliente
 =
-External Customer
+External Cliente
 
 Mesmo quando os campos pareçam semelhantes.
 
@@ -373,7 +373,7 @@ Operações externas sujeitas a repetição devem considerar idempotência.
 
 Exemplo:
 
-POST /customers
+POST /clientes
 
 pode ser repetido após:
 
@@ -1152,7 +1152,7 @@ Testar repetição da mesma operação.
 
 Exemplo:
 
-sync_customer
+sync_cliente
 ↓
 execução 1
 ↓

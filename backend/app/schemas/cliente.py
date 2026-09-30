@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, field_serializer
 from app.core.config import settings
 
 
-class CustomerCreate(BaseModel):
+class ClienteCriarPayload(BaseModel):
     name: str = Field(min_length=1, max_length=150)
     document: str | None = Field(default=None, max_length=30)
     email: str | None = Field(default=None, max_length=255)
@@ -13,7 +13,7 @@ class CustomerCreate(BaseModel):
     notes: str | None = Field(default=None, max_length=5000)
 
 
-class CustomerUpdate(BaseModel):
+class ClienteAtualizarPayload(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=150)
     document: str | None = Field(default=None, max_length=30)
     email: str | None = Field(default=None, max_length=255)
@@ -21,7 +21,7 @@ class CustomerUpdate(BaseModel):
     notes: str | None = Field(default=None, max_length=5000)
 
 
-class CustomerResponse(BaseModel):
+class ClienteResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
@@ -42,8 +42,8 @@ class CustomerResponse(BaseModel):
         return value.astimezone(settings.tz).isoformat()
 
 
-class CustomerListResponse(BaseModel):
-    items: list[CustomerResponse]
+class ListaClientesResposta(BaseModel):
+    items: list[ClienteResposta]
     page: int
     page_size: int
     total: int

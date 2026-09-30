@@ -1,17 +1,17 @@
 from asyncpg import UniqueViolationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import CustomerNotFoundError, DuplicateCustomerError
-from app.db.models.customer import Customer
-from app.repositories.customer import CustomerRepository
-from app.schemas.customer import CustomerCreate, CustomerUpdate
+from app.core.exceptions import ErroClienteDuplicado, ErroClienteNaoEncontrado
+from app.db.models.cliente import Cliente
+from app.repositories.cliente import ClienteRepository
+from app.schemas.cliente import ClienteAtualizarPayload, ClienteCriarPayload
 from app.services.audit_log import AuditLogService
 
 
-class CustomerService:
+class ClienteService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
-        self.repo = CustomerRepository(session)
+        self.repo = ClienteRepository(session)
         self.audit_service = AuditLogService(session)
 
     async def list(
@@ -23,7 +23,7 @@ class CustomerService:
         search: str | None = None,
         sort: str = "created_at",
         order: str = "desc",
-    ) -> tuple[list[Customer], int]:
+    ) -> tuple[list[Cliente], int]:
         offset = (page - 1) * page_size
         return await self.repo.list(
             tenant_id,
@@ -36,26 +36,26 @@ class CustomerService:
 
     async def get_by_id(
         self,
-        customer_id: int,
+        cliente_id: int,
         tenant_id: int,
-    ) -> Customer:
-        customer = await self.repo.get_by_id(customer_id, tenant_id)
-        if customer is None:
-            raise CustomerNotFoundError()
-        return customer
+    ) -> Cliente:
+        cliente = await self.repo.get_by_id(cliente_id, tenant_id)
+        if cliente is None:
+            raise ErroClienteNaoEncontrado()
+        return cliente
 
     async def create(
         self,
         tenant_id: int,
-        data: CustomerCreate,
+        data: ClienteCriarPayload,
         user_id: int | None = None,
-    ) -> Customer:
+    ) -> Cliente:
         if data.document:
             exists = await self.repo.exists_by_document(tenant_id, data.document)
             if exists:
-                raise DuplicateCustomerError()
+                raise ErroClienteDuplicado()
 
-        customer = Customer(
+        cliente = Cliente(
             tenant_id=tenant_id,
             name=data.name.strip(),
             document=data.document,
@@ -65,15 +65,15 @@ class CustomerService:
         )
 
         try:
-            result = await self.repo.create(customer)
+            result = await self.repo.create(cliente)
         except UniqueViolationError:
-            raise DuplicateCustomerError()
+            raise ErroClienteDuplicado()
 
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="CUSTOMER_CREATE",
-            entity_type="customer",
+            action="CLIENTE_CRIAR",
+            entity_type="cliente",
             entity_id=result.id,
             new_values={
                 "name": result.name,
@@ -87,46 +87,46 @@ class CustomerService:
 
     async def update(
         self,
-        customer_id: int,
+        cliente_id: int,
         tenant_id: int,
-        data: CustomerUpdate,
+        data: ClienteAtualizarPayload,
         user_id: int | None = None,
-    ) -> Customer:
-        customer = await self.repo.get_by_id(customer_id, tenant_id)
-        if customer is None:
-            raise CustomerNotFoundError()
+    ) -> Cliente:
+        cliente = await self.repo.get_by_id(cliente_id, tenant_id)
+        if cliente is None:
+            raise ErroClienteNaoEncontrado()
 
         old_values = {
-            "name": customer.name,
-            "document": customer.document,
-            "email": customer.email,
-            "phone": customer.phone,
+            "name": cliente.name,
+            "document": cliente.document,
+            "email": cliente.email,
+            "phone": cliente.phone,
         }
 
         update_data = data.model_dump(exclude_unset=True)
 
         if "name" in update_data:
-            customer.name = update_data["name"].strip()
+            cliente.name = update_data["name"].strip()
         if "document" in update_data:
             new_document = update_data["document"]
-            if new_document is not None and new_document != customer.document:
+            if new_document is not None and new_document != cliente.document:
                 exists = await self.repo.exists_by_document(
-                    tenant_id, new_document, exclude_id=customer.id
+                    tenant_id, new_document, exclude_id=cliente.id
                 )
                 if exists:
-                    raise DuplicateCustomerError()
-            customer.document = new_document
+                    raise ErroClienteDuplicado()
+            cliente.document = new_document
         if "email" in update_data:
-            customer.email = update_data["email"]
+            cliente.email = update_data["email"]
         if "phone" in update_data:
-            customer.phone = update_data["phone"]
+            cliente.phone = update_data["phone"]
         if "notes" in update_data:
-            customer.notes = update_data["notes"]
+            cliente.notes = update_data["notes"]
 
         try:
-            result = await self.repo.update(customer)
+            result = await self.repo.update(cliente)
         except UniqueViolationError:
-            raise DuplicateCustomerError()
+            raise ErroClienteDuplicado()
 
         new_values = {
             "name": result.name,
@@ -138,8 +138,8 @@ class CustomerService:
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="CUSTOMER_UPDATE",
-            entity_type="customer",
+            action="CLIENTE_ATUALIZAR",
+            entity_type="cliente",
             entity_id=result.id,
             old_values=old_values,
             new_values=new_values,
@@ -149,26 +149,26 @@ class CustomerService:
 
     async def soft_delete(
         self,
-        customer_id: int,
+        cliente_id: int,
         tenant_id: int,
         user_id: int | None = None,
     ) -> None:
-        customer = await self.repo.get_by_id(customer_id, tenant_id)
-        if customer is None:
-            raise CustomerNotFoundError()
+        cliente = await self.repo.get_by_id(cliente_id, tenant_id)
+        if cliente is None:
+            raise ErroClienteNaoEncontrado()
 
         old_values = {
-            "name": customer.name,
-            "document": customer.document,
+            "name": cliente.name,
+            "document": cliente.document,
         }
 
-        await self.repo.soft_delete(customer)
+        await self.repo.soft_delete(cliente)
 
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="CUSTOMER_DELETE",
-            entity_type="customer",
-            entity_id=customer_id,
+            action="CLIENTE_EXCLUIR",
+            entity_type="cliente",
+            entity_id=cliente_id,
             old_values=old_values,
         )

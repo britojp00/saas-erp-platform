@@ -70,7 +70,7 @@ O endpoint consome a session através do mecanismo de dependency injection do Fa
 
 Exemplo:
 
-async def list_customers(
+async def list_clientes(
     db: AsyncSession = Depends(get_db),
 ):
     ...
@@ -226,7 +226,7 @@ Dependencies também podem realizar verificações de autorização.
 
 Conceito:
 
-require_permission("customer.read")
+require_permission("cliente.ler")
 
 Fluxo:
 
@@ -255,7 +255,7 @@ def require_permission(permission: str):
 
 Isso permite:
 
-Depends(require_permission("customer.read"))
+Depends(require_permission("cliente.ler"))
 
 A implementação final deve manter essa lógica simples e testável.
 
@@ -265,7 +265,7 @@ A dependency deve verificar se o usuário possui a permission necessária.
 
 Exemplo:
 
-customer.read
+cliente.ler
 
 Caso não possua:
 
@@ -285,7 +285,7 @@ A operação pode acontecer considerando o estado do domínio?
 
 Exemplo:
 
-customer.delete
+cliente.excluir
 +
 permission válida
 
@@ -333,8 +333,8 @@ Evitar criar uma dependency exclusiva para uma única linha de código sem neces
 
 Evitar:
 
-async def get_current_customer(...):
-    if customer.status == "...":
+async def get_current_cliente(...):
+    if cliente.status == "...":
         ...
 
 quando essa decisão fizer parte da regra do domínio.
@@ -375,7 +375,7 @@ verificar status do tenant
 
 quando essas verificações fizerem parte do contrato de identidade e contexto.
 
-Não deve implementar regras específicas de customers, products ou orders.
+Não deve implementar regras específicas de clientes, products ou orders.
 
 22. Permission Dependency
 
@@ -480,7 +480,7 @@ application
 Exemplo:
 
 router = APIRouter(
-    prefix="/customers",
+    prefix="/clientes",
     dependencies=[Depends(get_current_user)],
 )
 
@@ -492,10 +492,10 @@ Quando todos os endpoints de um router exigirem uma permission comum, pode ser p
 
 Entretanto, quando cada operação possuir permission diferente:
 
-GET → customer.read
-POST → customer.create
-PATCH → customer.update
-DELETE → customer.delete
+GET → cliente.ler
+POST → cliente.criar
+PATCH → cliente.atualizar
+DELETE → cliente.excluir
 
 o check deve ser definido de forma específica.
 
@@ -740,7 +740,7 @@ Repositories também não devem utilizar Depends.
 
 Evitar:
 
-class CustomerRepository:
+class ClienteRepository:
 
     def __init__(
         self,
@@ -750,7 +750,7 @@ class CustomerRepository:
 
 Preferir:
 
-CustomerRepository(session)
+ClienteRepository(session)
 
 A composição ocorre na camada da aplicação.
 
@@ -770,11 +770,11 @@ Exemplo conceitual:
 
 get_db
    ↓
-get_customer_service
+get_cliente_service
    ↓
-CustomerService
+ClienteService
    ↓
-CustomerRepository
+ClienteRepository
 
 Isso mantém a arquitetura explícita.
 
@@ -784,11 +784,11 @@ Quando necessário, uma dependency pode construir um service.
 
 Exemplo conceitual:
 
-async def get_customer_service(
+async def get_cliente_service(
     db: AsyncSession = Depends(get_db),
-) -> CustomerService:
-    repository = CustomerRepository(db)
-    return CustomerService(repository)
+) -> ClienteService:
+    repository = ClienteRepository(db)
+    return ClienteService(repository)
 
 Isso é útil para centralizar a composição.
 
@@ -816,7 +816,7 @@ Evitar uma dependency única que faça:
 
 authentication
 authorization
-customer lookup
+cliente lookup
 inventory validation
 audit
 

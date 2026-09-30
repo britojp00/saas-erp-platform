@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, get_password_hash
-from app.db.models.customer import Customer
+from app.db.models.cliente import Cliente
 from app.db.models.permission import Permission
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
@@ -93,36 +93,36 @@ async def _assign_role_to_user(
     await session.flush()
 
 
-async def _create_customer_in_db(
+async def _create_cliente_in_db(
     session: AsyncSession,
     tenant_id: int,
     name: str,
     document: str | None = None,
-) -> Customer:
-    customer = Customer(
+) -> Cliente:
+    cliente = Cliente(
         tenant_id=tenant_id,
         name=name,
         document=document,
     )
-    session.add(customer)
+    session.add(cliente)
     await session.flush()
-    return customer
+    return cliente
 
 
 @pytest.fixture
-async def all_customer_perms(
+async def all_cliente_perms(
     db_session: AsyncSession,
     test_tenant: Tenant,
 ) -> Role:
     return await _create_role_with_perms(
         db_session,
         test_tenant.id,
-        "customer_admin",
+        "cliente_admin",
         [
-            "customer.read",
-            "customer.create",
-            "customer.update",
-            "customer.delete",
+            "cliente.ler",
+            "cliente.criar",
+            "cliente.atualizar",
+            "cliente.excluir",
         ],
     )
 
@@ -132,10 +132,10 @@ async def admin_user(
     db_session: AsyncSession,
     test_tenant: Tenant,
     test_user: User,
-    all_customer_perms: Role,
+    all_cliente_perms: Role,
 ) -> User:
     await _assign_role_to_user(
-        db_session, test_tenant.id, test_user.id, all_customer_perms.id
+        db_session, test_tenant.id, test_user.id, all_cliente_perms.id
     )
     await db_session.commit()
     return test_user
@@ -159,7 +159,7 @@ async def admin_headers(
 async def other_tenant(db_session: AsyncSession) -> Tenant:
     tenant = Tenant(
         name="Other Tenant",
-        slug="other-customer-tenant",
+        slug="other-cliente-tenant",
         is_active=True,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
@@ -197,12 +197,12 @@ async def other_tenant_headers(
     role = await _create_role_with_perms(
         db_session,
         other_tenant.id,
-        "other_customer_all",
+        "other_cliente_all",
         [
-            "customer.read",
-            "customer.create",
-            "customer.update",
-            "customer.delete",
+            "cliente.ler",
+            "cliente.criar",
+            "cliente.atualizar",
+            "cliente.excluir",
         ],
     )
     await _assign_role_to_user(
@@ -222,12 +222,12 @@ async def other_tenant_headers(
 
 
 @pytest.mark.asyncio
-async def test_create_customer(
+async def test_create_cliente(
     client: AsyncClient,
     admin_headers: dict[str, str],
 ):
     response = await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         json={"name": "Joao Silva"},
     )
@@ -240,12 +240,12 @@ async def test_create_customer(
 
 
 @pytest.mark.asyncio
-async def test_create_customer_without_permission(
+async def test_create_cliente_without_permission(
     client: AsyncClient,
     authenticated_headers: dict[str, str],
 ):
     response = await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=authenticated_headers,
         json={"name": "Joao Silva"},
     )
@@ -254,19 +254,19 @@ async def test_create_customer_without_permission(
 
 
 @pytest.mark.asyncio
-async def test_create_customer_duplicate_document(
+async def test_create_cliente_duplicate_document(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    await _create_customer_in_db(db_session, test_tenant.id, "Existing", "12345678901")
+    await _create_cliente_in_db(db_session, test_tenant.id, "Existing", "12345678901")
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
-        json={"name": "New Customer", "document": "12345678901"},
+        json={"name": "New Cliente", "document": "12345678901"},
     )
     assert response.status_code == 409
 
@@ -275,12 +275,12 @@ async def test_create_customer_duplicate_document(
 
 
 @pytest.mark.asyncio
-async def test_list_customers_empty(
+async def test_list_clientes_empty(
     client: AsyncClient,
     admin_headers: dict[str, str],
 ):
     response = await client.get(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -292,18 +292,18 @@ async def test_list_customers_empty(
 
 
 @pytest.mark.asyncio
-async def test_list_customers_with_data(
+async def test_list_clientes_with_data(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    await _create_customer_in_db(db_session, test_tenant.id, "Customer A")
-    await _create_customer_in_db(db_session, test_tenant.id, "Customer B")
+    await _create_cliente_in_db(db_session, test_tenant.id, "Cliente A")
+    await _create_cliente_in_db(db_session, test_tenant.id, "Cliente B")
     await db_session.commit()
 
     response = await client.get(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -313,18 +313,18 @@ async def test_list_customers_with_data(
 
 
 @pytest.mark.asyncio
-async def test_list_customers_search(
+async def test_list_clientes_search(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    await _create_customer_in_db(db_session, test_tenant.id, "Joao Silva")
-    await _create_customer_in_db(db_session, test_tenant.id, "Maria Santos")
+    await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
+    await _create_cliente_in_db(db_session, test_tenant.id, "Maria Santos")
     await db_session.commit()
 
     response = await client.get(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         params={"search": "Joao"},
     )
@@ -335,18 +335,18 @@ async def test_list_customers_search(
 
 
 @pytest.mark.asyncio
-async def test_list_customers_pagination(
+async def test_list_clientes_pagination(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
     for i in range(5):
-        await _create_customer_in_db(db_session, test_tenant.id, f"Customer {i}")
+        await _create_cliente_in_db(db_session, test_tenant.id, f"Cliente {i}")
     await db_session.commit()
 
     response = await client.get(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         params={"page": 1, "page_size": 2},
     )
@@ -359,18 +359,18 @@ async def test_list_customers_pagination(
 
 
 @pytest.mark.asyncio
-async def test_list_customers_sort(
+async def test_list_clientes_sort(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    await _create_customer_in_db(db_session, test_tenant.id, "Zebra")
-    await _create_customer_in_db(db_session, test_tenant.id, "Alpha")
+    await _create_cliente_in_db(db_session, test_tenant.id, "Zebra")
+    await _create_cliente_in_db(db_session, test_tenant.id, "Alpha")
     await db_session.commit()
 
     response = await client.get(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         params={"sort": "name", "order": "asc"},
     )
@@ -381,15 +381,15 @@ async def test_list_customers_sort(
 
 
 @pytest.mark.asyncio
-async def test_list_customers_sort_by_id_desc(
+async def test_list_clientes_sort_by_id_desc(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    first = await _create_customer_in_db(db_session, test_tenant.id, "Primeiro")
-    second = await _create_customer_in_db(db_session, test_tenant.id, "Segundo")
-    third = await _create_customer_in_db(db_session, test_tenant.id, "Terceiro")
+    first = await _create_cliente_in_db(db_session, test_tenant.id, "Primeiro")
+    second = await _create_cliente_in_db(db_session, test_tenant.id, "Segundo")
+    third = await _create_cliente_in_db(db_session, test_tenant.id, "Terceiro")
     # created_at invertido em relacao aos ids (id maior = created_at mais
     # antigo): se sort=id caisse no fallback de created_at, a ordem seria
     # a inversa da esperada.
@@ -399,7 +399,7 @@ async def test_list_customers_sort_by_id_desc(
     await db_session.commit()
 
     response = await client.get(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         params={"sort": "id", "order": "desc"},
     )
@@ -409,15 +409,15 @@ async def test_list_customers_sort_by_id_desc(
 
 
 @pytest.mark.asyncio
-async def test_list_customers_sort_by_id_asc(
+async def test_list_clientes_sort_by_id_asc(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    first = await _create_customer_in_db(db_session, test_tenant.id, "Primeiro")
-    second = await _create_customer_in_db(db_session, test_tenant.id, "Segundo")
-    third = await _create_customer_in_db(db_session, test_tenant.id, "Terceiro")
+    first = await _create_cliente_in_db(db_session, test_tenant.id, "Primeiro")
+    second = await _create_cliente_in_db(db_session, test_tenant.id, "Segundo")
+    third = await _create_cliente_in_db(db_session, test_tenant.id, "Terceiro")
     # created_at invertido em relacao aos ids (id maior = created_at mais
     # antigo): se sort=id caisse no fallback de created_at, a ordem seria
     # a inversa da esperada.
@@ -427,7 +427,7 @@ async def test_list_customers_sort_by_id_asc(
     await db_session.commit()
 
     response = await client.get(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
         params={"sort": "id", "order": "asc"},
     )
@@ -440,49 +440,49 @@ async def test_list_customers_sort_by_id_asc(
 
 
 @pytest.mark.asyncio
-async def test_get_customer(
+async def test_get_cliente(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    customer = await _create_customer_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
     await db_session.commit()
 
     response = await client.get(
-        f"/api/v1/customers/{customer.id}",
+        f"/api/v1/clientes/{cliente.id}",
         headers=admin_headers,
     )
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "Joao Silva"
-    assert data["id"] == customer.id
+    assert data["id"] == cliente.id
 
 
 @pytest.mark.asyncio
-async def test_get_customer_not_found(
+async def test_get_cliente_not_found(
     client: AsyncClient,
     admin_headers: dict[str, str],
 ):
     response = await client.get(
-        "/api/v1/customers/99999",
+        "/api/v1/clientes/99999",
         headers=admin_headers,
     )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_get_customer_cross_tenant(
+async def test_get_cliente_cross_tenant(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     other_tenant_headers: dict[str, str],
 ):
-    customer = await _create_customer_in_db(db_session, test_tenant.id, "My Customer")
+    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "My Cliente")
     await db_session.commit()
 
     response = await client.get(
-        f"/api/v1/customers/{customer.id}",
+        f"/api/v1/clientes/{cliente.id}",
         headers=other_tenant_headers,
     )
     assert response.status_code == 404
@@ -492,17 +492,17 @@ async def test_get_customer_cross_tenant(
 
 
 @pytest.mark.asyncio
-async def test_update_customer(
+async def test_update_cliente(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    customer = await _create_customer_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
     await db_session.commit()
 
     response = await client.patch(
-        f"/api/v1/customers/{customer.id}",
+        f"/api/v1/clientes/{cliente.id}",
         headers=admin_headers,
         json={"name": "Joao Updated"},
     )
@@ -512,17 +512,17 @@ async def test_update_customer(
 
 
 @pytest.mark.asyncio
-async def test_update_customer_without_permission(
+async def test_update_cliente_without_permission(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     authenticated_headers: dict[str, str],
 ):
-    customer = await _create_customer_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
     await db_session.commit()
 
     response = await client.patch(
-        f"/api/v1/customers/{customer.id}",
+        f"/api/v1/clientes/{cliente.id}",
         headers=authenticated_headers,
         json={"name": "Joao Updated"},
     )
@@ -530,12 +530,12 @@ async def test_update_customer_without_permission(
 
 
 @pytest.mark.asyncio
-async def test_update_customer_not_found(
+async def test_update_cliente_not_found(
     client: AsyncClient,
     admin_headers: dict[str, str],
 ):
     response = await client.patch(
-        "/api/v1/customers/99999",
+        "/api/v1/clientes/99999",
         headers=admin_headers,
         json={"name": "Updated"},
     )
@@ -543,17 +543,17 @@ async def test_update_customer_not_found(
 
 
 @pytest.mark.asyncio
-async def test_update_customer_cross_tenant(
+async def test_update_cliente_cross_tenant(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     other_tenant_headers: dict[str, str],
 ):
-    customer = await _create_customer_in_db(db_session, test_tenant.id, "My Customer")
+    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "My Cliente")
     await db_session.commit()
 
     response = await client.patch(
-        f"/api/v1/customers/{customer.id}",
+        f"/api/v1/clientes/{cliente.id}",
         headers=other_tenant_headers,
         json={"name": "Hacked"},
     )
@@ -564,39 +564,39 @@ async def test_update_customer_cross_tenant(
 
 
 @pytest.mark.asyncio
-async def test_delete_customer(
+async def test_delete_cliente(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    customer = await _create_customer_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
     await db_session.commit()
 
     response = await client.delete(
-        f"/api/v1/customers/{customer.id}",
+        f"/api/v1/clientes/{cliente.id}",
         headers=admin_headers,
     )
     assert response.status_code == 204
 
 
 @pytest.mark.asyncio
-async def test_deleted_customer_not_in_list(
+async def test_deleted_cliente_not_in_list(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    customer = await _create_customer_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
     await db_session.commit()
 
     await client.delete(
-        f"/api/v1/customers/{customer.id}",
+        f"/api/v1/clientes/{cliente.id}",
         headers=admin_headers,
     )
 
     response = await client.get(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -604,44 +604,44 @@ async def test_deleted_customer_not_in_list(
 
 
 @pytest.mark.asyncio
-async def test_deleted_customer_not_found(
+async def test_deleted_cliente_not_found(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    customer = await _create_customer_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
     await db_session.commit()
 
     await client.delete(
-        f"/api/v1/customers/{customer.id}",
+        f"/api/v1/clientes/{cliente.id}",
         headers=admin_headers,
     )
 
     response = await client.get(
-        f"/api/v1/customers/{customer.id}",
+        f"/api/v1/clientes/{cliente.id}",
         headers=admin_headers,
     )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_deleted_customer_cannot_be_updated(
+async def test_deleted_cliente_cannot_be_updated(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    customer = await _create_customer_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
     await db_session.commit()
 
     await client.delete(
-        f"/api/v1/customers/{customer.id}",
+        f"/api/v1/clientes/{cliente.id}",
         headers=admin_headers,
     )
 
     response = await client.patch(
-        f"/api/v1/customers/{customer.id}",
+        f"/api/v1/clientes/{cliente.id}",
         headers=admin_headers,
         json={"name": "Updated"},
     )
@@ -649,29 +649,29 @@ async def test_deleted_customer_cannot_be_updated(
 
 
 @pytest.mark.asyncio
-async def test_delete_customer_not_found(
+async def test_delete_cliente_not_found(
     client: AsyncClient,
     admin_headers: dict[str, str],
 ):
     response = await client.delete(
-        "/api/v1/customers/99999",
+        "/api/v1/clientes/99999",
         headers=admin_headers,
     )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_delete_customer_cross_tenant(
+async def test_delete_cliente_cross_tenant(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     other_tenant_headers: dict[str, str],
 ):
-    customer = await _create_customer_in_db(db_session, test_tenant.id, "My Customer")
+    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "My Cliente")
     await db_session.commit()
 
     response = await client.delete(
-        f"/api/v1/customers/{customer.id}",
+        f"/api/v1/clientes/{cliente.id}",
         headers=other_tenant_headers,
     )
     assert response.status_code == 404
@@ -682,7 +682,7 @@ async def test_delete_customer_cross_tenant(
 
 @pytest.mark.asyncio
 async def test_unauthenticated_access(client: AsyncClient):
-    response = await client.get("/api/v1/customers")
+    response = await client.get("/api/v1/clientes")
     assert response.status_code == 401
 
 
@@ -690,7 +690,7 @@ async def test_unauthenticated_access(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_customers_isolated_by_tenant(
+async def test_clientes_isolated_by_tenant(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -698,20 +698,20 @@ async def test_customers_isolated_by_tenant(
     admin_headers: dict[str, str],
     other_tenant_headers: dict[str, str],
 ):
-    await _create_customer_in_db(db_session, test_tenant.id, "Tenant A Customer")
-    await _create_customer_in_db(db_session, other_tenant.id, "Tenant B Customer")
+    await _create_cliente_in_db(db_session, test_tenant.id, "Tenant A Cliente")
+    await _create_cliente_in_db(db_session, other_tenant.id, "Tenant B Cliente")
     await db_session.commit()
 
     response_a = await client.get(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=admin_headers,
     )
     assert response_a.json()["total"] == 1
-    assert response_a.json()["items"][0]["name"] == "Tenant A Customer"
+    assert response_a.json()["items"][0]["name"] == "Tenant A Cliente"
 
     response_b = await client.get(
-        "/api/v1/customers",
+        "/api/v1/clientes",
         headers=other_tenant_headers,
     )
     assert response_b.json()["total"] == 1
-    assert response_b.json()["items"][0]["name"] == "Tenant B Customer"
+    assert response_b.json()["items"][0]["name"] == "Tenant B Cliente"

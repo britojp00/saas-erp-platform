@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
     DuplicateOrderItemError,
+    ErroPedidoClienteNaoEncontrado,
     InvalidOrderStateError,
-    OrderCustomerNotFoundError,
     OrderItemNotFoundError,
     OrderItemRemovalNotAllowedError,
     OrderMustHaveItemsError,
@@ -13,12 +13,12 @@ from app.core.exceptions import (
     OrderProductInactiveError,
     OrderProductNotFoundError,
 )
-from app.db.models.customer import Customer
+from app.db.models.cliente import Cliente
 from app.db.models.inventory_reservation import InventoryReservation, ReservationStatus
 from app.db.models.order import Order
 from app.db.models.order_item import OrderItem
 from app.db.models.product import Product
-from app.repositories.customer import CustomerRepository
+from app.repositories.cliente import ClienteRepository
 from app.repositories.inventory import InventoryRepository
 from app.repositories.inventory_reservation import InventoryReservationRepository
 from app.repositories.order import OrderRepository
@@ -44,7 +44,7 @@ class OrderService:
         self.order_repo = OrderRepository(session)
         self.item_repo = OrderItemRepository(session)
         self.product_repo = ProductRepository(session)
-        self.customer_repo = CustomerRepository(session)
+        self.cliente_repo = ClienteRepository(session)
         self.inventory_repo = InventoryRepository(session)
         self.reservation_repo = InventoryReservationRepository(session)
         self.audit_service = AuditLogService(session)
@@ -59,7 +59,7 @@ class OrderService:
         sort: str = "created_at",
         order: str = "desc",
         status: str | None = None,
-        customer_id: int | None = None,
+        cliente_id: int | None = None,
     ) -> tuple[list[Order], int]:
         offset = (page - 1) * page_size
         return await self.order_repo.list(
@@ -70,7 +70,7 @@ class OrderService:
             sort=sort,
             order=order,
             status=status,
-            customer_id=customer_id,
+            cliente_id=cliente_id,
         )
 
     async def get_by_id(
@@ -92,15 +92,15 @@ class OrderService:
         order.items = await self.item_repo.list_by_order(tenant_id, order_id)
         return order
 
-    async def _validate_customer(
+    async def _validate_cliente(
         self,
         tenant_id: int,
-        customer_id: int,
-    ) -> Customer:
-        customer = await self.customer_repo.get_by_id(customer_id, tenant_id)
-        if customer is None:
-            raise OrderCustomerNotFoundError()
-        return customer
+        cliente_id: int,
+    ) -> Cliente:
+        cliente = await self.cliente_repo.get_by_id(cliente_id, tenant_id)
+        if cliente is None:
+            raise ErroPedidoClienteNaoEncontrado()
+        return cliente
 
     async def _validate_product(
         self,
@@ -122,7 +122,7 @@ class OrderService:
         data: OrderCreate,
         user_id: int | None = None,
     ) -> Order:
-        await self._validate_customer(tenant_id, data.customer_id)
+        await self._validate_cliente(tenant_id, data.cliente_id)
 
         product_ids = [item.product_id for item in data.items]
         if len(product_ids) != len(set(product_ids)):
@@ -133,7 +133,7 @@ class OrderService:
         order = Order(
             tenant_id=tenant_id,
             order_number=order_number,
-            customer_id=data.customer_id,
+            cliente_id=data.cliente_id,
             notes=data.notes,
         )
         await self.order_repo.create(order)
@@ -169,7 +169,7 @@ class OrderService:
             entity_id=order.id,
             new_values={
                 "order_number": order.order_number,
-                "customer_id": order.customer_id,
+                "cliente_id": order.cliente_id,
                 "status": order.status,
             },
         )
@@ -191,15 +191,15 @@ class OrderService:
             raise InvalidOrderStateError()
 
         old_values = {
-            "customer_id": order.customer_id,
+            "cliente_id": order.cliente_id,
             "notes": order.notes,
         }
 
         update_data = data.model_dump(exclude_unset=True)
 
-        if "customer_id" in update_data and update_data["customer_id"] is not None:
-            await self._validate_customer(tenant_id, update_data["customer_id"])
-            order.customer_id = update_data["customer_id"]
+        if "cliente_id" in update_data and update_data["cliente_id"] is not None:
+            await self._validate_cliente(tenant_id, update_data["cliente_id"])
+            order.cliente_id = update_data["cliente_id"]
 
         if "notes" in update_data:
             order.notes = update_data["notes"]
@@ -207,7 +207,7 @@ class OrderService:
         result = await self.order_repo.update(order)
 
         new_values = {
-            "customer_id": result.customer_id,
+            "cliente_id": result.cliente_id,
             "notes": result.notes,
         }
 

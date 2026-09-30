@@ -145,7 +145,7 @@ Tenant
 User
 Role
 Permission
-Customer
+Cliente
 Category
 Product
 Inventory
@@ -222,7 +222,7 @@ Permissoes devem representar ações do sistema.
 
 Permissoes implementadas:
 
-customer.read, customer.create, customer.update, customer.delete
+cliente.ler, cliente.criar, cliente.atualizar, cliente.excluir
 category.read, category.create, category.update, category.delete
 product.read, product.create, product.update, product.delete
 inventory.read, inventory.update
@@ -234,9 +234,9 @@ da aplicação e não serem duplicadas arbitrariamente em cada endpoint.
 Utilizar require_permissions() para verificar permissões:
 
 ```python
-@router.get("/customers")
-async def list_customers(
-    current_user: CurrentUser = Depends(require_permissions("customer.read")),
+@router.get("/clientes")
+async def list_clientes(
+    current_user: CurrentUser = Depends(require_permissions("cliente.ler")),
 ):
     ...
 ```
@@ -413,7 +413,7 @@ tests/api/
 Módulos com testes:
 
 auth (unit + api)
-customers (api)
+clientes (api)
 categories (api)
 products (api)
 inventory (api)

@@ -40,8 +40,9 @@ class Order(
             name="uq_orders_tenant_id",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "customer_id"],
-            ["customers.tenant_id", "customers.id"],
+            ["tenant_id", "cliente_id"],
+            ["clientes.tenant_id", "clientes.id"],
+            name="fk_orders_tenant_cliente",
             ondelete="RESTRICT",
         ),
     )
@@ -51,7 +52,7 @@ class Order(
         nullable=False,
     )
 
-    customer_id: Mapped[int] = mapped_column(
+    cliente_id: Mapped[int] = mapped_column(
         BigInteger,
         nullable=False,
         index=True,
