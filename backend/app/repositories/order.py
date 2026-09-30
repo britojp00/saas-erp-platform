@@ -7,7 +7,7 @@ SORT_FIELDS = {
     "order_number": Order.order_number,
     "status": Order.status,
     "total_amount": Order.total_amount,
-    "customer_id": Order.customer_id,
+    "cliente_id": Order.cliente_id,
     "created_at": Order.created_at,
     "updated_at": Order.updated_at,
 }
@@ -27,7 +27,7 @@ class OrderRepository:
         sort: str = "created_at",
         order: str = "desc",
         status: str | None = None,
-        customer_id: int | None = None,
+        cliente_id: int | None = None,
     ) -> tuple[list[Order], int]:
         base_stmt = select(Order).where(
             Order.tenant_id == tenant_id,
@@ -40,8 +40,8 @@ class OrderRepository:
             )
         if status is not None:
             base_stmt = base_stmt.where(Order.status == status)
-        if customer_id is not None:
-            base_stmt = base_stmt.where(Order.customer_id == customer_id)
+        if cliente_id is not None:
+            base_stmt = base_stmt.where(Order.cliente_id == cliente_id)
 
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
         total_result = await self.session.execute(count_stmt)

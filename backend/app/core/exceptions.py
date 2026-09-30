@@ -42,12 +42,12 @@ class InactiveTenantError(DomainError):
     """Raised when a tenant is inactive."""
 
 
-class CustomerNotFoundError(DomainError):
-    """Raised when a customer is not found."""
+class ErroClienteNaoEncontrado(DomainError):
+    """Levantado quando um cliente não é encontrado."""
 
 
-class DuplicateCustomerError(DomainError):
-    """Raised when a customer document already exists in the tenant."""
+class ErroClienteDuplicado(DomainError):
+    """Levantado quando o documento de um cliente já existe no tenant."""
 
 
 class CategoryNotFoundError(DomainError):
@@ -142,8 +142,8 @@ class OrderItemRemovalNotAllowedError(DomainError):
     """Raised when trying to remove the last item from an order."""
 
 
-class OrderCustomerNotFoundError(DomainError):
-    """Raised when the customer for an order is not found."""
+class ErroPedidoClienteNaoEncontrado(DomainError):
+    """Levantado quando o cliente de um pedido não é encontrado."""
 
 
 class OrderProductNotFoundError(DomainError):
@@ -207,26 +207,26 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={"detail": "Tenant não encontrado"},
         )
 
-    @app.exception_handler(CustomerNotFoundError)
-    async def customer_not_found_error_handler(
-        request: Request, exc: CustomerNotFoundError
+    @app.exception_handler(ErroClienteNaoEncontrado)
+    async def cliente_nao_encontrado_error_handler(
+        request: Request, exc: ErroClienteNaoEncontrado
     ) -> JSONResponse:
         logger.warning(
-            "customer.not_found",
-            extra={"event": "customer.not_found"},
+            "cliente.nao_encontrado",
+            extra={"event": "cliente.nao_encontrado"},
         )
         return JSONResponse(
             status_code=404,
             content={"detail": "Cliente não encontrado"},
         )
 
-    @app.exception_handler(DuplicateCustomerError)
-    async def duplicate_customer_error_handler(
-        request: Request, exc: DuplicateCustomerError
+    @app.exception_handler(ErroClienteDuplicado)
+    async def cliente_duplicado_error_handler(
+        request: Request, exc: ErroClienteDuplicado
     ) -> JSONResponse:
         logger.warning(
-            "customer.duplicate",
-            extra={"event": "customer.duplicate"},
+            "cliente.duplicado",
+            extra={"event": "cliente.duplicado"},
         )
         return JSONResponse(
             status_code=409,
@@ -544,13 +544,13 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={"detail": "Não é possível remover o último item do pedido"},
         )
 
-    @app.exception_handler(OrderCustomerNotFoundError)
-    async def order_customer_not_found_error_handler(
-        request: Request, exc: OrderCustomerNotFoundError
+    @app.exception_handler(ErroPedidoClienteNaoEncontrado)
+    async def pedido_cliente_nao_encontrado_error_handler(
+        request: Request, exc: ErroPedidoClienteNaoEncontrado
     ) -> JSONResponse:
         logger.warning(
-            "order.customer_not_found",
-            extra={"event": "order.customer_not_found"},
+            "pedido.cliente_nao_encontrado",
+            extra={"event": "pedido.cliente_nao_encontrado"},
         )
         return JSONResponse(
             status_code=409,

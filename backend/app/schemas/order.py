@@ -46,13 +46,13 @@ class OrderItemUpdate(BaseModel):
 
 
 class OrderCreate(BaseModel):
-    customer_id: int
+    cliente_id: int
     notes: str | None = Field(default=None, max_length=1000)
     items: list[OrderItemCreate] = Field(min_length=1)
 
 
 class OrderUpdate(BaseModel):
-    customer_id: int | None = Field(default=None)
+    cliente_id: int | None = Field(default=None)
     notes: str | None = Field(default=None, max_length=1000)
 
 
@@ -96,7 +96,7 @@ class OrderResponse(BaseModel):
     id: int
     tenant_id: int
     order_number: int
-    customer_id: int
+    cliente_id: int
     status: str
     total_amount: Decimal
     notes: str | None
@@ -130,7 +130,7 @@ class OrderListItem(BaseModel):
     id: int
     tenant_id: int
     order_number: int
-    customer_id: int
+    cliente_id: int
     status: str
     total_amount: Decimal
     created_at: datetime

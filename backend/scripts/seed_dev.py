@@ -32,10 +32,10 @@ SEED_USER_EMAIL = "admin@demo.com"
 DEFAULT_DEV_PASSWORD = "admin123"
 
 ALL_PERMISSIONS = [
-    "customer.read",
-    "customer.create",
-    "customer.update",
-    "customer.delete",
+    "cliente.ler",
+    "cliente.criar",
+    "cliente.atualizar",
+    "cliente.excluir",
     "product.read",
     "product.create",
     "product.update",
@@ -63,7 +63,7 @@ ALL_PERMISSIONS = [
 
 MANAGER_EXCLUDED = {"user.delete", "role.delete", "permission.read"}
 
-READ_PERMISSIONS = {p for p in ALL_PERMISSIONS if p.endswith(".read")}
+READ_PERMISSIONS = {p for p in ALL_PERMISSIONS if p.endswith((".read", ".ler"))}
 
 
 async def _get_or_create_permission(

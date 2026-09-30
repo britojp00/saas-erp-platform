@@ -145,14 +145,14 @@ async def test_log_contains_request_id(
 
 @pytest.mark.asyncio
 async def test_401_has_request_id(client: AsyncClient):
-    response = await client.get("/api/v1/customers/999999")
+    response = await client.get("/api/v1/clientes/999999")
     assert response.status_code == 401
     assert "x-request-id" in response.headers
 
 
 @pytest.mark.asyncio
 async def test_unexpected_error_does_not_expose_traceback(client: AsyncClient):
-    response = await client.get("/api/v1/customers/999999")
+    response = await client.get("/api/v1/clientes/999999")
     assert response.status_code == 401
     body = response.json()
     assert "traceback" not in str(body).lower()
@@ -233,7 +233,7 @@ async def test_request_body_not_logged(
 ):
     with caplog.at_level(logging.INFO):
         await client.post(
-            "/api/v1/customers",
+            "/api/v1/clientes",
             headers=authenticated_headers,
             json={"name": "Body Test", "document": "12345678901"},
         )

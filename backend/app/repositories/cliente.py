@@ -3,16 +3,16 @@ from datetime import UTC, datetime
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.customer import Customer
+from app.db.models.cliente import Cliente
 
 SORT_FIELDS = {
-    "id": Customer.id,
-    "name": Customer.name,
-    "created_at": Customer.created_at,
+    "id": Cliente.id,
+    "name": Cliente.name,
+    "created_at": Cliente.created_at,
 }
 
 
-class CustomerRepository:
+class ClienteRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -25,23 +25,23 @@ class CustomerRepository:
         search: str | None = None,
         sort: str = "created_at",
         order: str = "desc",
-    ) -> tuple[list[Customer], int]:
-        base_stmt = select(Customer).where(
-            Customer.tenant_id == tenant_id,
-            Customer.deleted_at.is_(None),
+    ) -> tuple[list[Cliente], int]:
+        base_stmt = select(Cliente).where(
+            Cliente.tenant_id == tenant_id,
+            Cliente.deleted_at.is_(None),
         )
         if search:
-            base_stmt = base_stmt.where(Customer.name.ilike(f"%{search}%"))
+            base_stmt = base_stmt.where(Cliente.name.ilike(f"%{search}%"))
 
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
         total_result = await self.session.execute(count_stmt)
         total = total_result.scalar_one()
 
-        sort_column = SORT_FIELDS.get(sort, Customer.created_at)
+        sort_column = SORT_FIELDS.get(sort, Cliente.created_at)
         if order == "asc":
-            base_stmt = base_stmt.order_by(sort_column.asc(), Customer.id.asc())
+            base_stmt = base_stmt.order_by(sort_column.asc(), Cliente.id.asc())
         else:
-            base_stmt = base_stmt.order_by(sort_column.desc(), Customer.id.desc())
+            base_stmt = base_stmt.order_by(sort_column.desc(), Cliente.id.desc())
 
         base_stmt = base_stmt.offset(offset).limit(limit)
         result = await self.session.execute(base_stmt)
@@ -51,13 +51,13 @@ class CustomerRepository:
 
     async def get_by_id(
         self,
-        customer_id: int,
+        cliente_id: int,
         tenant_id: int,
-    ) -> Customer | None:
-        stmt = select(Customer).where(
-            Customer.id == customer_id,
-            Customer.tenant_id == tenant_id,
-            Customer.deleted_at.is_(None),
+    ) -> Cliente | None:
+        stmt = select(Cliente).where(
+            Cliente.id == cliente_id,
+            Cliente.tenant_id == tenant_id,
+            Cliente.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -68,25 +68,25 @@ class CustomerRepository:
         document: str,
         exclude_id: int | None = None,
     ) -> bool:
-        stmt = select(Customer).where(
-            Customer.tenant_id == tenant_id,
-            Customer.document == document,
+        stmt = select(Cliente).where(
+            Cliente.tenant_id == tenant_id,
+            Cliente.document == document,
         )
         if exclude_id is not None:
-            stmt = stmt.where(Customer.id != exclude_id)
+            stmt = stmt.where(Cliente.id != exclude_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none() is not None
 
-    async def create(self, customer: Customer) -> Customer:
-        self.session.add(customer)
+    async def create(self, cliente: Cliente) -> Cliente:
+        self.session.add(cliente)
         await self.session.flush()
-        return customer
+        return cliente
 
-    async def update(self, customer: Customer) -> Customer:
+    async def update(self, cliente: Cliente) -> Cliente:
         await self.session.flush()
-        await self.session.refresh(customer)
-        return customer
+        await self.session.refresh(cliente)
+        return cliente
 
-    async def soft_delete(self, customer: Customer) -> None:
-        customer.deleted_at = datetime.now(UTC)
+    async def soft_delete(self, cliente: Cliente) -> None:
+        cliente.deleted_at = datetime.now(UTC)
         await self.session.flush()

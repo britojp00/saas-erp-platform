@@ -5,7 +5,7 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.customer import Customer
+from app.db.models.cliente import Cliente
 from app.db.models.inventory import Inventory
 from app.db.models.order import Order
 from app.db.models.permission import Permission
@@ -95,18 +95,18 @@ async def _assign_role_to_user(
     await session.flush()
 
 
-async def _create_customer_in_db(
+async def _create_cliente_in_db(
     session: AsyncSession,
     tenant_id: int,
     name: str,
-) -> Customer:
-    customer = Customer(
+) -> Cliente:
+    cliente = Cliente(
         tenant_id=tenant_id,
         name=name,
     )
-    session.add(customer)
+    session.add(cliente)
     await session.flush()
-    return customer
+    return cliente
 
 
 async def _create_product_in_db(
@@ -164,8 +164,8 @@ async def _create_inventory(
 
 
 @pytest.fixture
-async def customer(db_session: AsyncSession, test_tenant: Tenant) -> Customer:
-    return await _create_customer_in_db(db_session, test_tenant.id, "Cliente Teste")
+async def cliente(db_session: AsyncSession, test_tenant: Tenant) -> Cliente:
+    return await _create_cliente_in_db(db_session, test_tenant.id, "Cliente Teste")
 
 
 @pytest.fixture
@@ -199,7 +199,7 @@ async def order_with_items(
     db_session: AsyncSession,
     test_tenant: Tenant,
     test_user: User,
-    customer: Customer,
+    cliente: Cliente,
     product: Product,
     inventory: Inventory,
 ) -> Order:
@@ -216,7 +216,7 @@ async def order_with_items(
     )
     await _assign_role_to_user(db_session, test_tenant.id, test_user.id, role.id)
     await db_session.commit()
-    return customer  # type: ignore[return-value]
+    return cliente  # type: ignore[return-value]
 
 
 class TestOrderCreate:
@@ -226,7 +226,7 @@ class TestOrderCreate:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -247,7 +247,7 @@ class TestOrderCreate:
         response = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 2}],
             },
             headers=authenticated_headers,
@@ -255,7 +255,7 @@ class TestOrderCreate:
         assert response.status_code == 201
         data = response.json()
         assert data["status"] == "DRAFT"
-        assert data["customer_id"] == customer.id
+        assert data["cliente_id"] == cliente.id
         assert len(data["items"]) == 1
         assert data["items"][0]["product_id"] == product.id
         assert data["items"][0]["quantity"] == 2.0
@@ -269,7 +269,7 @@ class TestOrderCreate:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         product_b: Product,
         inventory: Inventory,
@@ -292,7 +292,7 @@ class TestOrderCreate:
         response = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [
                     {"product_id": product.id, "quantity": 2},
                     {"product_id": product_b.id, "quantity": 1},
@@ -312,7 +312,7 @@ class TestOrderCreate:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -330,12 +330,12 @@ class TestOrderCreate:
 
         response = await client.post(
             "/api/v1/orders",
-            json={"customer_id": customer.id, "items": []},
+            json={"cliente_id": cliente.id, "items": []},
             headers=authenticated_headers,
         )
         assert response.status_code == 422
 
-    async def test_create_order_nonexistent_customer_fails(
+    async def test_create_order_nonexistent_cliente_fails(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -361,7 +361,7 @@ class TestOrderCreate:
         response = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": 99999,
+                "cliente_id": 99999,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -374,7 +374,7 @@ class TestOrderCreate:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -393,7 +393,7 @@ class TestOrderCreate:
         response = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": 99999, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -406,7 +406,7 @@ class TestOrderCreate:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -427,7 +427,7 @@ class TestOrderCreate:
         response = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [
                     {"product_id": product.id, "quantity": 1},
                     {"product_id": product.id, "quantity": 2},
@@ -443,7 +443,7 @@ class TestOrderCreate:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -465,7 +465,7 @@ class TestOrderCreate:
         response = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [
                     {
                         "product_id": product.id,
@@ -491,7 +491,7 @@ class TestOrderNumber:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -512,7 +512,7 @@ class TestOrderNumber:
         resp1 = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -523,7 +523,7 @@ class TestOrderNumber:
         resp2 = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -541,7 +541,7 @@ class TestOrderListAndDetail:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -562,7 +562,7 @@ class TestOrderListAndDetail:
         await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -583,7 +583,7 @@ class TestOrderListAndDetail:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -604,7 +604,7 @@ class TestOrderListAndDetail:
         await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -625,7 +625,7 @@ class TestOrderListAndDetail:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -646,7 +646,7 @@ class TestOrderListAndDetail:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -691,13 +691,13 @@ class TestOrderListAndDetail:
 
 
 class TestOrderUpdate:
-    async def test_update_order_customer(
+    async def test_update_order_cliente(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -718,25 +718,25 @@ class TestOrderUpdate:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
         order_id = create_resp.json()["id"]
 
-        new_customer = await _create_customer_in_db(
+        new_cliente = await _create_cliente_in_db(
             db_session, test_tenant.id, "Novo Cliente"
         )
         await db_session.commit()
 
         response = await client.patch(
             f"/api/v1/orders/{order_id}",
-            json={"customer_id": new_customer.id},
+            json={"cliente_id": new_cliente.id},
             headers=authenticated_headers,
         )
         assert response.status_code == 200
-        assert response.json()["customer_id"] == new_customer.id
+        assert response.json()["cliente_id"] == new_cliente.id
 
     async def test_update_order_not_draft_fails(
         self,
@@ -744,7 +744,7 @@ class TestOrderUpdate:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -765,7 +765,7 @@ class TestOrderUpdate:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -792,7 +792,7 @@ class TestOrderItems:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         product_b: Product,
         inventory: Inventory,
@@ -815,7 +815,7 @@ class TestOrderItems:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -845,7 +845,7 @@ class TestOrderItems:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -866,7 +866,7 @@ class TestOrderItems:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -886,7 +886,7 @@ class TestOrderItems:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -907,7 +907,7 @@ class TestOrderItems:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -938,7 +938,7 @@ class TestOrderItems:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         product_b: Product,
         inventory: Inventory,
@@ -961,7 +961,7 @@ class TestOrderItems:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [
                     {"product_id": product.id, "quantity": 1},
                     {"product_id": product_b.id, "quantity": 2},
@@ -990,7 +990,7 @@ class TestOrderItems:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -1011,7 +1011,7 @@ class TestOrderItems:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -1031,7 +1031,7 @@ class TestOrderItems:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         product_b: Product,
         inventory: Inventory,
@@ -1054,7 +1054,7 @@ class TestOrderItems:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -1081,7 +1081,7 @@ class TestOrderStateMachine:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -1108,7 +1108,7 @@ class TestOrderStateMachine:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 5}],
             },
             headers=authenticated_headers,
@@ -1135,7 +1135,7 @@ class TestOrderStateMachine:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -1156,7 +1156,7 @@ class TestOrderStateMachine:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 5}],
             },
             headers=authenticated_headers,
@@ -1189,7 +1189,7 @@ class TestOrderStateMachine:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -1210,7 +1210,7 @@ class TestOrderStateMachine:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 5}],
             },
             headers=authenticated_headers,
@@ -1230,7 +1230,7 @@ class TestOrderStateMachine:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -1257,7 +1257,7 @@ class TestOrderStateMachine:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 5}],
             },
             headers=authenticated_headers,
@@ -1289,7 +1289,7 @@ class TestOrderStateMachine:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -1310,7 +1310,7 @@ class TestOrderStateMachine:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -1329,7 +1329,7 @@ class TestOrderStateMachine:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -1350,7 +1350,7 @@ class TestOrderStateMachine:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -1378,7 +1378,7 @@ class TestOrderStateMachine:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -1399,7 +1399,7 @@ class TestOrderStateMachine:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 1}],
             },
             headers=authenticated_headers,
@@ -1427,7 +1427,7 @@ class TestOrderRBAC:
     ) -> None:
         response = await client.post(
             "/api/v1/orders",
-            json={"customer_id": 1, "items": [{"product_id": 1, "quantity": 1}]},
+            json={"cliente_id": 1, "items": [{"product_id": 1, "quantity": 1}]},
             headers=authenticated_headers,
         )
         assert response.status_code == 403
@@ -1465,7 +1465,7 @@ class TestOrderMultiTenancy:
         test_tenant: Tenant,
         test_user: User,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -1475,8 +1475,8 @@ class TestOrderMultiTenancy:
         db_session.add(other_tenant)
         await db_session.flush()
 
-        other_customer = Customer(tenant_id=other_tenant.id, name="Outro Cliente")
-        db_session.add(other_customer)
+        other_cliente = Cliente(tenant_id=other_tenant.id, name="Outro Cliente")
+        db_session.add(other_cliente)
         await db_session.flush()
 
         other_product = Product(
@@ -1552,7 +1552,7 @@ class TestOrderMultiTenancy:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": other_customer.id,
+                "cliente_id": other_cliente.id,
                 "items": [{"product_id": other_product.id, "quantity": 1}],
             },
             headers=other_headers,
@@ -1574,7 +1574,7 @@ class TestOrderInventoryIntegration:
         db_session: AsyncSession,
         test_tenant: Tenant,
         authenticated_headers: dict,
-        customer: Customer,
+        cliente: Cliente,
         product: Product,
         inventory: Inventory,
     ) -> None:
@@ -1595,7 +1595,7 @@ class TestOrderInventoryIntegration:
         create_resp = await client.post(
             "/api/v1/orders",
             json={
-                "customer_id": customer.id,
+                "cliente_id": cliente.id,
                 "items": [{"product_id": product.id, "quantity": 200}],
             },
             headers=authenticated_headers,
