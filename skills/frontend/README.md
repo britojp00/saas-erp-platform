@@ -205,7 +205,7 @@ O frontend pode utilizar permissions para melhorar a experiência.
 
 Exemplo:
 
-customer.delete
+cliente.excluir
 
 pode controlar:
 
@@ -260,7 +260,7 @@ Dados relevantes da API devem possuir tipos TypeScript.
 
 Exemplo conceitual:
 
-interface Customer {
+interface Cliente {
   id: string;
   name: string;
   email: string | null;
@@ -333,7 +333,7 @@ Exemplo:
 pages/
 ├── Login
 ├── Dashboard
-├── Customers
+├── Clientes
 ├── Products
 ├── Inventory
 └── Orders
@@ -381,7 +381,7 @@ Hooks devem encapsular lógica reutilizável do frontend.
 Exemplos:
 
 useAuth()
-useCustomers()
+useClientes()
 useProducts()
 usePagination()
 
@@ -432,7 +432,7 @@ Dados vindos da API possuem características diferentes do estado local da inter
 
 Exemplos:
 
-customers
+clientes
 products
 orders
 inventory
@@ -657,11 +657,11 @@ Filtros devem ser enviados para a API quando forem filtros de dados persistidos.
 
 Exemplo:
 
-GET /customers?search=joao
+GET /clientes?search=joao
 
 Evitar:
 
-GET /customers
+GET /clientes
 ↓
 baixar milhares
 ↓
@@ -701,7 +701,7 @@ Exemplo:
 
 /login
 /dashboard
-/customers
+/clientes
 /products
 /inventory
 /orders
@@ -939,7 +939,7 @@ Exemplo conceitual:
 
 Login
 Dashboard
-Customers
+Clientes
 Products
 Orders
 

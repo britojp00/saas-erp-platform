@@ -166,20 +166,20 @@ Exemplo:
 
 Tenant A
 ├── User A
-└── Customer A
+└── Cliente A
 
 Tenant B
 ├── User B
-└── Customer B
+└── Cliente B
 
 Validar:
 
-User A → Customer A
+User A → Cliente A
 ✓
 
 e:
 
-User A → Customer B
+User A → Cliente B
 ✗
 10. Security Boundary
 
@@ -590,7 +590,7 @@ Os fluxos E2E devem priorizar operações críticas.
 Exemplos:
 
 login
-customer creation
+cliente creation
 product creation
 order creation
 inventory movement
@@ -874,7 +874,7 @@ Testes com nomes claros também funcionam como documentação executável.
 
 Exemplo:
 
-async def test_user_cannot_access_other_tenant_customer():
+async def test_user_cannot_access_other_tenant_cliente():
     ...
 
 Esse nome comunica uma regra importante do sistema.
@@ -930,7 +930,7 @@ resultado esperado
 
 Exemplo:
 
-test_user_cannot_access_other_tenant_customer
+test_user_cannot_access_other_tenant_cliente
 
 Evitar:
 
@@ -951,7 +951,7 @@ tests/
 │   └── database/
 └── api/
     ├── auth/
-    ├── customers/
+    ├── clientes/
     └── orders/
 
 A estrutura poderá evoluir conforme o volume crescer.
@@ -970,7 +970,7 @@ Factories podem ser utilizadas quando a criação manual de entidades estiver re
 
 Exemplo conceitual:
 
-CustomerFactory
+ClienteFactory
 UserFactory
 OrderFactory
 

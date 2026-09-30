@@ -45,7 +45,7 @@ tenants
 users
 roles
 permissions
-customers
+clientes
 products
 categories
 orders
@@ -55,11 +55,11 @@ audit_logs
 
 Não utilizar:
 
-Customers
-Customer
-tbl_customers
-TB_CUSTOMERS
-customerTable
+Clientes
+Cliente
+tbl_clientes
+TB_CLIENTES
+clienteTable
 Colunas
 
 Utilizar:
@@ -118,7 +118,7 @@ Relacionamentos devem utilizar foreign keys reais no banco.
 
 Exemplo:
 
-customer_id
+cliente_id
 product_id
 tenant_id
 user_id
@@ -139,7 +139,7 @@ tenant_id
 
 Exemplo:
 
-customers
+clientes
 products
 orders
 inventory
@@ -445,7 +445,7 @@ apropriadas.
 
 Exemplo:
 
-Customer
+Cliente
    |
    +---- Orders
    +---- Orders
@@ -453,11 +453,11 @@ Customer
 
 No banco:
 
-orders.customer_id
+orders.cliente_id
 
 referencia:
 
-customers.id
+clientes.id
 20. Many-to-Many
 
 Relacionamentos muitos-para-muitos devem utilizar uma
@@ -770,7 +770,7 @@ updated_at
 deleted_at
 
 
-customers
+clientes
 ---------
 id
 tenant_id
@@ -797,7 +797,7 @@ orders
 ------
 id
 tenant_id
-customer_id
+cliente_id
 status
 total_amount
 created_at
@@ -808,7 +808,7 @@ Relacionamentos:
 
 tenants
    |
-   +---- customers
+   +---- clientes
    |
    +---- products
    |
@@ -816,10 +816,10 @@ tenants
 
 E:
 
-orders.customer_id
+orders.cliente_id
         |
         v
-customers.id
+clientes.id
 
 O relacionamento também deve ser validado dentro
 das regras de multi-tenancy.

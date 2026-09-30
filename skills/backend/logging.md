@@ -70,7 +70,7 @@ Conceito:
 {
   "timestamp": "2026-09-18T23:28:01.685674-03:00",
   "level": "INFO",
-  "event": "customer.created",
+  "event": "cliente.criard",
   "request_id": "uuid",
   "tenant_id": 10,
   "user_id": 32
@@ -137,7 +137,7 @@ Eventos operacionais normais.
 Exemplo:
 
 application.started
-customer.created
+cliente.criard
 order.confirmed
 WARNING
 
@@ -171,9 +171,9 @@ application.started
 application.shutdown
 auth.login.success
 auth.login.failed
-customer.created
-customer.updated
-customer.deleted
+cliente.criard
+cliente.atualizard
+cliente.excluird
 order.created
 order.cancelled
 inventory.reserved
@@ -263,7 +263,7 @@ nos logs relevantes.
 Exemplo:
 
 {
-  "event": "customer.created",
+  "event": "cliente.criard",
   "tenant_id": "uuid",
   "user_id": "uuid"
 }
@@ -481,7 +481,7 @@ Não gerar stack trace para toda condição esperada de negócio.
 
 Por exemplo:
 
-CustomerNotFound
+ErroClienteNaoEncontrado
 
 normalmente não precisa de um stack trace completo.
 
@@ -491,7 +491,7 @@ Erros esperados de negócio devem ser registrados com nível adequado.
 
 Exemplo:
 
-customer.not_found
+cliente.nao_encontrado
 
 não precisa necessariamente ser ERROR em toda situação.
 
@@ -548,7 +548,7 @@ Registrar somente o necessário.
 
 Exemplo:
 
-required_permission=customer.delete
+required_permission=cliente.excluir
 
 Não registrar listas desnecessariamente grandes de permissions se somente uma for relevante.
 
@@ -666,7 +666,7 @@ Exemplo:
 {
   "event": "http.request",
   "method": "GET",
-  "path": "/api/v1/customers",
+  "path": "/api/v1/clientes",
   "status_code": 200,
   "duration_ms": 34
 }
@@ -1048,7 +1048,7 @@ pode exigir alerta.
 
 Já:
 
-customer.not_found
+cliente.nao_encontrado
 
 normalmente não deve gerar alerta operacional imediato.
 
@@ -1197,7 +1197,7 @@ Cada log JSON contém:
   "user_id": 1,
   "event": "request_completed",
   "method": "GET",
-  "path": "/api/v1/customers",
+  "path": "/api/v1/clientes",
   "status_code": 200,
   "duration_ms": 12.29
 }

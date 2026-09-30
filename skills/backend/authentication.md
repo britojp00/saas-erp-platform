@@ -313,8 +313,8 @@ Routers protegidos podem depender dessa resolução.
 
 Exemplo conceitual:
 
-@router.get("/customers")
-async def list_customers(
+@router.get("/clientes")
+async def list_clientes(
     current_user: User = Depends(get_current_user),
 ):
     ...
@@ -407,15 +407,15 @@ Exemplo:
 
 JWT válido
 +
-customer.read
-→ GET /customers permitido
+cliente.ler
+→ GET /clientes permitido
 
 Mas:
 
 JWT válido
 +
-sem customer.delete
-→ DELETE /customers/{id} bloqueado
+sem cliente.excluir
+→ DELETE /clientes/{id} bloqueado
 25. Roles e Permissions
 
 O sistema utilizará posteriormente:

@@ -43,7 +43,7 @@ PostgreSQL
                 |
                 ├── tenants
                 ├── users
-                ├── customers
+                ├── clientes
                 ├── products
                 ├── orders
                 └── inventory
@@ -68,7 +68,7 @@ tenants
 users
 roles
 permissions
-customers
+clientes
 products
 orders
 order_items
@@ -80,7 +80,7 @@ Utilizar nomes descritivos em snake_case.
 Exemplos:
 
 tenant_id
-customer_id
+cliente_id
 created_at
 updated_at
 deleted_at
@@ -121,7 +121,7 @@ Relacionamentos devem utilizar foreign keys reais.
 
 Exemplo:
 
-customer_id UUID REFERENCES customers(id)
+cliente_id UUID REFERENCES clientes(id)
 
 Quando a tabela pertencer a um tenant:
 
@@ -145,11 +145,11 @@ quando a coluna representar uma chave estrutural.
 
 Exemplo correto:
 
-customer_id UUID
+cliente_id UUID
 
 Exemplo a evitar:
 
-customer_id VARCHAR(36)
+cliente_id VARCHAR(36)
 7. Timestamps
 
 O padrão temporal do projeto é:
@@ -359,7 +359,7 @@ Não utilizar JSONB para esconder entidades estruturadas.
 
 Evitar:
 
-customer_data JSONB
+cliente_data JSONB
 
 quando o sistema precisar consultar, relacionar ou validar
 individualmente informações que deveriam ser colunas
@@ -478,7 +478,7 @@ Toda tabela de entidade deve possuir uma primary key.
 
 Exemplo:
 
-CONSTRAINT pk_customers
+CONSTRAINT pk_clientes
 PRIMARY KEY (id)
 
 A nomenclatura de constraints deve ser consistente
@@ -490,9 +490,9 @@ Foreign keys devem possuir constraints explícitas.
 
 Exemplo conceitual:
 
-CONSTRAINT fk_orders_customer
-FOREIGN KEY (customer_id)
-REFERENCES customers(id)
+CONSTRAINT fk_orders_tenant_cliente
+FOREIGN KEY (cliente_id)
+REFERENCES clientes(id)
 27. Foreign Key e Tenant
 
 Relacionamentos entre entidades multi-tenant devem respeitar
@@ -502,7 +502,7 @@ Exemplo:
 
 orders
     |
-    +---- customer_id
+    +---- cliente_id
     |
     +---- tenant_id
 
@@ -510,12 +510,12 @@ A aplicação deve garantir que:
 
 Order Tenant
 =
-Customer Tenant
+Cliente Tenant
 
 A foreign key simples entre:
 
-orders.customer_id
-→ customers.id
+orders.cliente_id
+→ clientes.id
 
 não substitui a validação de contexto de tenant.
 

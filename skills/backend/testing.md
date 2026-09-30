@@ -77,7 +77,7 @@ tests/
 │   ├── test_health.py
 │   ├── test_timezone.py
 │   ├── test_rbac.py
-│   ├── test_customers.py
+│   ├── test_clientes.py
 │   ├── test_categories.py
 │   ├── test_products.py
 │   ├── test_inventory.py
@@ -182,16 +182,16 @@ Os nomes dos testes devem explicar o comportamento.
 
 Preferir:
 
-def test_create_customer_with_valid_data():
+def test_create_cliente_with_valid_data():
     ...
-def test_create_customer_rejects_duplicate_email():
+def test_create_cliente_rejects_duplicate_email():
     ...
-async def test_user_cannot_access_other_tenant_customer():
+async def test_user_cannot_access_other_tenant_cliente():
     ...
 
 Evitar:
 
-def test_customer_1():
+def test_cliente_1():
     ...
 10. Arrange / Act / Assert
 
@@ -275,7 +275,7 @@ tenant
 user
 role
 permissions
-customers
+clientes
 products
 orders
 
@@ -336,19 +336,19 @@ Toda operação multi-tenant relevante deve possuir teste explícito de isolamen
 Exemplo:
 
 Tenant A
-└── Customer A
+└── Cliente A
 
 Tenant B
-└── Customer B
+└── Cliente B
 
 Teste:
 
-Tenant A → Customer A
+Tenant A → Cliente A
 ✓
 
 E:
 
-Tenant A → Customer B
+Tenant A → Cliente B
 ✗
 19. Testes de GET
 
@@ -458,7 +458,7 @@ Exemplo:
 
 InsufficientStockError
 → 409
-CustomerNotFoundError
+ErroClienteNaoEncontrado
 → 404
 PermissionDeniedError
 → 403
@@ -484,14 +484,14 @@ usuário autenticado sem permission
 
 Exemplo:
 
-customer.read
-→ GET /customers
+cliente.ler
+→ GET /clientes
 ✓
 
 Sem a permission:
 
-customer.read
-→ GET /customers
+cliente.ler
+→ GET /clientes
 ✗ 403
 29. Testes de RBAC
 
@@ -540,15 +540,15 @@ Exemplo:
 
 Tenant A
 User A
-customer.read
+cliente.ler
 
 deve permitir:
 
-Customer A
+Cliente A
 
 mas não:
 
-Customer B
+Cliente B
 
 mesmo com a permission correta.
 
@@ -1051,7 +1051,7 @@ uv run pytest tests/api/test_health.py::test_health_check
 
 Executar testes por palavra-chave:
 
-uv run pytest -k customer
+uv run pytest -k cliente
 67. Warnings
 
 Warnings relevantes não devem ser simplesmente ignorados.
@@ -1264,7 +1264,7 @@ Quando um teste representar uma regra importante, o nome do teste pode servir co
 
 Exemplo:
 
-async def test_user_cannot_access_other_tenant_customer():
+async def test_user_cannot_access_other_tenant_cliente():
     ...
 
 Isso facilita a compreensão do domínio.

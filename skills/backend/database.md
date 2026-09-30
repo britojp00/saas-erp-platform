@@ -127,7 +127,7 @@ Exemplo:
 models/
 ├── tenant.py
 ├── user.py
-├── customer.py
+├── cliente.py
 ├── product.py
 ├── category.py
 ├── inventory.py
@@ -149,7 +149,7 @@ plural
 
 Exemplo:
 
-customers
+clientes
 products
 order_items
 audit_logs
@@ -187,7 +187,7 @@ Relacionamentos entre entidades devem utilizar foreign keys reais.
 
 Exemplo:
 
-customers.tenant_id
+clientes.tenant_id
     ↓
 tenants.id
 
@@ -203,7 +203,7 @@ tenant_id
 
 Exemplo:
 
-customers
+clientes
 ├── id
 ├── tenant_id
 ├── name
@@ -221,10 +221,10 @@ Repositories que acessam entidades de tenant devem aplicar o contexto do tenant.
 
 Exemplo conceitual:
 
-select(Customer).where(
-    Customer.id == customer_id,
-    Customer.tenant_id == tenant_id,
-    Customer.deleted_at.is_(None),
+select(Cliente).where(
+    Cliente.id == cliente_id,
+    Cliente.tenant_id == tenant_id,
+    Cliente.deleted_at.is_(None),
 )
 
 Não depender de um filtro adicionado somente posteriormente pelo router.
@@ -235,17 +235,17 @@ O isolamento deve fazer parte da operação de persistência.
 
 Evitar:
 
-select(Customer).where(
-    Customer.id == customer_id
+select(Cliente).where(
+    Cliente.id == cliente_id
 )
 
 quando o contexto do tenant for obrigatório.
 
 Preferir:
 
-select(Customer).where(
-    Customer.id == customer_id,
-    Customer.tenant_id == tenant_id,
+select(Cliente).where(
+    Cliente.id == cliente_id,
+    Cliente.tenant_id == tenant_id,
 )
 
 Essa regra deve ser aplicada a:
@@ -273,9 +273,9 @@ Consultas normais devem considerar somente registros ativos.
 
 Exemplo conceitual:
 
-stmt = select(Customer).where(
-    Customer.tenant_id == tenant_id,
-    Customer.deleted_at.is_(None),
+stmt = select(Cliente).where(
+    Cliente.tenant_id == tenant_id,
+    Cliente.deleted_at.is_(None),
 )
 
 A consulta de registros excluídos deve ser explícita.
@@ -288,16 +288,16 @@ Atualizações devem considerar o tenant.
 
 Evitar:
 
-update(Customer).where(
-    Customer.id == customer_id
+update(Cliente).where(
+    Cliente.id == cliente_id
 )
 
 Preferir:
 
-update(Customer).where(
-    Customer.id == customer_id,
-    Customer.tenant_id == tenant_id,
-    Customer.deleted_at.is_(None),
+update(Cliente).where(
+    Cliente.id == cliente_id,
+    Cliente.tenant_id == tenant_id,
+    Cliente.deleted_at.is_(None),
 )
 
 A operação deve garantir que o registro pertence ao contexto autorizado.
@@ -486,7 +486,7 @@ A criação de índices deve considerar o padrão de consulta, não apenas adici
 Exemplo conceitual:
 
 CREATE INDEX ...
-ON customers (tenant_id, email)
+ON clientes (tenant_id, email)
 WHERE deleted_at IS NULL;
 
 Isso pode ser útil quando as consultas operam principalmente sobre registros ativos.
@@ -499,7 +499,7 @@ Repositories devem concentrar operações de persistência.
 
 Exemplo:
 
-CustomerRepository
+ClienteRepository
 ├── get_by_id
 ├── list
 ├── create
@@ -796,16 +796,16 @@ Funcionalidades multi-tenant devem possuir testes explícitos.
 Exemplo:
 
 Tenant A
- └── Customer A
+ └── Cliente A
 
 Tenant B
- └── Customer B
+ └── Cliente B
 
 Teste:
 
-Tenant A → Customer A
+Tenant A → Cliente A
 ✓ permitido
-Tenant A → Customer B
+Tenant A → Cliente B
 ✗ bloqueado
 
 Esse tipo de teste é obrigatório para operações relevantes de dados multi-tenant.

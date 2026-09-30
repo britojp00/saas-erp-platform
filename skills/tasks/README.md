@@ -117,7 +117,7 @@ Problema:
 clientes de outro tenant podem aparecer na listagem.
 
 Arquivo:
-backend/app/repositories/customer.py
+backend/app/repositories/cliente.py
 
 Método:
 list()
@@ -178,7 +178,7 @@ Antes de criar uma solução nova, procurar código semelhante.
 
 Exemplo:
 
-CustomerRepository
+ClienteRepository
 
 pode ser referência para:
 
@@ -788,7 +788,7 @@ Possíveis pontos pendentes
 Exemplo:
 
 Alterado:
-backend/app/services/customer.py
+backend/app/services/cliente.py
 
 Testes:
 uv run pytest

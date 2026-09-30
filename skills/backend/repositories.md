@@ -50,7 +50,7 @@ backend/app/repositories/
 Exemplo:
 
 repositories/
-├── customer.py
+├── cliente.py
 ├── product.py
 ├── category.py
 ├── inventory.py
@@ -119,7 +119,7 @@ Não criar uma nova engine ou session independente para cada operação.
 
 Conceito:
 
-class CustomerRepository:
+class ClienteRepository:
 
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -145,7 +145,7 @@ Evitar montar SQL por concatenação de strings utilizando valores fornecidos pe
 
 Evitar:
 
-query = f"SELECT * FROM customers WHERE name = '{name}'"
+query = f"SELECT * FROM clientes WHERE name = '{name}'"
 
 Preferir os mecanismos parametrizados do SQLAlchemy.
 
@@ -155,9 +155,9 @@ Repositories de entidades multi-tenant devem considerar explicitamente o tenant_
 
 Exemplo:
 
-stmt = select(Customer).where(
-    Customer.id == customer_id,
-    Customer.tenant_id == tenant_id,
+stmt = select(Cliente).where(
+    Cliente.id == cliente_id,
+    Cliente.tenant_id == tenant_id,
 )
 
 O repository não deve permitir consultas fora do escopo definido.
@@ -179,7 +179,7 @@ Evitar métodos que permitam consultar uma entidade multi-tenant sem qualquer po
 
 Evitar:
 
-async def get_by_id(self, customer_id):
+async def get_by_id(self, cliente_id):
     ...
 
 para entidades cujo acesso obrigatoriamente dependa de tenant, se isso permitir esquecer o isolamento.
@@ -188,7 +188,7 @@ Preferir um contrato que torne o contexto explícito:
 
 async def get_by_id(
     self,
-    customer_id,
+    cliente_id,
     tenant_id,
 ):
     ...
@@ -202,13 +202,13 @@ quando um registro não existir.
 
 Exemplo:
 
-customer = await repository.get_by_id(
-    customer_id,
+cliente = await repository.get_by_id(
+    cliente_id,
     tenant_id,
 )
 
-if customer is None:
-    raise CustomerNotFoundError()
+if cliente is None:
+    raise ErroClienteNaoEncontrado()
 
 A decisão sobre o significado de "não encontrado" pertence ao service ou à camada apropriada.
 
@@ -239,14 +239,14 @@ Filtros devem ser aplicados no banco.
 
 Exemplo conceitual:
 
-stmt = select(Customer).where(
-    Customer.tenant_id == tenant_id,
-    Customer.deleted_at.is_(None),
+stmt = select(Cliente).where(
+    Cliente.tenant_id == tenant_id,
+    Cliente.deleted_at.is_(None),
 )
 
 if search:
     stmt = stmt.where(
-        Customer.name.ilike(f"%{search}%")
+        Cliente.name.ilike(f"%{search}%")
     )
 
 A construção definitiva deve seguir as regras de consulta do projeto.
@@ -264,8 +264,8 @@ quando sort vier diretamente do cliente.
 Preferir um mapa controlado:
 
 SORT_FIELDS = {
-    "name": Customer.name,
-    "created_at": Customer.created_at,
+    "name": Cliente.name,
+    "created_at": Cliente.created_at,
 }
 
 O valor recebido pela API deve ser validado antes de chegar à query.
@@ -277,9 +277,9 @@ O repository deve realizar paginação no banco.
 Exemplo conceitual:
 
 stmt = (
-    select(Customer)
+    select(Cliente)
     .where(...)
-    .order_by(Customer.created_at.desc())
+    .order_by(Cliente.created_at.desc())
     .offset(offset)
     .limit(limit)
 )
@@ -298,8 +298,8 @@ id DESC
 Exemplo:
 
 stmt = stmt.order_by(
-    Customer.created_at.desc(),
-    Customer.id.desc(),
+    Cliente.created_at.desc(),
+    Cliente.id.desc(),
 )
 
 Isso reduz resultados instáveis entre páginas.
@@ -314,9 +314,9 @@ nas consultas normais de entidades de negócio.
 
 Exemplo:
 
-stmt = select(Customer).where(
-    Customer.tenant_id == tenant_id,
-    Customer.deleted_at.is_(None),
+stmt = select(Cliente).where(
+    Cliente.tenant_id == tenant_id,
+    Cliente.deleted_at.is_(None),
 )
 
 Consultas que precisam acessar registros excluídos devem ser explicitamente identificadas.
@@ -337,10 +337,10 @@ O repository pode encapsular a persistência inicial da entidade.
 
 Exemplo:
 
-async def create(self, customer: Customer) -> Customer:
-    self.session.add(customer)
+async def create(self, cliente: Cliente) -> Cliente:
+    self.session.add(cliente)
     await self.session.flush()
-    return customer
+    return cliente
 
 O commit não deve ser automaticamente realizado pelo repository quando fizer parte de uma transação maior.
 
@@ -390,11 +390,11 @@ Evitar uma operação de update somente pelo ID em entidades multi-tenant.
 Exemplo:
 
 stmt = (
-    update(Customer)
+    update(Cliente)
     .where(
-        Customer.id == customer_id,
-        Customer.tenant_id == tenant_id,
-        Customer.deleted_at.is_(None),
+        Cliente.id == cliente_id,
+        Cliente.tenant_id == tenant_id,
+        Cliente.deleted_at.is_(None),
     )
     .values(...)
 )
@@ -465,8 +465,8 @@ Repositories podem retornar somente os campos necessários quando isso reduzir c
 Exemplo:
 
 select(
-    Customer.id,
-    Customer.name,
+    Cliente.id,
+    Cliente.name,
 )
 
 Isso pode ser apropriado para:
@@ -861,7 +861,7 @@ Não forçar todos os repositories a possuir uma abstração genérica quando os
 
 Um método como:
 
-get_active_customer_by_id()
+get_active_cliente_by_id()
 
 pode ser mais claro que:
 
@@ -903,7 +903,7 @@ Evitar:
 
 return {
     "status": 200,
-    "data": customer,
+    "data": cliente,
 }
 
 A resposta HTTP pertence à camada da API.
@@ -930,11 +930,11 @@ Repositories não devem ser automaticamente responsáveis por auditoria de negó
 
 Exemplo:
 
-UPDATE customers
+UPDATE clientes
 
 não necessariamente significa:
 
-customer.price_changed
+cliente.price_changed
 
 A primeira é uma operação de persistência.
 

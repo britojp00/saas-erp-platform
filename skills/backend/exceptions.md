@@ -103,7 +103,7 @@ Exemplo:
 
 usuário autenticado
 +
-sem customer.delete
+sem cliente.excluir
 
 Resposta:
 
@@ -114,8 +114,8 @@ Representa uma regra de negócio que impede a operação.
 
 Exemplos:
 
-CustomerNotFoundError
-DuplicateCustomerError
+ErroClienteNaoEncontrado
+ErroClienteDuplicado
 ProductInactiveError
 InsufficientStockError
 OrderNotCancelableError
@@ -162,8 +162,8 @@ Erros expostos pela API devem possuir códigos estáveis quando necessário.
 Exemplo:
 
 INSUFFICIENT_STOCK
-CUSTOMER_NOT_FOUND
-DUPLICATE_CUSTOMER
+CLIENTE_NAO_ENCONTRADO
+CLIENTE_DUPLICADO
 ORDER_NOT_CANCELABLE
 
 O código deve ser independente do texto exibido ao usuário.
@@ -216,7 +216,7 @@ dentro do service somente para representar uma regra de negócio.
 
 Preferir:
 
-raise DuplicateCustomerError()
+raise ErroClienteDuplicado()
 
 e realizar a tradução em uma camada apropriada.
 
@@ -253,10 +253,10 @@ Um handler pode mapear tipos conhecidos:
 InsufficientStockError
     ↓
 409 Conflict
-CustomerNotFoundError
+ErroClienteNaoEncontrado
     ↓
 404 Not Found
-DuplicateCustomerError
+ErroClienteDuplicado
     ↓
 409 Conflict
 
@@ -270,7 +270,7 @@ Quando o recurso não existir:
 
 Exemplos:
 
-CustomerNotFoundError
+ErroClienteNaoEncontrado
 ProductNotFoundError
 OrderNotFoundError
 
@@ -284,7 +284,7 @@ Quando a operação conflitar com o estado atual:
 
 Exemplos:
 
-DuplicateCustomerError
+ErroClienteDuplicado
 SkuAlreadyExistsError
 OrderAlreadyCancelledError
 OrderNotCancelableError
@@ -530,11 +530,11 @@ Erros relacionados a recursos multi-tenant não devem revelar informações sobr
 
 Exemplo:
 
-Tenant A solicita Customer B
+Tenant A solicita Cliente B
 
 Não retornar:
 
-"Customer B existe, mas pertence ao Tenant B"
+"Cliente B existe, mas pertence ao Tenant B"
 
 quando essa informação não deveria ser revelada.
 
@@ -746,9 +746,9 @@ HTTP response
 
 Exemplo:
 
-CustomerNotFoundError
+ErroClienteNaoEncontrado
 → 404
-DuplicateCustomerError
+ErroClienteDuplicado
 → 409
 PermissionDenied
 → 403
@@ -785,9 +785,9 @@ Uma possível hierarquia:
 
 AppError
 ├── DomainError
-│   ├── CustomerNotFoundError
+│   ├── ErroClienteNaoEncontrado
 │   ├── ProductNotFoundError
-│   ├── DuplicateCustomerError
+│   ├── ErroClienteDuplicado
 │   ├── InsufficientStockError
 │   └── OrderNotCancelableError
 │
@@ -811,8 +811,8 @@ Os códigos devem possuir convenção consistente.
 
 Exemplo:
 
-CUSTOMER_NOT_FOUND
-DUPLICATE_CUSTOMER
+CLIENTE_NAO_ENCONTRADO
+CLIENTE_DUPLICADO
 INSUFFICIENT_STOCK
 ORDER_NOT_CANCELABLE
 UNAUTHORIZED

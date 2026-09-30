@@ -50,7 +50,7 @@ backend/
 │   ├── api/
 │   │   ├── v1/
 │   │   │   ├── auth.py
-│   │   │   ├── customers.py
+│   │   │   ├── clientes.py
 │   │   │   ├── categories.py
 │   │   │   ├── products.py
 │   │   │   ├── inventory.py
@@ -72,7 +72,7 @@ backend/
 │   │   └── mixins.py
 │   ├── schemas/
 │   │   ├── auth.py
-│   │   ├── customer.py
+│   │   ├── cliente.py
 │   │   ├── category.py
 │   │   ├── product.py
 │   │   ├── inventory.py
@@ -81,7 +81,7 @@ backend/
 │   ├── repositories/
 │   │   ├── user.py
 │   │   ├── tenant.py
-│   │   ├── customer.py
+│   │   ├── cliente.py
 │   │   ├── category.py
 │   │   ├── product.py
 │   │   ├── inventory.py
@@ -95,7 +95,7 @@ backend/
 │   ├── services/
 │   │   ├── auth.py
 │   │   ├── authorization.py
-│   │   ├── customer.py
+│   │   ├── cliente.py
 │   │   ├── category.py
 │   │   ├── product.py
 │   │   ├── inventory.py
@@ -109,7 +109,7 @@ backend/
 │   │   ├── test_health.py
 │   │   ├── test_timezone.py
 │   │   ├── test_rbac.py
-│   │   ├── test_customers.py
+│   │   ├── test_clientes.py
 │   │   ├── test_categories.py
 │   │   ├── test_products.py
 │   │   ├── test_inventory.py
@@ -170,7 +170,7 @@ retornar respostas HTTP.
 Exemplos:
 
 auth.py
-customers.py
+clientes.py
 categories.py
 products.py
 inventory.py
@@ -220,7 +220,7 @@ user_role.py
 role.py
 role_permission.py
 permission.py
-customer.py
+cliente.py
 category.py
 product.py
 inventory.py
@@ -246,7 +246,7 @@ Contém os schemas Pydantic utilizados pelos contratos da API.
 Exemplos:
 
 auth.py
-customer.py
+cliente.py
 category.py
 product.py
 inventory.py
@@ -277,7 +277,7 @@ Exemplos:
 
 user.py
 tenant.py
-customer.py
+cliente.py
 category.py
 product.py
 inventory.py
@@ -311,7 +311,7 @@ Exemplos:
 
 auth.py
 authorization.py
-customer.py
+cliente.py
 category.py
 product.py
 inventory.py
@@ -376,7 +376,7 @@ backend/tests/
 │   ├── test_health.py
 │   ├── test_timezone.py
 │   ├── test_rbac.py
-│   ├── test_customers.py
+│   ├── test_clientes.py
 │   ├── test_categories.py
 │   ├── test_products.py
 │   ├── test_inventory.py
@@ -411,7 +411,7 @@ test_auth.py
 test_health.py
 test_timezone.py
 test_rbac.py
-test_customers.py
+test_clientes.py
 test_categories.py
 test_products.py
 test_inventory.py

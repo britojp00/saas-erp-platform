@@ -194,7 +194,7 @@ status codes
 
 Exemplo conceitual:
 
-GET /api/v1/customers
+GET /api/v1/clientes
 → 200
 → 35 ms
 
@@ -1317,7 +1317,7 @@ LOG_JSON=true     # true=JSON, false=Text
 | application_shutdown | INFO | main.py shutdown |
 | request_completed | INFO/WARNING/ERROR | middleware |
 | request_failed | ERROR | middleware (exception) |
-| customer.not_found | WARNING | exceptions.py |
+| cliente.nao_encontrado | WARNING | exceptions.py |
 | product.not_found | WARNING | exceptions.py |
 | inventory.not_found | WARNING | exceptions.py |
 | order.not_found | WARNING | exceptions.py |

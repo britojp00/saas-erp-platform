@@ -72,7 +72,7 @@ Exemplo:
 
 services/
 ├── auth.py
-├── customer.py
+├── cliente.py
 ├── product.py
 ├── category.py
 ├── inventory.py
@@ -136,10 +136,10 @@ O router deve permanecer fino.
 
 Exemplo:
 
-@router.post("/customers")
-async def create_customer(
-    data: CustomerCreate,
-    service: CustomerService = Depends(get_customer_service),
+@router.post("/clientes")
+async def create_cliente(
+    data: ClienteCriarPayload,
+    service: ClienteService = Depends(get_cliente_service),
 ):
     return await service.create(data)
 7. Service e Repository
@@ -156,9 +156,9 @@ O repository determina como acessar os dados.
 
 Exemplo:
 
-CustomerService
+ClienteService
     ↓
-CustomerRepository.get_by_email()
+ClienteRepository.get_by_email()
 
 Evitar que o service monte diretamente todas as queries SQL.
 
@@ -229,7 +229,7 @@ Um service não deve se tornar um arquivo gigante.
 
 Evitar um único arquivo contendo:
 
-Customer
+Cliente
 Product
 Inventory
 Order
@@ -267,8 +267,8 @@ Os nomes devem representar ações reais do domínio.
 
 Preferir:
 
-create_customer
-update_customer
+create_cliente
+update_cliente
 cancel_order
 confirm_order
 reserve_stock
@@ -339,8 +339,8 @@ recurso está disponível?
 
 Exemplo conceitual:
 
-customer = await repository.get_by_id(
-    customer_id,
+cliente = await repository.get_by_id(
+    cliente_id,
     tenant_id=current_tenant.id,
 )
 
@@ -408,14 +408,14 @@ Falhas esperadas do domínio devem ser representadas de forma explícita.
 
 Exemplos:
 
-CustomerNotFound
+ErroClienteNaoEncontrado
 ProductNotFound
 InsufficientStock
 ProductInactive
 OrderNotFound
 OrderAlreadyCancelled
 OrderNotCancelable
-DuplicateCustomer
+ErroClienteDuplicado
 
 Os nomes devem refletir comportamentos reais.
 
@@ -448,7 +448,7 @@ diretamente na regra de negócio, quando isso puder ser separado.
 
 Preferir:
 
-raise DuplicateCustomerError()
+raise ErroClienteDuplicado()
 
 e deixar a camada apropriada transformar o erro em:
 
@@ -506,11 +506,11 @@ Dependências dos services devem ser fornecidas de forma previsível.
 
 Exemplo conceitual:
 
-class CustomerService:
+class ClienteService:
 
     def __init__(
         self,
-        repository: CustomerRepository,
+        repository: ClienteRepository,
     ):
         self.repository = repository
 
@@ -529,7 +529,7 @@ Serviços externos reais
 
 Exemplo:
 
-CustomerService
+ClienteService
     ↓
 Fake / Mock Repository
 
@@ -622,7 +622,7 @@ Exemplo:
 
 process_payment()
 process_webhook()
-sync_customer()
+sync_cliente()
 
 Uma repetição da mesma operação não deve produzir efeitos duplicados quando o caso de uso exigir idempotência.
 
@@ -695,7 +695,7 @@ Exemplo:
 order.created
 order.cancelled
 inventory.reserved
-customer.created
+cliente.criard
 
 Quando apropriado:
 

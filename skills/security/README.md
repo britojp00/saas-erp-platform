@@ -167,7 +167,7 @@ Exemplo:
 User A
 Tenant A
     ↓
-Customer B
+Cliente B
 Tenant B
 
 Resultado:
@@ -229,7 +229,7 @@ Nunca concatenar entrada do usuário diretamente em SQL.
 
 Evitar:
 
-query = f"SELECT * FROM customers WHERE name = '{name}'"
+query = f"SELECT * FROM clientes WHERE name = '{name}'"
 
 Preferir:
 
@@ -787,13 +787,13 @@ Caches devem possuir escopo correto.
 
 Evitar:
 
-customer:123
+cliente:123
 
 quando IDs puderem existir em diferentes tenants.
 
 Preferir chaves que incluam o contexto necessário:
 
-tenant:{tenant_id}:customer:{customer_id}
+tenant:{tenant_id}:cliente:{cliente_id}
 59. Multi-tenant Jobs
 
 Jobs devem respeitar:
