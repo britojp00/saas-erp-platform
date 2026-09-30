@@ -1,9 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './layouts/AppLayout'
-import CustomerCreatePage from './pages/CustomerCreatePage'
-import CustomerDetailPage from './pages/CustomerDetailPage'
-import CustomerEditPage from './pages/CustomerEditPage'
-import CustomersPage from './pages/CustomersPage'
+import PaginaCriarCliente from './pages/PaginaCriarCliente'
+import PaginaDetalheCliente from './pages/PaginaDetalheCliente'
+import PaginaEditarCliente from './pages/PaginaEditarCliente'
+import PaginaListaClientes from './pages/PaginaListaClientes'
 import DashboardPage from './pages/DashboardPage'
 import InventoryPage from './pages/InventoryPage'
 import LoginPage from './pages/LoginPage'
@@ -19,10 +19,10 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/customers" element={<CustomersPage />} />
-          <Route path="/customers/new" element={<CustomerCreatePage />} />
-          <Route path="/customers/:id" element={<CustomerDetailPage />} />
-          <Route path="/customers/:id/edit" element={<CustomerEditPage />} />
+          <Route path="/clientes" element={<PaginaListaClientes />} />
+          <Route path="/clientes/new" element={<PaginaCriarCliente />} />
+          <Route path="/clientes/:id" element={<PaginaDetalheCliente />} />
+          <Route path="/clientes/:id/edit" element={<PaginaEditarCliente />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/orders" element={<OrdersPage />} />

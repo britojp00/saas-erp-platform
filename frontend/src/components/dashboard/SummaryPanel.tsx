@@ -30,7 +30,7 @@ export default function SummaryPanel({ state, onRetry }: SummaryPanelProps) {
       <div className="stat-grid">
         <StatCard
           label="Clientes"
-          value={formatNumber(data.customersTotal)}
+          value={formatNumber(data.clientesTotal)}
         />
         <StatCard
           label="Produtos"

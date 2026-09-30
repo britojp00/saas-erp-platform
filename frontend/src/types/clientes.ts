@@ -1,6 +1,6 @@
 import type { PaginatedResponse } from './dashboard'
 
-export interface Customer {
+export interface Cliente {
   id: number
   name: string
   document: string | null
@@ -11,13 +11,13 @@ export interface Customer {
   updated_at: string
 }
 
-export type CustomerListResponse = PaginatedResponse<Customer>
+export type ListaClientesResposta = PaginatedResponse<Cliente>
 
-export type CustomerSortField = 'id' | 'name' | 'created_at'
+export type CampoOrdenacaoCliente = 'id' | 'name' | 'created_at'
 
 export type SortOrder = 'asc' | 'desc'
 
-export interface CustomerCreatePayload {
+export interface ClienteCriarPayload {
   name: string
   document: string | null
   email: string | null
@@ -25,7 +25,7 @@ export interface CustomerCreatePayload {
   notes: string | null
 }
 
-export interface CustomerUpdatePayload {
+export interface ClienteAtualizarPayload {
   name: string
   document: string | null
   email: string | null
@@ -33,7 +33,7 @@ export interface CustomerUpdatePayload {
   notes: string | null
 }
 
-export interface CustomerFormValues {
+export interface ValoresFormularioCliente {
   name: string
   document: string
   email: string

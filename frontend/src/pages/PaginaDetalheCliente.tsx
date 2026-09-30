@@ -1,52 +1,52 @@
 import { Link, useParams } from 'react-router-dom'
-import CustomerDetail from '../components/customers/CustomerDetail'
+import DetalheCliente from '../components/clientes/DetalheCliente'
 import {
   SectionError,
   SectionLoading,
 } from '../components/dashboard/SectionState'
-import { useCustomer } from '../hooks/useCustomer'
+import { useCliente } from '../hooks/useCliente'
 
-export default function CustomerDetailPage() {
+export default function PaginaDetalheCliente() {
   const { id = '' } = useParams()
-  const { customer, loading, error, notFound, retry } = useCustomer(id)
+  const { cliente, loading, error, notFound, retry } = useCliente(id)
 
   return (
-    <section className="customer-detail-page">
+    <section className="cliente-detail-page">
       <header className="page-header">
         <div>
-          <h1>{customer !== null ? customer.name : 'Cliente'}</h1>
+          <h1>{cliente !== null ? cliente.name : 'Cliente'}</h1>
           <p className="muted">Cliente #{id}</p>
         </div>
         <div className="page-header__actions">
-          {customer !== null && (
+          {cliente !== null && (
             <Link
               className="button-link"
-              to={`/customers/${customer.id}/edit`}
+              to={`/clientes/${cliente.id}/edit`}
             >
               Editar
             </Link>
           )}
-          <Link to="/customers">← Voltar</Link>
+          <Link to="/clientes">← Voltar</Link>
         </div>
       </header>
 
       {notFound ? (
-        <div className="customer-missing" role="alert">
+        <div className="cliente-missing" role="alert">
           <p>Cliente não encontrado</p>
-          <Link to="/customers">Voltar para clientes</Link>
+          <Link to="/clientes">Voltar para clientes</Link>
         </div>
       ) : error !== null ? (
         <SectionError message={error} onRetry={retry} />
-      ) : loading && customer === null ? (
+      ) : loading && cliente === null ? (
         <SectionLoading label="Carregando cliente..." />
-      ) : customer !== null ? (
+      ) : cliente !== null ? (
         <>
           {loading && (
             <p className="section-state" role="status">
               Carregando cliente...
             </p>
           )}
-          <CustomerDetail customer={customer} />
+          <DetalheCliente cliente={cliente} />
         </>
       ) : null}
     </section>

@@ -1,24 +1,24 @@
 import { Link } from 'react-router-dom'
 import type {
-  Customer,
-  CustomerSortField,
+  Cliente,
+  CampoOrdenacaoCliente,
   SortOrder,
-} from '../../types/customers'
+} from '../../types/clientes'
 import { formatDateTime } from '../../utils/format'
 
-interface CustomerListProps {
-  items: Customer[]
-  sort: CustomerSortField
+interface ListaClientesProps {
+  items: Cliente[]
+  sort: CampoOrdenacaoCliente
   order: SortOrder
-  onSort: (field: CustomerSortField) => void
+  onSort: (field: CampoOrdenacaoCliente) => void
 }
 
 interface SortableHeaderProps {
-  field: CustomerSortField
+  field: CampoOrdenacaoCliente
   label: string
-  sort: CustomerSortField
+  sort: CampoOrdenacaoCliente
   order: SortOrder
-  onSort: (field: CustomerSortField) => void
+  onSort: (field: CampoOrdenacaoCliente) => void
 }
 
 function SortableHeader({
@@ -39,13 +39,13 @@ function SortableHeader({
     <th scope="col" aria-sort={ariaSort}>
       <button
         type="button"
-        className="customers-table__sort"
+        className="clientes-table__sort"
         aria-label={`Ordenar por ${label}`}
         onClick={() => onSort(field)}
       >
         {label}
         {active && (
-          <span className="customers-table__sort-mark" aria-hidden="true">
+          <span className="clientes-table__sort-mark" aria-hidden="true">
             {order === 'asc' ? '↑' : '↓'}
           </span>
         )}
@@ -61,15 +61,15 @@ function OptionalValue({ value }: { value: string | null }) {
   return <>{value}</>
 }
 
-export default function CustomerList({
+export default function ListaClientes({
   items,
   sort,
   order,
   onSort,
-}: CustomerListProps) {
+}: ListaClientesProps) {
   return (
     <div className="table-wrap">
-      <table className="customers-table">
+      <table className="clientes-table">
         <thead>
           <tr>
             <SortableHeader
@@ -99,22 +99,22 @@ export default function CustomerList({
           </tr>
         </thead>
         <tbody>
-          {items.map((customer) => (
-            <tr key={customer.id}>
-              <td>{customer.id}</td>
+          {items.map((cliente) => (
+            <tr key={cliente.id}>
+              <td>{cliente.id}</td>
               <td>
-                <Link to={`/customers/${customer.id}`}>{customer.name}</Link>
+                <Link to={`/clientes/${cliente.id}`}>{cliente.name}</Link>
               </td>
               <td>
-                <OptionalValue value={customer.document} />
+                <OptionalValue value={cliente.document} />
               </td>
               <td>
-                <OptionalValue value={customer.email} />
+                <OptionalValue value={cliente.email} />
               </td>
               <td>
-                <OptionalValue value={customer.phone} />
+                <OptionalValue value={cliente.phone} />
               </td>
-              <td>{formatDateTime(customer.created_at)}</td>
+              <td>{formatDateTime(cliente.created_at)}</td>
             </tr>
           ))}
         </tbody>

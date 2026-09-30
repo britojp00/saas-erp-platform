@@ -81,7 +81,7 @@ async function fetchInventorySummary(): Promise<InventorySummary> {
 
 async function fetchSummary(): Promise<DashboardSummary> {
   const [
-    customersRes,
+    clientesRes,
     productsRes,
     activeProductsRes,
     ordersRes,
@@ -94,7 +94,7 @@ async function fetchSummary(): Promise<DashboardSummary> {
     reservationsRes,
   ] = await Promise.all([
     api.get<PaginatedResponse<unknown>>(
-      '/api/v1/customers?page=1&page_size=1',
+      '/api/v1/clientes?page=1&page_size=1',
     ),
     api.get<PaginatedResponse<unknown>>('/api/v1/products?page=1&page_size=1'),
     api.get<PaginatedResponse<unknown>>(
@@ -135,7 +135,7 @@ async function fetchSummary(): Promise<DashboardSummary> {
   )
 
   return {
-    customersTotal: customersRes.total,
+    clientesTotal: clientesRes.total,
     productsTotal: productsRes.total,
     activeProductsTotal: activeProductsRes.total,
     ordersTotal: ordersRes.total,

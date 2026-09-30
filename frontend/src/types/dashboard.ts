@@ -25,7 +25,7 @@ export interface OrderListItem {
   id: number
   tenant_id: number
   order_number: number
-  customer_id: number
+  cliente_id: number
   status: string
   total_amount: number
   created_at: string
@@ -62,7 +62,7 @@ export interface InventorySummary {
 }
 
 export interface DashboardSummary {
-  customersTotal: number
+  clientesTotal: number
   productsTotal: number
   activeProductsTotal: number
   ordersTotal: number
