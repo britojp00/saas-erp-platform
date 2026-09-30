@@ -1,5 +1,5 @@
 from app.db.models.audit_log import AuditLog
-from app.db.models.category import Category
+from app.db.models.categoria import Categoria
 from app.db.models.cliente import Cliente
 from app.db.models.inventory import Inventory
 from app.db.models.inventory_movement import InventoryMovement
@@ -16,7 +16,7 @@ from app.db.models.user_role import UserRole
 
 __all__ = [
     "AuditLog",
-    "Category",
+    "Categoria",
     "Cliente",
     "Inventory",
     "InventoryMovement",

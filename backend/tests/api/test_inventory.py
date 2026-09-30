@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, get_password_hash
-from app.db.models.category import Category
+from app.db.models.categoria import Categoria
 from app.db.models.inventory import Inventory
 from app.db.models.inventory_movement import InventoryMovement, MovementType
 from app.db.models.inventory_reservation import InventoryReservation, ReservationStatus
@@ -98,18 +98,18 @@ async def _assign_role_to_user(
     await session.flush()
 
 
-async def _create_category_in_db(
+async def _create_categoria_in_db(
     session: AsyncSession,
     tenant_id: int,
     name: str,
-) -> Category:
-    category = Category(
+) -> Categoria:
+    categoria = Categoria(
         tenant_id=tenant_id,
         name=name,
     )
-    session.add(category)
+    session.add(categoria)
     await session.flush()
-    return category
+    return categoria
 
 
 async def _create_product_in_db(
@@ -117,7 +117,7 @@ async def _create_product_in_db(
     tenant_id: int,
     name: str,
     sku: str,
-    category_id: int | None = None,
+    categoria_id: int | None = None,
     price: Decimal = Decimal("10.00"),
     is_active: bool = True,
 ) -> Product:
@@ -125,7 +125,7 @@ async def _create_product_in_db(
         tenant_id=tenant_id,
         sku=sku,
         name=name,
-        category_id=category_id,
+        categoria_id=categoria_id,
         price=price,
         is_active=is_active,
     )
@@ -350,9 +350,9 @@ async def test_create_in_movement(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product A", "SKU-A", category.id
+        db_session, test_tenant.id, "Product A", "SKU-A", categoria.id
     )
     await db_session.commit()
 
@@ -382,9 +382,9 @@ async def test_create_out_movement(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product B", "SKU-B", category.id
+        db_session, test_tenant.id, "Product B", "SKU-B", categoria.id
     )
     await _create_inventory_in_db(db_session, test_tenant.id, product.id)
     await db_session.commit()
@@ -412,9 +412,9 @@ async def test_adjustment_movement(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product C", "SKU-C", category.id
+        db_session, test_tenant.id, "Product C", "SKU-C", categoria.id
     )
     await _create_inventory_in_db(db_session, test_tenant.id, product.id)
     await db_session.commit()
@@ -442,9 +442,9 @@ async def test_movement_updates_balance(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product D", "SKU-D", category.id
+        db_session, test_tenant.id, "Product D", "SKU-D", categoria.id
     )
     await _create_inventory_in_db(
         db_session, test_tenant.id, product.id, quantity=Decimal("50.000")
@@ -478,9 +478,9 @@ async def test_out_movement_insufficient_stock(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product E", "SKU-E", category.id
+        db_session, test_tenant.id, "Product E", "SKU-E", categoria.id
     )
     await _create_inventory_in_db(
         db_session, test_tenant.id, product.id, quantity=Decimal("5.000")
@@ -507,9 +507,9 @@ async def test_out_movement_cannot_consume_reserved(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product F", "SKU-F", category.id
+        db_session, test_tenant.id, "Product F", "SKU-F", categoria.id
     )
     await _create_inventory_in_db(
         db_session,
@@ -540,9 +540,9 @@ async def test_adjustment_leaves_reserved_exceeds_quantity(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product G", "SKU-G", category.id
+        db_session, test_tenant.id, "Product G", "SKU-G", categoria.id
     )
     await _create_inventory_in_db(
         db_session,
@@ -573,9 +573,9 @@ async def test_idempotent_movement_returns_same(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product H", "SKU-H", category.id
+        db_session, test_tenant.id, "Product H", "SKU-H", categoria.id
     )
     await db_session.commit()
 
@@ -611,9 +611,9 @@ async def test_list_movements(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product I", "SKU-I", category.id
+        db_session, test_tenant.id, "Product I", "SKU-I", categoria.id
     )
     await _create_movement_in_db(
         db_session, test_tenant.id, product.id, "IN", Decimal("10.000"), "key-1"
@@ -643,9 +643,9 @@ async def test_create_reservation(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product J", "SKU-J", category.id
+        db_session, test_tenant.id, "Product J", "SKU-J", categoria.id
     )
     await _create_inventory_in_db(db_session, test_tenant.id, product.id)
     await db_session.commit()
@@ -674,9 +674,9 @@ async def test_reservation_updates_reserved_quantity(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product K", "SKU-K", category.id
+        db_session, test_tenant.id, "Product K", "SKU-K", categoria.id
     )
     await _create_inventory_in_db(
         db_session, test_tenant.id, product.id, quantity=Decimal("20.000")
@@ -710,9 +710,9 @@ async def test_reservation_insufficient_stock(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product L", "SKU-L", category.id
+        db_session, test_tenant.id, "Product L", "SKU-L", categoria.id
     )
     await _create_inventory_in_db(
         db_session,
@@ -742,9 +742,9 @@ async def test_reservation_inactive_product(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product M", "SKU-M", category.id, is_active=False
+        db_session, test_tenant.id, "Product M", "SKU-M", categoria.id, is_active=False
     )
     await _create_inventory_in_db(db_session, test_tenant.id, product.id)
     await db_session.commit()
@@ -768,9 +768,9 @@ async def test_confirm_reservation(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product N", "SKU-N", category.id
+        db_session, test_tenant.id, "Product N", "SKU-N", categoria.id
     )
     inventory = await _create_inventory_in_db(
         db_session, test_tenant.id, product.id, quantity=Decimal("20.000")
@@ -804,9 +804,9 @@ async def test_release_reservation(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product O", "SKU-O", category.id
+        db_session, test_tenant.id, "Product O", "SKU-O", categoria.id
     )
     inventory = await _create_inventory_in_db(
         db_session, test_tenant.id, product.id, quantity=Decimal("20.000")
@@ -834,9 +834,9 @@ async def test_cancel_reservation(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product P", "SKU-P", category.id
+        db_session, test_tenant.id, "Product P", "SKU-P", categoria.id
     )
     inventory = await _create_inventory_in_db(
         db_session, test_tenant.id, product.id, quantity=Decimal("20.000")
@@ -864,9 +864,9 @@ async def test_confirm_already_confirmed_reservation(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product Q", "SKU-Q", category.id
+        db_session, test_tenant.id, "Product Q", "SKU-Q", categoria.id
     )
     reservation = await _create_reservation_in_db(
         db_session,
@@ -891,9 +891,9 @@ async def test_list_reservations(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product R", "SKU-R", category.id
+        db_session, test_tenant.id, "Product R", "SKU-R", categoria.id
     )
     await _create_reservation_in_db(
         db_session, test_tenant.id, product.id, Decimal("5.000"), idempotency_key="r1"
@@ -923,12 +923,12 @@ async def test_list_inventory_balances(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     p1 = await _create_product_in_db(
-        db_session, test_tenant.id, "Prod 1", "SKU-1", category.id
+        db_session, test_tenant.id, "Prod 1", "SKU-1", categoria.id
     )
     p2 = await _create_product_in_db(
-        db_session, test_tenant.id, "Prod 2", "SKU-2", category.id
+        db_session, test_tenant.id, "Prod 2", "SKU-2", categoria.id
     )
     await _create_inventory_in_db(db_session, test_tenant.id, p1.id)
     await _create_inventory_in_db(db_session, test_tenant.id, p2.id)
@@ -950,9 +950,9 @@ async def test_get_single_balance(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "Prod Single", "SKU-S", category.id
+        db_session, test_tenant.id, "Prod Single", "SKU-S", categoria.id
     )
     await _create_inventory_in_db(
         db_session, test_tenant.id, product.id, quantity=Decimal("42.000")
@@ -993,9 +993,9 @@ async def test_cannot_access_other_tenant_inventory(
     other_tenant_headers: dict[str, str],
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "TenantProd", "SKU-TP", category.id
+        db_session, test_tenant.id, "TenantProd", "SKU-TP", categoria.id
     )
     await _create_inventory_in_db(db_session, test_tenant.id, product.id)
     await db_session.commit()
@@ -1052,9 +1052,9 @@ async def test_read_only_user_cannot_create_movement(
     )
     ro_headers = {"Authorization": f"Bearer {ro_token}"}
 
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "ProdRO", "SKU-RO", category.id
+        db_session, test_tenant.id, "ProdRO", "SKU-RO", categoria.id
     )
     await db_session.commit()
 
@@ -1086,13 +1086,13 @@ async def test_movement_on_inactive_product_allowed(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
         db_session,
         test_tenant.id,
         "Inactive",
         "SKU-INACT",
-        category.id,
+        categoria.id,
         is_active=False,
     )
     await _create_inventory_in_db(db_session, test_tenant.id, product.id)
@@ -1118,9 +1118,9 @@ async def test_adjustment_must_be_positive(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "AdjProd", "SKU-ADJ", category.id
+        db_session, test_tenant.id, "AdjProd", "SKU-ADJ", categoria.id
     )
     await db_session.commit()
 
@@ -1144,9 +1144,9 @@ async def test_invalid_movement_type(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "BadType", "SKU-BT", category.id
+        db_session, test_tenant.id, "BadType", "SKU-BT", categoria.id
     )
     await db_session.commit()
 
@@ -1170,9 +1170,9 @@ async def test_pagination_works(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "PagProd", "SKU-PAG", category.id
+        db_session, test_tenant.id, "PagProd", "SKU-PAG", categoria.id
     )
     for i in range(5):
         await _create_movement_in_db(
@@ -1207,9 +1207,9 @@ async def test_idempotent_reservation_returns_same(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "IdemRes", "SKU-IR", category.id
+        db_session, test_tenant.id, "IdemRes", "SKU-IR", categoria.id
     )
     await _create_inventory_in_db(
         db_session, test_tenant.id, product.id, quantity=Decimal("50.000")
@@ -1247,9 +1247,9 @@ async def test_released_reservation_cannot_be_confirmed(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "RelCf", "SKU-RC", category.id
+        db_session, test_tenant.id, "RelCf", "SKU-RC", categoria.id
     )
     reservation = await _create_reservation_in_db(
         db_session,
@@ -1274,9 +1274,9 @@ async def test_cancelled_reservation_cannot_be_confirmed(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "CanCf", "SKU-CC", category.id
+        db_session, test_tenant.id, "CanCf", "SKU-CC", categoria.id
     )
     reservation = await _create_reservation_in_db(
         db_session,
@@ -1301,9 +1301,9 @@ async def test_confirmed_reservation_cannot_be_released(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "CfRel", "SKU-CR", category.id
+        db_session, test_tenant.id, "CfRel", "SKU-CR", categoria.id
     )
     reservation = await _create_reservation_in_db(
         db_session,
@@ -1328,9 +1328,9 @@ async def test_out_at_boundary_exactly_available(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "BoundOut", "SKU-BO", category.id
+        db_session, test_tenant.id, "BoundOut", "SKU-BO", categoria.id
     )
     await _create_inventory_in_db(
         db_session,
@@ -1361,9 +1361,9 @@ async def test_out_one_over_boundary_fails(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "BoundOutFail", "SKU-BOF", category.id
+        db_session, test_tenant.id, "BoundOutFail", "SKU-BOF", categoria.id
     )
     await _create_inventory_in_db(
         db_session,
@@ -1396,9 +1396,9 @@ async def test_cross_tenant_cannot_create_movement_on_other_tenant_product(
     other_tenant_headers: dict[str, str],
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "CrossTenant", "SKU-CT", category.id
+        db_session, test_tenant.id, "CrossTenant", "SKU-CT", categoria.id
     )
     await db_session.commit()
 
@@ -1424,9 +1424,9 @@ async def test_cross_tenant_cannot_create_reservation_on_other_tenant_product(
     other_tenant_headers: dict[str, str],
     admin_headers: dict[str, str],
 ) -> None:
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
-        db_session, test_tenant.id, "CrossTenantRes", "SKU-CTR", category.id
+        db_session, test_tenant.id, "CrossTenantRes", "SKU-CTR", categoria.id
     )
     await db_session.commit()
 

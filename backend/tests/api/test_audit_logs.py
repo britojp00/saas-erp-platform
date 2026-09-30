@@ -98,10 +98,10 @@ ALL_AUDIT_PERMS = [
     "cliente.criar",
     "cliente.atualizar",
     "cliente.excluir",
-    "category.read",
-    "category.create",
-    "category.update",
-    "category.delete",
+    "categoria.ler",
+    "categoria.criar",
+    "categoria.atualizar",
+    "categoria.excluir",
     "product.read",
     "product.create",
     "product.update",
@@ -352,33 +352,33 @@ async def test_cliente_delete_generates_audit(
     assert audit.old_values["name"] == "To Delete"
 
 
-# --- AUDIT FROM CATEGORY OPERATIONS ---
+# --- AUDIT DE OPERAÇÕES DE CATEGORIA ---
 
 
 @pytest.mark.asyncio
-async def test_category_create_generates_audit(
+async def test_categoria_create_generates_audit(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
     test_tenant: Tenant,
 ):
     response = await client.post(
-        "/api/v1/categories",
+        "/api/v1/categorias",
         headers=admin_headers,
-        json={"name": "Audit Category"},
+        json={"name": "Audit Categoria"},
     )
     assert response.status_code == 201
-    category_id = response.json()["id"]
+    categoria_id = response.json()["id"]
 
     stmt = select(AuditLog).where(
         AuditLog.tenant_id == test_tenant.id,
-        AuditLog.action == "CATEGORY_CREATE",
-        AuditLog.entity_id == category_id,
+        AuditLog.action == "CATEGORIA_CRIAR",
+        AuditLog.entity_id == categoria_id,
     )
     result = await db_session.execute(stmt)
     audit = result.scalar_one_or_none()
     assert audit is not None
-    assert audit.entity_type == "category"
+    assert audit.entity_type == "categoria"
 
 
 # --- AUDIT FROM PRODUCT OPERATIONS ---

@@ -10,7 +10,7 @@ class ProductCreate(BaseModel):
     sku: str = Field(min_length=1, max_length=50)
     name: str = Field(min_length=1, max_length=150)
     description: str | None = Field(default=None, max_length=5000)
-    category_id: int | None = Field(default=None)
+    categoria_id: int | None = Field(default=None)
     price: Decimal = Field(max_digits=15, decimal_places=2)
     cost_price: Decimal | None = Field(default=None, max_digits=15, decimal_places=2)
     is_active: bool = Field(default=True)
@@ -34,7 +34,7 @@ class ProductUpdate(BaseModel):
     sku: str | None = Field(default=None, min_length=1, max_length=50)
     name: str | None = Field(default=None, min_length=1, max_length=150)
     description: str | None = Field(default=None, max_length=5000)
-    category_id: int | None = Field(default=None)
+    categoria_id: int | None = Field(default=None)
     price: Decimal | None = Field(default=None, max_digits=15, decimal_places=2)
     cost_price: Decimal | None = Field(default=None, max_digits=15, decimal_places=2)
     is_active: bool | None = Field(default=None)
@@ -62,7 +62,7 @@ class ProductResponse(BaseModel):
     sku: str
     name: str
     description: str | None
-    category_id: int | None
+    categoria_id: int | None
     price: Decimal
     cost_price: Decimal | None
     is_active: bool

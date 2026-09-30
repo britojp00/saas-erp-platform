@@ -10,29 +10,29 @@ from app.db.mixins import (
 )
 
 
-class Category(
+class Categoria(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
     Base,
 ):
-    __tablename__ = "categories"
+    __tablename__ = "categorias"
 
     __table_args__ = (
         UniqueConstraint(
             "tenant_id",
             "name",
-            name="uq_categories_tenant_name",
+            name="uq_categorias_tenant_name",
         ),
         UniqueConstraint(
             "tenant_id",
             "id",
-            name="uq_categories_tenant_id",
+            name="uq_categorias_tenant_id",
         ),
         ForeignKeyConstraint(
             ["tenant_id", "parent_id"],
-            ["categories.tenant_id", "categories.id"],
+            ["categorias.tenant_id", "categorias.id"],
             ondelete="RESTRICT",
         ),
     )

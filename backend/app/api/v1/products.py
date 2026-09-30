@@ -37,7 +37,7 @@ async def list_products(
     search: str | None = Query(default=None, max_length=150),
     sort: str = Query(default="created_at"),
     order: str = Query(default="desc"),
-    category_id: int | None = Query(default=None),
+    categoria_id: int | None = Query(default=None),
     is_active: bool | None = Query(default=None),
 ) -> ProductListResponse:
     items, total = await service.list(
@@ -47,7 +47,7 @@ async def list_products(
         search=search,
         sort=sort,
         order=order,
-        category_id=category_id,
+        categoria_id=categoria_id,
         is_active=is_active,
     )
     return ProductListResponse(

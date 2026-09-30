@@ -50,32 +50,32 @@ class ErroClienteDuplicado(DomainError):
     """Levantado quando o documento de um cliente já existe no tenant."""
 
 
-class CategoryNotFoundError(DomainError):
-    """Raised when a category is not found."""
+class ErroCategoriaNaoEncontrada(DomainError):
+    """Levantado quando uma categoria não é encontrada."""
 
 
-class DuplicateCategoryError(DomainError):
-    """Raised when a category name already exists in the tenant."""
+class ErroCategoriaDuplicada(DomainError):
+    """Levantado quando o nome de uma categoria já existe no tenant."""
 
 
-class CategoryHasChildrenError(DomainError):
-    """Raised when trying to delete a category that has children."""
+class ErroCategoriaPossuiFilhos(DomainError):
+    """Levantado ao tentar excluir uma categoria que possui subcategorias."""
 
 
-class CategoryHasProductsError(DomainError):
-    """Raised when trying to delete a category that is used by products."""
+class ErroCategoriaPossuiProdutos(DomainError):
+    """Levantado ao tentar excluir uma categoria que é usada por produtos."""
 
 
-class CategoryCycleError(DomainError):
-    """Raised when setting a parent_id would create a cycle."""
+class ErroCategoriaCicloDetectado(DomainError):
+    """Levantado quando definir um parent_id criaria um ciclo."""
 
 
-class CategorySelfReferenceError(DomainError):
-    """Raised when trying to set a category as its own parent."""
+class ErroCategoriaAutorreferencia(DomainError):
+    """Levantado ao tentar definir uma categoria como pai de si mesma."""
 
 
-class CategoryParentNotFoundError(DomainError):
-    """Raised when the specified parent category does not exist."""
+class ErroCategoriaPaiNaoEncontrada(DomainError):
+    """Levantado quando a categoria pai especificada não existe."""
 
 
 class ProductNotFoundError(DomainError):
@@ -90,8 +90,8 @@ class ProductInUseError(DomainError):
     """Raised when trying to delete a product that has inventory or order references."""
 
 
-class InvalidProductCategoryError(DomainError):
-    """Raised when the specified category is invalid for the product."""
+class ErroProdutoCategoriaInvalida(DomainError):
+    """Levantado quando a categoria especificada é inválida para o produto."""
 
 
 class InventoryNotFoundError(DomainError):
@@ -233,39 +233,39 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={"detail": "Já existe um cliente com este documento"},
         )
 
-    @app.exception_handler(CategoryNotFoundError)
-    async def category_not_found_error_handler(
-        request: Request, exc: CategoryNotFoundError
+    @app.exception_handler(ErroCategoriaNaoEncontrada)
+    async def categoria_nao_encontrada_error_handler(
+        request: Request, exc: ErroCategoriaNaoEncontrada
     ) -> JSONResponse:
         logger.warning(
-            "category.not_found",
-            extra={"event": "category.not_found"},
+            "categoria.nao_encontrada",
+            extra={"event": "categoria.nao_encontrada"},
         )
         return JSONResponse(
             status_code=404,
             content={"detail": "Categoria não encontrada"},
         )
 
-    @app.exception_handler(DuplicateCategoryError)
-    async def duplicate_category_error_handler(
-        request: Request, exc: DuplicateCategoryError
+    @app.exception_handler(ErroCategoriaDuplicada)
+    async def categoria_duplicada_error_handler(
+        request: Request, exc: ErroCategoriaDuplicada
     ) -> JSONResponse:
         logger.warning(
-            "category.duplicate",
-            extra={"event": "category.duplicate"},
+            "categoria.duplicada",
+            extra={"event": "categoria.duplicada"},
         )
         return JSONResponse(
             status_code=409,
             content={"detail": "Já existe uma categoria com este nome"},
         )
 
-    @app.exception_handler(CategoryHasChildrenError)
-    async def category_has_children_error_handler(
-        request: Request, exc: CategoryHasChildrenError
+    @app.exception_handler(ErroCategoriaPossuiFilhos)
+    async def categoria_possui_filhos_error_handler(
+        request: Request, exc: ErroCategoriaPossuiFilhos
     ) -> JSONResponse:
         logger.warning(
-            "category.has_children",
-            extra={"event": "category.has_children"},
+            "categoria.possui_filhos",
+            extra={"event": "categoria.possui_filhos"},
         )
         return JSONResponse(
             status_code=409,
@@ -274,13 +274,13 @@ def register_exception_handlers(app: FastAPI) -> None:
             },
         )
 
-    @app.exception_handler(CategoryHasProductsError)
-    async def category_has_products_error_handler(
-        request: Request, exc: CategoryHasProductsError
+    @app.exception_handler(ErroCategoriaPossuiProdutos)
+    async def categoria_possui_produtos_error_handler(
+        request: Request, exc: ErroCategoriaPossuiProdutos
     ) -> JSONResponse:
         logger.warning(
-            "category.has_products",
-            extra={"event": "category.has_products"},
+            "categoria.possui_produtos",
+            extra={"event": "categoria.possui_produtos"},
         )
         return JSONResponse(
             status_code=409,
@@ -289,13 +289,13 @@ def register_exception_handlers(app: FastAPI) -> None:
             },
         )
 
-    @app.exception_handler(CategoryCycleError)
-    async def category_cycle_error_handler(
-        request: Request, exc: CategoryCycleError
+    @app.exception_handler(ErroCategoriaCicloDetectado)
+    async def categoria_ciclo_detectado_error_handler(
+        request: Request, exc: ErroCategoriaCicloDetectado
     ) -> JSONResponse:
         logger.warning(
-            "category.cycle_detected",
-            extra={"event": "category.cycle_detected"},
+            "categoria.ciclo_detectado",
+            extra={"event": "categoria.ciclo_detectado"},
         )
         return JSONResponse(
             status_code=409,
@@ -304,26 +304,26 @@ def register_exception_handlers(app: FastAPI) -> None:
             },
         )
 
-    @app.exception_handler(CategorySelfReferenceError)
-    async def category_self_reference_error_handler(
-        request: Request, exc: CategorySelfReferenceError
+    @app.exception_handler(ErroCategoriaAutorreferencia)
+    async def categoria_autorreferencia_error_handler(
+        request: Request, exc: ErroCategoriaAutorreferencia
     ) -> JSONResponse:
         logger.warning(
-            "category.self_reference",
-            extra={"event": "category.self_reference"},
+            "categoria.autorreferencia",
+            extra={"event": "categoria.autorreferencia"},
         )
         return JSONResponse(
             status_code=409,
             content={"detail": "Uma categoria não pode ser pai de si mesma"},
         )
 
-    @app.exception_handler(CategoryParentNotFoundError)
-    async def category_parent_not_found_error_handler(
-        request: Request, exc: CategoryParentNotFoundError
+    @app.exception_handler(ErroCategoriaPaiNaoEncontrada)
+    async def categoria_pai_nao_encontrada_error_handler(
+        request: Request, exc: ErroCategoriaPaiNaoEncontrada
     ) -> JSONResponse:
         logger.warning(
-            "category.parent_not_found",
-            extra={"event": "category.parent_not_found"},
+            "categoria.pai_nao_encontrada",
+            extra={"event": "categoria.pai_nao_encontrada"},
         )
         return JSONResponse(
             status_code=409,
@@ -371,13 +371,13 @@ def register_exception_handlers(app: FastAPI) -> None:
             },
         )
 
-    @app.exception_handler(InvalidProductCategoryError)
-    async def invalid_product_category_error_handler(
-        request: Request, exc: InvalidProductCategoryError
+    @app.exception_handler(ErroProdutoCategoriaInvalida)
+    async def produto_categoria_invalida_error_handler(
+        request: Request, exc: ErroProdutoCategoriaInvalida
     ) -> JSONResponse:
         logger.warning(
-            "product.invalid_category",
-            extra={"event": "product.invalid_category"},
+            "product.categoria_invalida",
+            extra={"event": "product.categoria_invalida"},
         )
         return JSONResponse(
             status_code=409,

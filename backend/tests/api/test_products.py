@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, get_password_hash
-from app.db.models.category import Category
+from app.db.models.categoria import Categoria
 from app.db.models.cliente import Cliente
 from app.db.models.inventory import Inventory
 from app.db.models.order import Order
@@ -100,18 +100,18 @@ async def _assign_role_to_user(
     await session.flush()
 
 
-async def _create_category_in_db(
+async def _create_categoria_in_db(
     session: AsyncSession,
     tenant_id: int,
     name: str,
-) -> Category:
-    category = Category(
+) -> Categoria:
+    categoria = Categoria(
         tenant_id=tenant_id,
         name=name,
     )
-    session.add(category)
+    session.add(categoria)
     await session.flush()
-    return category
+    return categoria
 
 
 async def _create_product_in_db(
@@ -119,7 +119,7 @@ async def _create_product_in_db(
     tenant_id: int,
     name: str,
     sku: str,
-    category_id: int | None = None,
+    categoria_id: int | None = None,
     price: Decimal = Decimal("10.00"),
     cost_price: Decimal | None = None,
     is_active: bool = True,
@@ -128,7 +128,7 @@ async def _create_product_in_db(
         tenant_id=tenant_id,
         sku=sku,
         name=name,
-        category_id=category_id,
+        categoria_id=categoria_id,
         price=price,
         cost_price=cost_price,
         is_active=is_active,
@@ -320,7 +320,7 @@ async def test_create_product(
     assert data["sku"] == "SKU-001"
     assert data["name"] == "Laptop Pro"
     assert Decimal(data["price"]) == Decimal("999.99")
-    assert data["category_id"] is None
+    assert data["categoria_id"] is None
     assert data["description"] is None
     assert data["cost_price"] is None
     assert data["is_active"] is True
@@ -337,7 +337,7 @@ async def test_create_product_with_all_fields(
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    category = await _create_category_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
     await db_session.commit()
 
     response = await client.post(
@@ -347,7 +347,7 @@ async def test_create_product_with_all_fields(
             "sku": "SKU-002",
             "name": "Laptop",
             "description": "A powerful laptop",
-            "category_id": category.id,
+            "categoria_id": categoria.id,
             "price": "1299.99",
             "cost_price": "800.00",
         },
@@ -357,7 +357,7 @@ async def test_create_product_with_all_fields(
     assert data["sku"] == "SKU-002"
     assert data["name"] == "Laptop"
     assert data["description"] == "A powerful laptop"
-    assert data["category_id"] == category.id
+    assert data["categoria_id"] == categoria.id
     assert Decimal(data["price"]) == Decimal("1299.99")
     assert Decimal(data["cost_price"]) == Decimal("800.00")
 
@@ -423,7 +423,7 @@ async def test_create_product_missing_required_fields(
 
 
 @pytest.mark.asyncio
-async def test_create_product_non_existent_category(
+async def test_create_product_non_existent_categoria(
     client: AsyncClient,
     admin_headers: dict[str, str],
 ):
@@ -434,22 +434,22 @@ async def test_create_product_non_existent_category(
             "sku": "SKU-005",
             "name": "Laptop",
             "price": "100.00",
-            "category_id": 99999,
+            "categoria_id": 99999,
         },
     )
     assert response.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_create_product_cross_tenant_category(
+async def test_create_product_cross_tenant_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     other_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    other_category = await _create_category_in_db(
-        db_session, other_tenant.id, "Other Category"
+    other_categoria = await _create_categoria_in_db(
+        db_session, other_tenant.id, "Other Categoria"
     )
     await db_session.commit()
 
@@ -460,23 +460,23 @@ async def test_create_product_cross_tenant_category(
             "sku": "SKU-006",
             "name": "Laptop",
             "price": "100.00",
-            "category_id": other_category.id,
+            "categoria_id": other_categoria.id,
         },
     )
     assert response.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_create_product_deleted_category(
+async def test_create_product_deleted_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    category = await _create_category_in_db(
-        db_session, test_tenant.id, "Deleted Category"
+    categoria = await _create_categoria_in_db(
+        db_session, test_tenant.id, "Deleted Categoria"
     )
-    category.deleted_at = datetime.now(UTC)
+    categoria.deleted_at = datetime.now(UTC)
     await db_session.commit()
 
     response = await client.post(
@@ -486,7 +486,7 @@ async def test_create_product_deleted_category(
             "sku": "SKU-007",
             "name": "Laptop",
             "price": "100.00",
-            "category_id": category.id,
+            "categoria_id": categoria.id,
         },
     )
     assert response.status_code == 409
@@ -700,31 +700,31 @@ async def test_list_products_sort(
 
 
 @pytest.mark.asyncio
-async def test_list_products_filter_category(
+async def test_list_products_filter_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    cat_a = await _create_category_in_db(db_session, test_tenant.id, "Cat A")
-    cat_b = await _create_category_in_db(db_session, test_tenant.id, "Cat B")
+    cat_a = await _create_categoria_in_db(db_session, test_tenant.id, "Cat A")
+    cat_b = await _create_categoria_in_db(db_session, test_tenant.id, "Cat B")
     await _create_product_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-F1", category_id=cat_a.id
+        db_session, test_tenant.id, "Laptop", "SKU-F1", categoria_id=cat_a.id
     )
     await _create_product_in_db(
-        db_session, test_tenant.id, "Mouse", "SKU-F2", category_id=cat_b.id
+        db_session, test_tenant.id, "Mouse", "SKU-F2", categoria_id=cat_b.id
     )
     await db_session.commit()
 
     response = await client.get(
         "/api/v1/products",
         headers=admin_headers,
-        params={"category_id": cat_a.id},
+        params={"categoria_id": cat_a.id},
     )
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 1
-    assert data["items"][0]["category_id"] == cat_a.id
+    assert data["items"][0]["categoria_id"] == cat_a.id
 
 
 @pytest.mark.asyncio
@@ -897,13 +897,13 @@ async def test_update_product_price(
 
 
 @pytest.mark.asyncio
-async def test_update_product_category(
+async def test_update_product_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    category = await _create_category_in_db(db_session, test_tenant.id, "New Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "New Cat")
     product = await _create_product_in_db(
         db_session, test_tenant.id, "Laptop", "SKU-U4"
     )
@@ -912,38 +912,38 @@ async def test_update_product_category(
     response = await client.patch(
         f"/api/v1/products/{product.id}",
         headers=admin_headers,
-        json={"category_id": category.id},
+        json={"categoria_id": categoria.id},
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["category_id"] == category.id
+    assert data["categoria_id"] == categoria.id
 
 
 @pytest.mark.asyncio
-async def test_update_product_remove_category(
+async def test_update_product_remove_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    category = await _create_category_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
     product = await _create_product_in_db(
         db_session,
         test_tenant.id,
         "Laptop",
         "SKU-U5",
-        category_id=category.id,
+        categoria_id=categoria.id,
     )
     await db_session.commit()
 
     response = await client.patch(
         f"/api/v1/products/{product.id}",
         headers=admin_headers,
-        json={"category_id": None},
+        json={"categoria_id": None},
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["category_id"] is None
+    assert data["categoria_id"] is None
 
 
 @pytest.mark.asyncio
@@ -1107,7 +1107,7 @@ async def test_update_product_same_sku_no_conflict(
 
 
 @pytest.mark.asyncio
-async def test_update_product_non_existent_category(
+async def test_update_product_non_existent_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1121,20 +1121,20 @@ async def test_update_product_non_existent_category(
     response = await client.patch(
         f"/api/v1/products/{product.id}",
         headers=admin_headers,
-        json={"category_id": 99999},
+        json={"categoria_id": 99999},
     )
     assert response.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_update_product_cross_tenant_category(
+async def test_update_product_cross_tenant_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     other_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    other_category = await _create_category_in_db(
+    other_categoria = await _create_categoria_in_db(
         db_session, other_tenant.id, "Other Cat"
     )
     product = await _create_product_in_db(
@@ -1145,20 +1145,20 @@ async def test_update_product_cross_tenant_category(
     response = await client.patch(
         f"/api/v1/products/{product.id}",
         headers=admin_headers,
-        json={"category_id": other_category.id},
+        json={"categoria_id": other_categoria.id},
     )
     assert response.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_update_product_deleted_category(
+async def test_update_product_deleted_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ):
-    category = await _create_category_in_db(db_session, test_tenant.id, "Deleted Cat")
-    category.deleted_at = datetime.now(UTC)
+    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Deleted Cat")
+    categoria.deleted_at = datetime.now(UTC)
     product = await _create_product_in_db(
         db_session, test_tenant.id, "Laptop", "SKU-DC"
     )
@@ -1167,7 +1167,7 @@ async def test_update_product_deleted_category(
     response = await client.patch(
         f"/api/v1/products/{product.id}",
         headers=admin_headers,
-        json={"category_id": category.id},
+        json={"categoria_id": categoria.id},
     )
     assert response.status_code == 409
 
