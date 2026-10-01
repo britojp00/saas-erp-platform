@@ -70,7 +70,7 @@ Conceito:
 {
   "timestamp": "2026-09-18T23:28:01.685674-03:00",
   "level": "INFO",
-  "event": "cliente.criard",
+  "event": "cliente.criar",
   "request_id": "uuid",
   "tenant_id": 10,
   "user_id": 32
@@ -137,7 +137,7 @@ Eventos operacionais normais.
 Exemplo:
 
 application.started
-cliente.criard
+cliente.criar
 order.confirmed
 WARNING
 
@@ -171,9 +171,9 @@ application.started
 application.shutdown
 auth.login.success
 auth.login.failed
-cliente.criard
-cliente.atualizard
-cliente.excluird
+cliente.criar
+cliente.atualizar
+cliente.excluir
 order.created
 order.cancelled
 inventory.reserved
@@ -263,7 +263,7 @@ nos logs relevantes.
 Exemplo:
 
 {
-  "event": "cliente.criard",
+  "event": "cliente.criar",
   "tenant_id": "uuid",
   "user_id": "uuid"
 }

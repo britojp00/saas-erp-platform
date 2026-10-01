@@ -695,7 +695,7 @@ Exemplo:
 order.created
 order.cancelled
 inventory.reserved
-cliente.criard
+cliente.criar
 
 Quando apropriado:
 
