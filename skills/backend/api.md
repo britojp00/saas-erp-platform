@@ -38,7 +38,7 @@ Estrutura:
 Exemplos:
 
 /api/v1/clientes
-/api/v1/products
+/api/v1/produtos
 /api/v1/orders
 
 Novas alterações incompatíveis devem utilizar uma nova versão quando necessário.
@@ -57,7 +57,7 @@ app/
 └── api/
     └── v1/
         ├── clientes.py
-        ├── products.py
+        ├── produtos.py
         ├── inventory.py
         ├── orders.py
         └── auth.py
@@ -71,7 +71,7 @@ Os endpoints devem representar recursos de forma consistente.
 Exemplo:
 
 /clientes
-/products
+/produtos
 /categorias
 /inventory
 /orders
@@ -354,7 +354,7 @@ Quando um endpoint possuir busca textual, utilizar parâmetros explícitos.
 
 Exemplo:
 
-GET /products?search=camisa
+GET /produtos?search=camisa
 
 Não criar rotas diferentes para cada variação simples de pesquisa.
 
@@ -642,7 +642,7 @@ Estrutura esperada:
 Depois:
 
 /api/v1/clientes
-/api/v1/products
+/api/v1/produtos
 /api/v1/orders
 
 Evitar duplicar manualmente /api/v1 em todos os endpoints caso isso possa ser resolvido pelo router principal.

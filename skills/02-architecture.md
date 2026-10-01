@@ -183,7 +183,7 @@ Responsável pela persistência.
 Exemplos:
 
 ClienteRepository
-ProductRepository
+ProdutoRepository
 InventoryRepository
 OrderRepository
 
@@ -224,7 +224,7 @@ User
 Role
 Permission
 Cliente
-Product
+Produto
 Categoria
 Inventory
 Order
@@ -430,7 +430,7 @@ Tenant
   |
   +---- Users
   +---- Clientes
-  +---- Products
+  +---- Produtos
   +---- Orders
   +---- Inventory
 
@@ -546,7 +546,7 @@ Permissoes implementadas:
 
 cliente.ler, cliente.criar, cliente.atualizar, cliente.excluir
 categoria.ler, categoria.criar, categoria.atualizar, categoria.excluir
-product.read, product.create, product.update, product.delete
+produto.ler, produto.criar, produto.atualizar, produto.excluir
 inventory.read, inventory.update
 order.read, order.create, order.update, order.cancel
 
@@ -680,7 +680,7 @@ Padrão:
 Exemplo:
 
 /api/v1/clientes
-/api/v1/products
+/api/v1/produtos
 /api/v1/orders
 
 Uma nova versão somente deve ser criada quando existir

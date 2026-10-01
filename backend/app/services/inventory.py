@@ -2,21 +2,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
     DuplicateIdempotencyKeyError,
+    ErroProdutoNaoEncontrado,
     InsufficientStockError,
     InvalidInventoryOperationError,
     InvalidReservationStateError,
     InventoryNotFoundError,
-    ProductNotFoundError,
     ReservationNotFoundError,
 )
 from app.db.models.inventory import Inventory
 from app.db.models.inventory_movement import InventoryMovement, MovementType
 from app.db.models.inventory_reservation import InventoryReservation, ReservationStatus
-from app.db.models.product import Product
+from app.db.models.produto import Produto
 from app.repositories.inventory import InventoryRepository
 from app.repositories.inventory_movement import InventoryMovementRepository
 from app.repositories.inventory_reservation import InventoryReservationRepository
-from app.repositories.product import ProductRepository
+from app.repositories.produto import ProdutoRepository
 from app.schemas.inventory import MovementCreate, ReservationCreate
 from app.services.audit_log import AuditLogService
 
@@ -27,18 +27,18 @@ class InventoryService:
         self.inventory_repo = InventoryRepository(session)
         self.movement_repo = InventoryMovementRepository(session)
         self.reservation_repo = InventoryReservationRepository(session)
-        self.product_repo = ProductRepository(session)
+        self.produto_repo = ProdutoRepository(session)
         self.audit_service = AuditLogService(session)
 
-    async def _validate_product_exists(
+    async def _validate_produto_exists(
         self,
         tenant_id: int,
-        product_id: int,
-    ) -> Product:
-        product = await self.product_repo.get_by_id(product_id, tenant_id)
-        if product is None:
-            raise ProductNotFoundError()
-        return product
+        produto_id: int,
+    ) -> Produto:
+        produto = await self.produto_repo.get_by_id(produto_id, tenant_id)
+        if produto is None:
+            raise ErroProdutoNaoEncontrado()
+        return produto
 
     async def list_balances(
         self,
@@ -46,22 +46,22 @@ class InventoryService:
         *,
         page: int,
         page_size: int,
-        product_id: int | None = None,
+        produto_id: int | None = None,
     ) -> tuple[list[Inventory], int]:
         offset = (page - 1) * page_size
         return await self.inventory_repo.list(
             tenant_id,
             offset=offset,
             limit=page_size,
-            product_id=product_id,
+            produto_id=produto_id,
         )
 
     async def get_balance(
         self,
         tenant_id: int,
-        product_id: int,
+        produto_id: int,
     ) -> Inventory:
-        inventory = await self.inventory_repo.get_by_product_id(tenant_id, product_id)
+        inventory = await self.inventory_repo.get_by_produto_id(tenant_id, produto_id)
         if inventory is None:
             raise InventoryNotFoundError()
         return inventory
@@ -72,14 +72,14 @@ class InventoryService:
         *,
         page: int,
         page_size: int,
-        product_id: int | None = None,
+        produto_id: int | None = None,
     ) -> tuple[list[InventoryMovement], int]:
         offset = (page - 1) * page_size
         return await self.movement_repo.list(
             tenant_id,
             offset=offset,
             limit=page_size,
-            product_id=product_id,
+            produto_id=produto_id,
         )
 
     async def list_reservations(
@@ -88,14 +88,14 @@ class InventoryService:
         *,
         page: int,
         page_size: int,
-        product_id: int | None = None,
+        produto_id: int | None = None,
     ) -> tuple[list[InventoryReservation], int]:
         offset = (page - 1) * page_size
         return await self.reservation_repo.list(
             tenant_id,
             offset=offset,
             limit=page_size,
-            product_id=product_id,
+            produto_id=produto_id,
         )
 
     async def create_movement(
@@ -104,7 +104,7 @@ class InventoryService:
         data: MovementCreate,
         user_id: int | None = None,
     ) -> InventoryMovement:
-        await self._validate_product_exists(tenant_id, data.product_id)
+        await self._validate_produto_exists(tenant_id, data.produto_id)
 
         if data.movement_type == "ADJUSTMENT" and data.quantity <= 0:
             raise InvalidInventoryOperationError()
@@ -115,11 +115,11 @@ class InventoryService:
         if existing:
             raise DuplicateIdempotencyKeyError()
 
-        inventory = await self.inventory_repo.get_for_update(tenant_id, data.product_id)
+        inventory = await self.inventory_repo.get_for_update(tenant_id, data.produto_id)
         if inventory is None:
             inventory = Inventory(
                 tenant_id=tenant_id,
-                product_id=data.product_id,
+                produto_id=data.produto_id,
             )
             self.session.add(inventory)
             await self.session.flush()
@@ -140,7 +140,7 @@ class InventoryService:
 
         movement = InventoryMovement(
             tenant_id=tenant_id,
-            product_id=data.product_id,
+            produto_id=data.produto_id,
             movement_type=MovementType(data.movement_type),
             quantity=data.quantity,
             reference=data.reference,
@@ -161,7 +161,7 @@ class InventoryService:
             user_id=user_id,
             action=action_map[data.movement_type],
             entity_type="inventory",
-            entity_id=inventory.product_id,
+            entity_id=inventory.produto_id,
             old_values={"quantity": str(old_quantity)},
             new_values={"quantity": str(inventory.quantity)},
         )
@@ -174,9 +174,9 @@ class InventoryService:
         data: ReservationCreate,
         user_id: int | None = None,
     ) -> InventoryReservation:
-        product = await self._validate_product_exists(tenant_id, data.product_id)
+        produto = await self._validate_produto_exists(tenant_id, data.produto_id)
 
-        if not product.is_active:
+        if not produto.is_active:
             raise InvalidInventoryOperationError()
 
         existing = await self.reservation_repo.exists_by_idempotency_key(
@@ -185,7 +185,7 @@ class InventoryService:
         if existing:
             raise DuplicateIdempotencyKeyError()
 
-        inventory = await self.inventory_repo.get_for_update(tenant_id, data.product_id)
+        inventory = await self.inventory_repo.get_for_update(tenant_id, data.produto_id)
         if inventory is None:
             raise InventoryNotFoundError()
 
@@ -197,7 +197,7 @@ class InventoryService:
 
         reservation = InventoryReservation(
             tenant_id=tenant_id,
-            product_id=data.product_id,
+            produto_id=data.produto_id,
             quantity=data.quantity,
             status=ReservationStatus.ACTIVE,
             reference=data.reference,
@@ -215,7 +215,7 @@ class InventoryService:
             entity_type="inventory_reservation",
             entity_id=result.id,
             new_values={
-                "product_id": data.product_id,
+                "produto_id": data.produto_id,
                 "quantity": str(data.quantity),
                 "reference": data.reference,
             },
@@ -237,7 +237,7 @@ class InventoryService:
             raise InvalidReservationStateError()
 
         inventory = await self.inventory_repo.get_for_update(
-            tenant_id, reservation.product_id
+            tenant_id, reservation.produto_id
         )
         if inventory is None:
             raise InventoryNotFoundError()
@@ -276,7 +276,7 @@ class InventoryService:
             raise InvalidReservationStateError()
 
         inventory = await self.inventory_repo.get_for_update(
-            tenant_id, reservation.product_id
+            tenant_id, reservation.produto_id
         )
         if inventory is None:
             raise InventoryNotFoundError()
@@ -315,7 +315,7 @@ class InventoryService:
             raise InvalidReservationStateError()
 
         inventory = await self.inventory_repo.get_for_update(
-            tenant_id, reservation.product_id
+            tenant_id, reservation.produto_id
         )
         if inventory is None:
             raise InventoryNotFoundError()

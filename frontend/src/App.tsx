@@ -8,7 +8,7 @@ import DashboardPage from './pages/DashboardPage'
 import InventoryPage from './pages/InventoryPage'
 import LoginPage from './pages/LoginPage'
 import OrdersPage from './pages/OrdersPage'
-import ProductsPage from './pages/ProductsPage'
+import PaginaListaProdutos from './pages/PaginaListaProdutos'
 import ProtectedRoute from './routes/ProtectedRoute'
 
 export default function App() {
@@ -23,7 +23,7 @@ export default function App() {
           <Route path="/clientes/new" element={<PaginaCriarCliente />} />
           <Route path="/clientes/:id" element={<PaginaDetalheCliente />} />
           <Route path="/clientes/:id/edit" element={<PaginaEditarCliente />} />
-          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/produtos" element={<PaginaListaProdutos />} />
           <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/orders" element={<OrdersPage />} />
         </Route>

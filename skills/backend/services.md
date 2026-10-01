@@ -73,7 +73,7 @@ Exemplo:
 services/
 ├── auth.py
 ├── cliente.py
-├── product.py
+├── produto.py
 ├── categoria.py
 ├── inventory.py
 ├── order.py
@@ -230,7 +230,7 @@ Um service não deve se tornar um arquivo gigante.
 Evitar um único arquivo contendo:
 
 Cliente
-Product
+Produto
 Inventory
 Order
 Authentication

@@ -23,8 +23,8 @@ class OrderItem(
         UniqueConstraint(
             "tenant_id",
             "order_id",
-            "product_id",
-            name="uq_order_items_tenant_order_product",
+            "produto_id",
+            name="uq_order_items_tenant_order_produto",
         ),
         ForeignKeyConstraint(
             ["tenant_id", "order_id"],
@@ -32,8 +32,8 @@ class OrderItem(
             ondelete="CASCADE",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "product_id"],
-            ["products.tenant_id", "products.id"],
+            ["tenant_id", "produto_id"],
+            ["produtos.tenant_id", "produtos.id"],
             ondelete="RESTRICT",
         ),
     )
@@ -44,7 +44,7 @@ class OrderItem(
         index=True,
     )
 
-    product_id: Mapped[int] = mapped_column(
+    produto_id: Mapped[int] = mapped_column(
         BigInteger,
         nullable=False,
         index=True,

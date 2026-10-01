@@ -33,13 +33,13 @@ class InventoryReservationRepository:
         *,
         offset: int,
         limit: int,
-        product_id: int | None = None,
+        produto_id: int | None = None,
     ) -> tuple[list[InventoryReservation], int]:
         base_stmt = select(InventoryReservation).where(
             InventoryReservation.tenant_id == tenant_id,
         )
-        if product_id is not None:
-            base_stmt = base_stmt.where(InventoryReservation.product_id == product_id)
+        if produto_id is not None:
+            base_stmt = base_stmt.where(InventoryReservation.produto_id == produto_id)
 
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
         total_result = await self.session.execute(count_stmt)
@@ -67,7 +67,7 @@ class InventoryReservationRepository:
                 InventoryReservation.reference == reference,
                 InventoryReservation.status == ReservationStatus.ACTIVE,
             )
-            .order_by(InventoryReservation.product_id.asc())
+            .order_by(InventoryReservation.produto_id.asc())
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

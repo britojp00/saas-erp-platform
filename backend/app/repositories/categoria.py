@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.categoria import Categoria
-from app.db.models.product import Product
+from app.db.models.produto import Produto
 
 SORT_FIELDS = {
     "name": Categoria.name,
@@ -121,17 +121,17 @@ class CategoriaRepository:
         children = await self.get_children_ids(tenant_id, categoria_id)
         return len(children) > 0
 
-    async def has_products(
+    async def has_produtos(
         self,
         tenant_id: int,
         categoria_id: int,
     ) -> bool:
         stmt = (
-            select(Product)
+            select(Produto)
             .where(
-                Product.tenant_id == tenant_id,
-                Product.categoria_id == categoria_id,
-                Product.deleted_at.is_(None),
+                Produto.tenant_id == tenant_id,
+                Produto.categoria_id == categoria_id,
+                Produto.deleted_at.is_(None),
             )
             .limit(1)
         )

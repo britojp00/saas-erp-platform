@@ -12,7 +12,7 @@ from app.db.models.inventory import Inventory
 from app.db.models.inventory_movement import InventoryMovement, MovementType
 from app.db.models.inventory_reservation import InventoryReservation, ReservationStatus
 from app.db.models.permission import Permission
-from app.db.models.product import Product
+from app.db.models.produto import Produto
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
 from app.db.models.tenant import Tenant
@@ -112,7 +112,7 @@ async def _create_categoria_in_db(
     return categoria
 
 
-async def _create_product_in_db(
+async def _create_produto_in_db(
     session: AsyncSession,
     tenant_id: int,
     name: str,
@@ -120,8 +120,8 @@ async def _create_product_in_db(
     categoria_id: int | None = None,
     price: Decimal = Decimal("10.00"),
     is_active: bool = True,
-) -> Product:
-    product = Product(
+) -> Produto:
+    produto = Produto(
         tenant_id=tenant_id,
         sku=sku,
         name=name,
@@ -129,21 +129,21 @@ async def _create_product_in_db(
         price=price,
         is_active=is_active,
     )
-    session.add(product)
+    session.add(produto)
     await session.flush()
-    return product
+    return produto
 
 
 async def _create_inventory_in_db(
     session: AsyncSession,
     tenant_id: int,
-    product_id: int,
+    produto_id: int,
     quantity: Decimal = Decimal("100.000"),
     reserved_quantity: Decimal = Decimal("0.000"),
 ) -> Inventory:
     inventory = Inventory(
         tenant_id=tenant_id,
-        product_id=product_id,
+        produto_id=produto_id,
         quantity=quantity,
         reserved_quantity=reserved_quantity,
     )
@@ -155,14 +155,14 @@ async def _create_inventory_in_db(
 async def _create_movement_in_db(
     session: AsyncSession,
     tenant_id: int,
-    product_id: int,
+    produto_id: int,
     movement_type: str = "IN",
     quantity: Decimal = Decimal("10.000"),
     idempotency_key: str = "test-key",
 ) -> InventoryMovement:
     movement = InventoryMovement(
         tenant_id=tenant_id,
-        product_id=product_id,
+        produto_id=produto_id,
         movement_type=MovementType(movement_type),
         quantity=quantity,
         idempotency_key=idempotency_key,
@@ -175,14 +175,14 @@ async def _create_movement_in_db(
 async def _create_reservation_in_db(
     session: AsyncSession,
     tenant_id: int,
-    product_id: int,
+    produto_id: int,
     quantity: Decimal = Decimal("5.000"),
     status: ReservationStatus = ReservationStatus.ACTIVE,
     idempotency_key: str = "test-reservation-key",
 ) -> InventoryReservation:
     reservation = InventoryReservation(
         tenant_id=tenant_id,
-        product_id=product_id,
+        produto_id=produto_id,
         quantity=quantity,
         status=status,
         idempotency_key=idempotency_key,
@@ -351,15 +351,15 @@ async def test_create_in_movement(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product A", "SKU-A", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto A", "SKU-A", categoria.id
     )
     await db_session.commit()
 
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "IN",
             "quantity": "50.000",
             "reference": "PO-001",
@@ -371,7 +371,7 @@ async def test_create_in_movement(
     data = response.json()
     assert data["movement_type"] == "IN"
     assert data["quantity"] == "50.000"
-    assert data["product_id"] == product.id
+    assert data["produto_id"] == produto.id
     assert data["reference"] == "PO-001"
 
 
@@ -383,16 +383,16 @@ async def test_create_out_movement(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product B", "SKU-B", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto B", "SKU-B", categoria.id
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, product.id)
+    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "OUT",
             "quantity": "10.000",
             "idempotency_key": "out-movement-1",
@@ -413,16 +413,16 @@ async def test_adjustment_movement(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product C", "SKU-C", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto C", "SKU-C", categoria.id
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, product.id)
+    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "ADJUSTMENT",
             "quantity": "75.000",
             "notes": "Stock count correction",
@@ -443,18 +443,18 @@ async def test_movement_updates_balance(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product D", "SKU-D", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto D", "SKU-D", categoria.id
     )
     await _create_inventory_in_db(
-        db_session, test_tenant.id, product.id, quantity=Decimal("50.000")
+        db_session, test_tenant.id, produto.id, quantity=Decimal("50.000")
     )
     await db_session.commit()
 
     await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "IN",
             "quantity": "25.000",
             "idempotency_key": "in-25",
@@ -463,7 +463,7 @@ async def test_movement_updates_balance(
     )
 
     response = await client.get(
-        f"/api/v1/inventory/{product.id}",
+        f"/api/v1/inventory/{produto.id}",
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -479,18 +479,18 @@ async def test_out_movement_insufficient_stock(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product E", "SKU-E", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto E", "SKU-E", categoria.id
     )
     await _create_inventory_in_db(
-        db_session, test_tenant.id, product.id, quantity=Decimal("5.000")
+        db_session, test_tenant.id, produto.id, quantity=Decimal("5.000")
     )
     await db_session.commit()
 
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "OUT",
             "quantity": "10.000",
             "idempotency_key": "out-10",
@@ -508,13 +508,13 @@ async def test_out_movement_cannot_consume_reserved(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product F", "SKU-F", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto F", "SKU-F", categoria.id
     )
     await _create_inventory_in_db(
         db_session,
         test_tenant.id,
-        product.id,
+        produto.id,
         quantity=Decimal("10.000"),
         reserved_quantity=Decimal("5.000"),
     )
@@ -523,7 +523,7 @@ async def test_out_movement_cannot_consume_reserved(
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "OUT",
             "quantity": "8.000",
             "idempotency_key": "out-8",
@@ -541,13 +541,13 @@ async def test_adjustment_leaves_reserved_exceeds_quantity(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product G", "SKU-G", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto G", "SKU-G", categoria.id
     )
     await _create_inventory_in_db(
         db_session,
         test_tenant.id,
-        product.id,
+        produto.id,
         quantity=Decimal("10.000"),
         reserved_quantity=Decimal("5.000"),
     )
@@ -556,7 +556,7 @@ async def test_adjustment_leaves_reserved_exceeds_quantity(
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "ADJUSTMENT",
             "quantity": "3.000",
             "idempotency_key": "adj-3",
@@ -574,15 +574,15 @@ async def test_idempotent_movement_returns_same(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product H", "SKU-H", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto H", "SKU-H", categoria.id
     )
     await db_session.commit()
 
     response1 = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "IN",
             "quantity": "10.000",
             "idempotency_key": "idempotent-1",
@@ -594,7 +594,7 @@ async def test_idempotent_movement_returns_same(
     response2 = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "IN",
             "quantity": "20.000",
             "idempotency_key": "idempotent-1",
@@ -612,14 +612,14 @@ async def test_list_movements(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product I", "SKU-I", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto I", "SKU-I", categoria.id
     )
     await _create_movement_in_db(
-        db_session, test_tenant.id, product.id, "IN", Decimal("10.000"), "key-1"
+        db_session, test_tenant.id, produto.id, "IN", Decimal("10.000"), "key-1"
     )
     await _create_movement_in_db(
-        db_session, test_tenant.id, product.id, "OUT", Decimal("5.000"), "key-2"
+        db_session, test_tenant.id, produto.id, "OUT", Decimal("5.000"), "key-2"
     )
     await db_session.commit()
 
@@ -644,16 +644,16 @@ async def test_create_reservation(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product J", "SKU-J", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto J", "SKU-J", categoria.id
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, product.id)
+    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
         "/api/v1/inventory/reservations",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "quantity": "5.000",
             "reference": "SO-001",
             "idempotency_key": "res-1",
@@ -664,7 +664,7 @@ async def test_create_reservation(
     data = response.json()
     assert data["status"] == "ACTIVE"
     assert data["quantity"] == "5.000"
-    assert data["product_id"] == product.id
+    assert data["produto_id"] == produto.id
 
 
 @pytest.mark.asyncio
@@ -675,18 +675,18 @@ async def test_reservation_updates_reserved_quantity(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product K", "SKU-K", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto K", "SKU-K", categoria.id
     )
     await _create_inventory_in_db(
-        db_session, test_tenant.id, product.id, quantity=Decimal("20.000")
+        db_session, test_tenant.id, produto.id, quantity=Decimal("20.000")
     )
     await db_session.commit()
 
     await client.post(
         "/api/v1/inventory/reservations",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "quantity": "7.000",
             "idempotency_key": "res-7",
         },
@@ -694,7 +694,7 @@ async def test_reservation_updates_reserved_quantity(
     )
 
     response = await client.get(
-        f"/api/v1/inventory/{product.id}",
+        f"/api/v1/inventory/{produto.id}",
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -711,13 +711,13 @@ async def test_reservation_insufficient_stock(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product L", "SKU-L", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto L", "SKU-L", categoria.id
     )
     await _create_inventory_in_db(
         db_session,
         test_tenant.id,
-        product.id,
+        produto.id,
         quantity=Decimal("10.000"),
         reserved_quantity=Decimal("8.000"),
     )
@@ -726,7 +726,7 @@ async def test_reservation_insufficient_stock(
     response = await client.post(
         "/api/v1/inventory/reservations",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "quantity": "5.000",
             "idempotency_key": "res-over",
         },
@@ -736,23 +736,23 @@ async def test_reservation_insufficient_stock(
 
 
 @pytest.mark.asyncio
-async def test_reservation_inactive_product(
+async def test_reservation_inactive_produto(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product M", "SKU-M", categoria.id, is_active=False
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto M", "SKU-M", categoria.id, is_active=False
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, product.id)
+    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
         "/api/v1/inventory/reservations",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "quantity": "2.000",
             "idempotency_key": "res-inactive",
         },
@@ -769,14 +769,14 @@ async def test_confirm_reservation(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product N", "SKU-N", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto N", "SKU-N", categoria.id
     )
     inventory = await _create_inventory_in_db(
-        db_session, test_tenant.id, product.id, quantity=Decimal("20.000")
+        db_session, test_tenant.id, produto.id, quantity=Decimal("20.000")
     )
     reservation = await _create_reservation_in_db(
-        db_session, test_tenant.id, product.id, Decimal("5.000")
+        db_session, test_tenant.id, produto.id, Decimal("5.000")
     )
     inventory.reserved_quantity = Decimal("5.000")
     await db_session.commit()
@@ -791,7 +791,7 @@ async def test_confirm_reservation(
     assert data["confirmed_at"] is not None
 
     response2 = await client.get(
-        f"/api/v1/inventory/{product.id}",
+        f"/api/v1/inventory/{produto.id}",
         headers=admin_headers,
     )
     assert response2.json()["reserved_quantity"] == "0.000"
@@ -805,14 +805,14 @@ async def test_release_reservation(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product O", "SKU-O", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto O", "SKU-O", categoria.id
     )
     inventory = await _create_inventory_in_db(
-        db_session, test_tenant.id, product.id, quantity=Decimal("20.000")
+        db_session, test_tenant.id, produto.id, quantity=Decimal("20.000")
     )
     reservation = await _create_reservation_in_db(
-        db_session, test_tenant.id, product.id, Decimal("5.000")
+        db_session, test_tenant.id, produto.id, Decimal("5.000")
     )
     inventory.reserved_quantity = Decimal("5.000")
     await db_session.commit()
@@ -835,14 +835,14 @@ async def test_cancel_reservation(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product P", "SKU-P", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto P", "SKU-P", categoria.id
     )
     inventory = await _create_inventory_in_db(
-        db_session, test_tenant.id, product.id, quantity=Decimal("20.000")
+        db_session, test_tenant.id, produto.id, quantity=Decimal("20.000")
     )
     reservation = await _create_reservation_in_db(
-        db_session, test_tenant.id, product.id, Decimal("5.000")
+        db_session, test_tenant.id, produto.id, Decimal("5.000")
     )
     inventory.reserved_quantity = Decimal("5.000")
     await db_session.commit()
@@ -865,13 +865,13 @@ async def test_confirm_already_confirmed_reservation(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product Q", "SKU-Q", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto Q", "SKU-Q", categoria.id
     )
     reservation = await _create_reservation_in_db(
         db_session,
         test_tenant.id,
-        product.id,
+        produto.id,
         Decimal("5.000"),
         ReservationStatus.CONFIRMED,
     )
@@ -892,14 +892,14 @@ async def test_list_reservations(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
-        db_session, test_tenant.id, "Product R", "SKU-R", categoria.id
+    produto = await _create_produto_in_db(
+        db_session, test_tenant.id, "Produto R", "SKU-R", categoria.id
     )
     await _create_reservation_in_db(
-        db_session, test_tenant.id, product.id, Decimal("5.000"), idempotency_key="r1"
+        db_session, test_tenant.id, produto.id, Decimal("5.000"), idempotency_key="r1"
     )
     await _create_reservation_in_db(
-        db_session, test_tenant.id, product.id, Decimal("3.000"), idempotency_key="r2"
+        db_session, test_tenant.id, produto.id, Decimal("3.000"), idempotency_key="r2"
     )
     await db_session.commit()
 
@@ -924,10 +924,10 @@ async def test_list_inventory_balances(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    p1 = await _create_product_in_db(
+    p1 = await _create_produto_in_db(
         db_session, test_tenant.id, "Prod 1", "SKU-1", categoria.id
     )
-    p2 = await _create_product_in_db(
+    p2 = await _create_produto_in_db(
         db_session, test_tenant.id, "Prod 2", "SKU-2", categoria.id
     )
     await _create_inventory_in_db(db_session, test_tenant.id, p1.id)
@@ -951,22 +951,22 @@ async def test_get_single_balance(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Prod Single", "SKU-S", categoria.id
     )
     await _create_inventory_in_db(
-        db_session, test_tenant.id, product.id, quantity=Decimal("42.000")
+        db_session, test_tenant.id, produto.id, quantity=Decimal("42.000")
     )
     await db_session.commit()
 
     response = await client.get(
-        f"/api/v1/inventory/{product.id}",
+        f"/api/v1/inventory/{produto.id}",
         headers=admin_headers,
     )
     assert response.status_code == 200
     data = response.json()
     assert data["quantity"] == "42.000"
-    assert data["product_id"] == product.id
+    assert data["produto_id"] == produto.id
 
 
 @pytest.mark.asyncio
@@ -994,14 +994,14 @@ async def test_cannot_access_other_tenant_inventory(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "TenantProd", "SKU-TP", categoria.id
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, product.id)
+    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.get(
-        f"/api/v1/inventory/{product.id}",
+        f"/api/v1/inventory/{produto.id}",
         headers=other_tenant_headers,
     )
     assert response.status_code == 404
@@ -1053,7 +1053,7 @@ async def test_read_only_user_cannot_create_movement(
     ro_headers = {"Authorization": f"Bearer {ro_token}"}
 
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "ProdRO", "SKU-RO", categoria.id
     )
     await db_session.commit()
@@ -1061,7 +1061,7 @@ async def test_read_only_user_cannot_create_movement(
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "IN",
             "quantity": "10.000",
             "idempotency_key": "ro-movement",
@@ -1080,14 +1080,14 @@ async def test_unauthenticated_cannot_access(
 
 
 @pytest.mark.asyncio
-async def test_movement_on_inactive_product_allowed(
+async def test_movement_on_inactive_produto_allowed(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session,
         test_tenant.id,
         "Inactive",
@@ -1095,13 +1095,13 @@ async def test_movement_on_inactive_product_allowed(
         categoria.id,
         is_active=False,
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, product.id)
+    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "IN",
             "quantity": "5.000",
             "idempotency_key": "inactive-in",
@@ -1119,7 +1119,7 @@ async def test_adjustment_must_be_positive(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "AdjProd", "SKU-ADJ", categoria.id
     )
     await db_session.commit()
@@ -1127,7 +1127,7 @@ async def test_adjustment_must_be_positive(
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "ADJUSTMENT",
             "quantity": "0.000",
             "idempotency_key": "adj-zero",
@@ -1145,7 +1145,7 @@ async def test_invalid_movement_type(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "BadType", "SKU-BT", categoria.id
     )
     await db_session.commit()
@@ -1153,7 +1153,7 @@ async def test_invalid_movement_type(
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "INVALID",
             "quantity": "5.000",
             "idempotency_key": "bad-type",
@@ -1171,14 +1171,14 @@ async def test_pagination_works(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "PagProd", "SKU-PAG", categoria.id
     )
     for i in range(5):
         await _create_movement_in_db(
             db_session,
             test_tenant.id,
-            product.id,
+            produto.id,
             "IN",
             Decimal("1.000"),
             f"pag-key-{i}",
@@ -1208,18 +1208,18 @@ async def test_idempotent_reservation_returns_same(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "IdemRes", "SKU-IR", categoria.id
     )
     await _create_inventory_in_db(
-        db_session, test_tenant.id, product.id, quantity=Decimal("50.000")
+        db_session, test_tenant.id, produto.id, quantity=Decimal("50.000")
     )
     await db_session.commit()
 
     response1 = await client.post(
         "/api/v1/inventory/reservations",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "quantity": "10.000",
             "idempotency_key": "res-idempotent-1",
         },
@@ -1231,7 +1231,7 @@ async def test_idempotent_reservation_returns_same(
     response2 = await client.post(
         "/api/v1/inventory/reservations",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "quantity": "20.000",
             "idempotency_key": "res-idempotent-1",
         },
@@ -1248,13 +1248,13 @@ async def test_released_reservation_cannot_be_confirmed(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "RelCf", "SKU-RC", categoria.id
     )
     reservation = await _create_reservation_in_db(
         db_session,
         test_tenant.id,
-        product.id,
+        produto.id,
         Decimal("5.000"),
         ReservationStatus.RELEASED,
     )
@@ -1275,13 +1275,13 @@ async def test_cancelled_reservation_cannot_be_confirmed(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "CanCf", "SKU-CC", categoria.id
     )
     reservation = await _create_reservation_in_db(
         db_session,
         test_tenant.id,
-        product.id,
+        produto.id,
         Decimal("5.000"),
         ReservationStatus.CANCELLED,
     )
@@ -1302,13 +1302,13 @@ async def test_confirmed_reservation_cannot_be_released(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "CfRel", "SKU-CR", categoria.id
     )
     reservation = await _create_reservation_in_db(
         db_session,
         test_tenant.id,
-        product.id,
+        produto.id,
         Decimal("5.000"),
         ReservationStatus.CONFIRMED,
     )
@@ -1329,13 +1329,13 @@ async def test_out_at_boundary_exactly_available(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "BoundOut", "SKU-BO", categoria.id
     )
     await _create_inventory_in_db(
         db_session,
         test_tenant.id,
-        product.id,
+        produto.id,
         quantity=Decimal("100.000"),
         reserved_quantity=Decimal("30.000"),
     )
@@ -1344,7 +1344,7 @@ async def test_out_at_boundary_exactly_available(
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "OUT",
             "quantity": "70.000",
             "idempotency_key": "out-boundary-ok",
@@ -1362,13 +1362,13 @@ async def test_out_one_over_boundary_fails(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "BoundOutFail", "SKU-BOF", categoria.id
     )
     await _create_inventory_in_db(
         db_session,
         test_tenant.id,
-        product.id,
+        produto.id,
         quantity=Decimal("100.000"),
         reserved_quantity=Decimal("30.000"),
     )
@@ -1377,7 +1377,7 @@ async def test_out_one_over_boundary_fails(
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "OUT",
             "quantity": "71.000",
             "idempotency_key": "out-boundary-fail",
@@ -1388,7 +1388,7 @@ async def test_out_one_over_boundary_fails(
 
 
 @pytest.mark.asyncio
-async def test_cross_tenant_cannot_create_movement_on_other_tenant_product(
+async def test_cross_tenant_cannot_create_movement_on_other_tenant_produto(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1397,7 +1397,7 @@ async def test_cross_tenant_cannot_create_movement_on_other_tenant_product(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "CrossTenant", "SKU-CT", categoria.id
     )
     await db_session.commit()
@@ -1405,7 +1405,7 @@ async def test_cross_tenant_cannot_create_movement_on_other_tenant_product(
     response = await client.post(
         "/api/v1/inventory/movements",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "movement_type": "IN",
             "quantity": "10.000",
             "idempotency_key": "cross-tenant-movement",
@@ -1416,7 +1416,7 @@ async def test_cross_tenant_cannot_create_movement_on_other_tenant_product(
 
 
 @pytest.mark.asyncio
-async def test_cross_tenant_cannot_create_reservation_on_other_tenant_product(
+async def test_cross_tenant_cannot_create_reservation_on_other_tenant_produto(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1425,7 +1425,7 @@ async def test_cross_tenant_cannot_create_reservation_on_other_tenant_product(
     admin_headers: dict[str, str],
 ) -> None:
     categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
-    product = await _create_product_in_db(
+    produto = await _create_produto_in_db(
         db_session, test_tenant.id, "CrossTenantRes", "SKU-CTR", categoria.id
     )
     await db_session.commit()
@@ -1433,7 +1433,7 @@ async def test_cross_tenant_cannot_create_reservation_on_other_tenant_product(
     response = await client.post(
         "/api/v1/inventory/reservations",
         json={
-            "product_id": product.id,
+            "produto_id": produto.id,
             "quantity": "5.000",
             "idempotency_key": "cross-tenant-reservation",
         },

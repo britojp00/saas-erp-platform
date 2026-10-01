@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, field_serializer, field_validator
 from app.core.config import settings
 
 
-class ProductCreate(BaseModel):
+class ProdutoCriarPayload(BaseModel):
     sku: str = Field(min_length=1, max_length=50)
     name: str = Field(min_length=1, max_length=150)
     description: str | None = Field(default=None, max_length=5000)
@@ -30,7 +30,7 @@ class ProductCreate(BaseModel):
         return v
 
 
-class ProductUpdate(BaseModel):
+class ProdutoAtualizarPayload(BaseModel):
     sku: str | None = Field(default=None, min_length=1, max_length=50)
     name: str | None = Field(default=None, min_length=1, max_length=150)
     description: str | None = Field(default=None, max_length=5000)
@@ -54,7 +54,7 @@ class ProductUpdate(BaseModel):
         return v
 
 
-class ProductResponse(BaseModel):
+class ProdutoResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
@@ -85,8 +85,8 @@ class ProductResponse(BaseModel):
         return value.astimezone(settings.tz).isoformat()
 
 
-class ProductListResponse(BaseModel):
-    items: list[ProductResponse]
+class ListaProdutosResposta(BaseModel):
+    items: list[ProdutoResposta]
     page: int
     page_size: int
     total: int

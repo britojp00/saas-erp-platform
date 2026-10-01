@@ -8,14 +8,14 @@ class InventoryRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def get_by_product_id(
+    async def get_by_produto_id(
         self,
         tenant_id: int,
-        product_id: int,
+        produto_id: int,
     ) -> Inventory | None:
         stmt = select(Inventory).where(
             Inventory.tenant_id == tenant_id,
-            Inventory.product_id == product_id,
+            Inventory.produto_id == produto_id,
             Inventory.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
@@ -24,13 +24,13 @@ class InventoryRepository:
     async def get_for_update(
         self,
         tenant_id: int,
-        product_id: int,
+        produto_id: int,
     ) -> Inventory | None:
         stmt = (
             select(Inventory)
             .where(
                 Inventory.tenant_id == tenant_id,
-                Inventory.product_id == product_id,
+                Inventory.produto_id == produto_id,
                 Inventory.deleted_at.is_(None),
             )
             .with_for_update()
@@ -44,14 +44,14 @@ class InventoryRepository:
         *,
         offset: int,
         limit: int,
-        product_id: int | None = None,
+        produto_id: int | None = None,
     ) -> tuple[list[Inventory], int]:
         base_stmt = select(Inventory).where(
             Inventory.tenant_id == tenant_id,
             Inventory.deleted_at.is_(None),
         )
-        if product_id is not None:
-            base_stmt = base_stmt.where(Inventory.product_id == product_id)
+        if produto_id is not None:
+            base_stmt = base_stmt.where(Inventory.produto_id == produto_id)
 
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
         total_result = await self.session.execute(count_stmt)
@@ -67,13 +67,13 @@ class InventoryRepository:
     async def get_or_create(
         self,
         tenant_id: int,
-        product_id: int,
+        produto_id: int,
     ) -> Inventory:
-        inventory = await self.get_by_product_id(tenant_id, product_id)
+        inventory = await self.get_by_produto_id(tenant_id, produto_id)
         if inventory is None:
             inventory = Inventory(
                 tenant_id=tenant_id,
-                product_id=product_id,
+                produto_id=produto_id,
             )
             self.session.add(inventory)
             await self.session.flush()

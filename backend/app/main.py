@@ -10,7 +10,7 @@ from app.api.v1.categorias import router as categorias_router
 from app.api.v1.clientes import router as clientes_router
 from app.api.v1.inventory import router as inventory_router
 from app.api.v1.orders import router as orders_router
-from app.api.v1.products import router as products_router
+from app.api.v1.produtos import router as produtos_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import setup_logging
@@ -42,7 +42,7 @@ app.include_router(categorias_router, prefix="/api/v1")
 app.include_router(clientes_router, prefix="/api/v1")
 app.include_router(inventory_router, prefix="/api/v1")
 app.include_router(orders_router, prefix="/api/v1")
-app.include_router(products_router, prefix="/api/v1")
+app.include_router(produtos_router, prefix="/api/v1")
 
 
 @app.on_event("startup")

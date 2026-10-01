@@ -52,7 +52,7 @@ backend/
 │   │   │   ├── auth.py
 │   │   │   ├── clientes.py
 │   │   │   ├── categorias.py
-│   │   │   ├── products.py
+│   │   │   ├── produtos.py
 │   │   │   ├── inventory.py
 │   │   │   ├── orders.py
 │   │   │   └── audit_logs.py
@@ -74,7 +74,7 @@ backend/
 │   │   ├── auth.py
 │   │   ├── cliente.py
 │   │   ├── categoria.py
-│   │   ├── product.py
+│   │   ├── produto.py
 │   │   ├── inventory.py
 │   │   ├── order.py
 │   │   └── audit_log.py
@@ -83,7 +83,7 @@ backend/
 │   │   ├── tenant.py
 │   │   ├── cliente.py
 │   │   ├── categoria.py
-│   │   ├── product.py
+│   │   ├── produto.py
 │   │   ├── inventory.py
 │   │   ├── inventory_movement.py
 │   │   ├── inventory_reservation.py
@@ -97,7 +97,7 @@ backend/
 │   │   ├── authorization.py
 │   │   ├── cliente.py
 │   │   ├── categoria.py
-│   │   ├── product.py
+│   │   ├── produto.py
 │   │   ├── inventory.py
 │   │   ├── order.py
 │   │   └── audit_log.py
@@ -111,7 +111,7 @@ backend/
 │   │   ├── test_rbac.py
 │   │   ├── test_clientes.py
 │   │   ├── test_categorias.py
-│   │   ├── test_products.py
+│   │   ├── test_produtos.py
 │   │   ├── test_inventory.py
 │   │   ├── test_orders.py
 │   │   ├── test_audit_logs.py
@@ -172,7 +172,7 @@ Exemplos:
 auth.py
 clientes.py
 categorias.py
-products.py
+produtos.py
 inventory.py
 orders.py
 audit_logs.py
@@ -222,7 +222,7 @@ role_permission.py
 permission.py
 cliente.py
 categoria.py
-product.py
+produto.py
 inventory.py
 inventory_movement.py
 inventory_reservation.py
@@ -248,7 +248,7 @@ Exemplos:
 auth.py
 cliente.py
 categoria.py
-product.py
+produto.py
 inventory.py
 order.py
 audit_log.py
@@ -279,7 +279,7 @@ user.py
 tenant.py
 cliente.py
 categoria.py
-product.py
+produto.py
 inventory.py
 inventory_movement.py
 inventory_reservation.py
@@ -313,7 +313,7 @@ auth.py
 authorization.py
 cliente.py
 categoria.py
-product.py
+produto.py
 inventory.py
 order.py
 audit_log.py
@@ -378,7 +378,7 @@ backend/tests/
 │   ├── test_rbac.py
 │   ├── test_clientes.py
 │   ├── test_categorias.py
-│   ├── test_products.py
+│   ├── test_produtos.py
 │   ├── test_inventory.py
 │   ├── test_orders.py
 │   ├── test_audit_logs.py
@@ -413,7 +413,7 @@ test_timezone.py
 test_rbac.py
 test_clientes.py
 test_categorias.py
-test_products.py
+test_produtos.py
 test_inventory.py
 test_orders.py
 test_audit_logs.py

@@ -1,9 +1,9 @@
 import ModulePlaceholder from '../components/ModulePlaceholder'
 
-export default function ProductsPage() {
+export default function PaginaListaProdutos() {
   return (
     <ModulePlaceholder
-      title="Products"
+      title="Produtos"
       description="Catálogo de produtos e categorias."
     />
   )

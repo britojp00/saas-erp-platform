@@ -2,21 +2,21 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
-    DuplicateProductError,
     ErroProdutoCategoriaInvalida,
-    ProductInUseError,
-    ProductNotFoundError,
+    ErroProdutoDuplicado,
+    ErroProdutoEmUso,
+    ErroProdutoNaoEncontrado,
 )
-from app.db.models.product import Product
-from app.repositories.product import ProductRepository
-from app.schemas.product import ProductCreate, ProductUpdate
+from app.db.models.produto import Produto
+from app.repositories.produto import ProdutoRepository
+from app.schemas.produto import ProdutoAtualizarPayload, ProdutoCriarPayload
 from app.services.audit_log import AuditLogService
 
 
-class ProductService:
+class ProdutoService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
-        self.repo = ProductRepository(session)
+        self.repo = ProdutoRepository(session)
         self.audit_service = AuditLogService(session)
 
     async def _validate_categoria(
@@ -41,7 +41,7 @@ class ProductService:
         order: str = "desc",
         categoria_id: int | None = None,
         is_active: bool | None = None,
-    ) -> tuple[list[Product], int]:
+    ) -> tuple[list[Produto], int]:
         offset = (page - 1) * page_size
         return await self.repo.list(
             tenant_id,
@@ -56,26 +56,26 @@ class ProductService:
 
     async def get_by_id(
         self,
-        product_id: int,
+        produto_id: int,
         tenant_id: int,
-    ) -> Product:
-        product = await self.repo.get_by_id(product_id, tenant_id)
-        if product is None:
-            raise ProductNotFoundError()
-        return product
+    ) -> Produto:
+        produto = await self.repo.get_by_id(produto_id, tenant_id)
+        if produto is None:
+            raise ErroProdutoNaoEncontrado()
+        return produto
 
     async def create(
         self,
         tenant_id: int,
-        data: ProductCreate,
+        data: ProdutoCriarPayload,
         user_id: int | None = None,
-    ) -> Product:
+    ) -> Produto:
         await self._validate_categoria(tenant_id, data.categoria_id)
 
         if await self.repo.exists_by_sku(tenant_id, data.sku.strip()):
-            raise DuplicateProductError()
+            raise ErroProdutoDuplicado()
 
-        product = Product(
+        produto = Produto(
             tenant_id=tenant_id,
             sku=data.sku.strip(),
             name=data.name.strip(),
@@ -87,15 +87,15 @@ class ProductService:
         )
 
         try:
-            result = await self.repo.create(product)
+            result = await self.repo.create(produto)
         except IntegrityError:
-            raise DuplicateProductError()
+            raise ErroProdutoDuplicado()
 
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="PRODUCT_CREATE",
-            entity_type="product",
+            action="PRODUTO_CRIAR",
+            entity_type="produto",
             entity_id=result.id,
             new_values={
                 "sku": result.sku,
@@ -109,20 +109,20 @@ class ProductService:
 
     async def update(
         self,
-        product_id: int,
+        produto_id: int,
         tenant_id: int,
-        data: ProductUpdate,
+        data: ProdutoAtualizarPayload,
         user_id: int | None = None,
-    ) -> Product:
-        product = await self.repo.get_by_id(product_id, tenant_id)
-        if product is None:
-            raise ProductNotFoundError()
+    ) -> Produto:
+        produto = await self.repo.get_by_id(produto_id, tenant_id)
+        if produto is None:
+            raise ErroProdutoNaoEncontrado()
 
         old_values = {
-            "sku": product.sku,
-            "name": product.name,
-            "price": str(product.price),
-            "is_active": product.is_active,
+            "sku": produto.sku,
+            "name": produto.name,
+            "price": str(produto.price),
+            "is_active": produto.is_active,
         }
 
         update_data = data.model_dump(exclude_unset=True)
@@ -131,31 +131,31 @@ class ProductService:
             new_categoria_id = update_data["categoria_id"]
             if new_categoria_id is not None:
                 await self._validate_categoria(tenant_id, new_categoria_id)
-            product.categoria_id = new_categoria_id
+            produto.categoria_id = new_categoria_id
 
         if "sku" in update_data:
             new_sku = update_data["sku"].strip()
-            if new_sku != product.sku and await self.repo.exists_by_sku(
-                tenant_id, new_sku, exclude_id=product.id
+            if new_sku != produto.sku and await self.repo.exists_by_sku(
+                tenant_id, new_sku, exclude_id=produto.id
             ):
-                raise DuplicateProductError()
-            product.sku = new_sku
+                raise ErroProdutoDuplicado()
+            produto.sku = new_sku
 
         if "name" in update_data:
-            product.name = update_data["name"].strip()
+            produto.name = update_data["name"].strip()
         if "description" in update_data:
-            product.description = update_data["description"]
+            produto.description = update_data["description"]
         if "price" in update_data:
-            product.price = update_data["price"]
+            produto.price = update_data["price"]
         if "cost_price" in update_data:
-            product.cost_price = update_data["cost_price"]
+            produto.cost_price = update_data["cost_price"]
         if "is_active" in update_data:
-            product.is_active = update_data["is_active"]
+            produto.is_active = update_data["is_active"]
 
         try:
-            result = await self.repo.update(product)
+            result = await self.repo.update(produto)
         except IntegrityError:
-            raise DuplicateProductError()
+            raise ErroProdutoDuplicado()
 
         new_values = {
             "sku": result.sku,
@@ -167,8 +167,8 @@ class ProductService:
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="PRODUCT_UPDATE",
-            entity_type="product",
+            action="PRODUTO_ATUALIZAR",
+            entity_type="produto",
             entity_id=result.id,
             old_values=old_values,
             new_values=new_values,
@@ -178,32 +178,32 @@ class ProductService:
 
     async def soft_delete(
         self,
-        product_id: int,
+        produto_id: int,
         tenant_id: int,
         user_id: int | None = None,
     ) -> None:
-        product = await self.repo.get_by_id(product_id, tenant_id)
-        if product is None:
-            raise ProductNotFoundError()
+        produto = await self.repo.get_by_id(produto_id, tenant_id)
+        if produto is None:
+            raise ErroProdutoNaoEncontrado()
 
-        if await self.repo.has_inventory(tenant_id, product.id):
-            raise ProductInUseError()
+        if await self.repo.has_inventory(tenant_id, produto.id):
+            raise ErroProdutoEmUso()
 
-        if await self.repo.has_order_items(tenant_id, product.id):
-            raise ProductInUseError()
+        if await self.repo.has_order_items(tenant_id, produto.id):
+            raise ErroProdutoEmUso()
 
         old_values = {
-            "sku": product.sku,
-            "name": product.name,
+            "sku": produto.sku,
+            "name": produto.name,
         }
 
-        await self.repo.soft_delete(product)
+        await self.repo.soft_delete(produto)
 
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="PRODUCT_DELETE",
-            entity_type="product",
-            entity_id=product_id,
+            action="PRODUTO_EXCLUIR",
+            entity_type="produto",
+            entity_id=produto_id,
             old_values=old_values,
         )

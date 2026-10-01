@@ -43,8 +43,8 @@ class InventoryReservation(
             name="uq_inventory_reservations_tenant_idempotency",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "product_id"],
-            ["products.tenant_id", "products.id"],
+            ["tenant_id", "produto_id"],
+            ["produtos.tenant_id", "produtos.id"],
             ondelete="RESTRICT",
         ),
         ForeignKeyConstraint(
@@ -54,7 +54,7 @@ class InventoryReservation(
         ),
     )
 
-    product_id: Mapped[int] = mapped_column(
+    produto_id: Mapped[int] = mapped_column(
         BigInteger,
         nullable=False,
         index=True,

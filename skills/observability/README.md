@@ -1318,7 +1318,7 @@ LOG_JSON=true     # true=JSON, false=Text
 | request_completed | INFO/WARNING/ERROR | middleware |
 | request_failed | ERROR | middleware (exception) |
 | cliente.nao_encontrado | WARNING | exceptions.py |
-| product.not_found | WARNING | exceptions.py |
+| produto.nao_encontrado | WARNING | exceptions.py |
 | inventory.not_found | WARNING | exceptions.py |
 | order.not_found | WARNING | exceptions.py |
 | order.invalid_state | WARNING | exceptions.py |

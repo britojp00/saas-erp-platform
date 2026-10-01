@@ -128,7 +128,7 @@ models/
 ├── tenant.py
 ├── user.py
 ├── cliente.py
-├── product.py
+├── produto.py
 ├── categoria.py
 ├── inventory.py
 ├── order.py
@@ -150,7 +150,7 @@ plural
 Exemplo:
 
 clientes
-products
+produtos
 order_items
 audit_logs
 

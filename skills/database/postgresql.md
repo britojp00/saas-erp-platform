@@ -44,7 +44,7 @@ PostgreSQL
                 ├── tenants
                 ├── users
                 ├── clientes
-                ├── products
+                ├── produtos
                 ├── orders
                 └── inventory
 
@@ -69,7 +69,7 @@ users
 roles
 permissions
 clientes
-products
+produtos
 orders
 order_items
 audit_logs

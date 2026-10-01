@@ -271,7 +271,7 @@ Quando o recurso não existir:
 Exemplos:
 
 ErroClienteNaoEncontrado
-ProductNotFoundError
+ErroProdutoNaoEncontrado
 OrderNotFoundError
 
 Em recursos multi-tenant, não revelar dados que permitam descobrir a existência de recursos de outro tenant.
@@ -786,7 +786,7 @@ Uma possível hierarquia:
 AppError
 ├── DomainError
 │   ├── ErroClienteNaoEncontrado
-│   ├── ProductNotFoundError
+│   ├── ErroProdutoNaoEncontrado
 │   ├── ErroClienteDuplicado
 │   ├── InsufficientStockError
 │   └── OrderNotCancelableError

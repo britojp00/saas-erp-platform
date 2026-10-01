@@ -143,10 +143,10 @@ cliente.excluir
 
 Produtos:
 
-product.read
-product.create
-product.update
-product.delete
+produto.ler
+produto.criar
+produto.atualizar
+produto.excluir
 
 Pedidos:
 
@@ -471,10 +471,10 @@ Administrator
 ├── cliente.criar
 ├── cliente.atualizar
 ├── cliente.excluir
-├── product.read
-├── product.create
-├── product.update
-├── product.delete
+├── produto.ler
+├── produto.criar
+├── produto.atualizar
+├── produto.excluir
 └── order.*
 
 Mesmo uma role administrativa deve continuar respeitando o tenant.
