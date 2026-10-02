@@ -1,19 +1,19 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.order import Order
+from app.db.models.pedido import Pedido
 
 SORT_FIELDS = {
-    "order_number": Order.order_number,
-    "status": Order.status,
-    "total_amount": Order.total_amount,
-    "cliente_id": Order.cliente_id,
-    "created_at": Order.created_at,
-    "updated_at": Order.updated_at,
+    "numero_pedido": Pedido.numero_pedido,
+    "status": Pedido.status,
+    "total_amount": Pedido.total_amount,
+    "cliente_id": Pedido.cliente_id,
+    "created_at": Pedido.created_at,
+    "updated_at": Pedido.updated_at,
 }
 
 
-class OrderRepository:
+class PedidoRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -28,30 +28,30 @@ class OrderRepository:
         order: str = "desc",
         status: str | None = None,
         cliente_id: int | None = None,
-    ) -> tuple[list[Order], int]:
-        base_stmt = select(Order).where(
-            Order.tenant_id == tenant_id,
-            Order.deleted_at.is_(None),
+    ) -> tuple[list[Pedido], int]:
+        base_stmt = select(Pedido).where(
+            Pedido.tenant_id == tenant_id,
+            Pedido.deleted_at.is_(None),
         )
         if search:
             base_stmt = base_stmt.where(
-                Order.order_number.cast(str).ilike(f"%{search}%")
-                | Order.notes.ilike(f"%{search}%")
+                Pedido.numero_pedido.cast(str).ilike(f"%{search}%")
+                | Pedido.notes.ilike(f"%{search}%")
             )
         if status is not None:
-            base_stmt = base_stmt.where(Order.status == status)
+            base_stmt = base_stmt.where(Pedido.status == status)
         if cliente_id is not None:
-            base_stmt = base_stmt.where(Order.cliente_id == cliente_id)
+            base_stmt = base_stmt.where(Pedido.cliente_id == cliente_id)
 
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
         total_result = await self.session.execute(count_stmt)
         total = total_result.scalar_one()
 
-        sort_column = SORT_FIELDS.get(sort, Order.created_at)
+        sort_column = SORT_FIELDS.get(sort, Pedido.created_at)
         if order == "asc":
-            base_stmt = base_stmt.order_by(sort_column.asc(), Order.id.asc())
+            base_stmt = base_stmt.order_by(sort_column.asc(), Pedido.id.asc())
         else:
-            base_stmt = base_stmt.order_by(sort_column.desc(), Order.id.desc())
+            base_stmt = base_stmt.order_by(sort_column.desc(), Pedido.id.desc())
 
         base_stmt = base_stmt.offset(offset).limit(limit)
         result = await self.session.execute(base_stmt)
@@ -62,12 +62,12 @@ class OrderRepository:
     async def get_by_id(
         self,
         tenant_id: int,
-        order_id: int,
-    ) -> Order | None:
-        stmt = select(Order).where(
-            Order.id == order_id,
-            Order.tenant_id == tenant_id,
-            Order.deleted_at.is_(None),
+        pedido_id: int,
+    ) -> Pedido | None:
+        stmt = select(Pedido).where(
+            Pedido.id == pedido_id,
+            Pedido.tenant_id == tenant_id,
+            Pedido.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -75,21 +75,21 @@ class OrderRepository:
     async def get_for_update(
         self,
         tenant_id: int,
-        order_id: int,
-    ) -> Order | None:
+        pedido_id: int,
+    ) -> Pedido | None:
         stmt = (
-            select(Order)
+            select(Pedido)
             .where(
-                Order.id == order_id,
-                Order.tenant_id == tenant_id,
-                Order.deleted_at.is_(None),
+                Pedido.id == pedido_id,
+                Pedido.tenant_id == tenant_id,
+                Pedido.deleted_at.is_(None),
             )
             .with_for_update()
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def next_order_number(
+    async def proximo_numero_pedido(
         self,
         tenant_id: int,
     ) -> int:
@@ -100,8 +100,8 @@ class OrderRepository:
             {"tid": str(tenant_id)},
         )
 
-        stmt = select(func.max(Order.order_number)).where(
-            Order.tenant_id == tenant_id,
+        stmt = select(func.max(Pedido.numero_pedido)).where(
+            Pedido.tenant_id == tenant_id,
         )
         result = await self.session.execute(stmt)
         max_num = result.scalar_one()
@@ -110,12 +110,12 @@ class OrderRepository:
             return 1
         return int(max_num) + 1
 
-    async def create(self, order: Order) -> Order:
-        self.session.add(order)
+    async def create(self, pedido: Pedido) -> Pedido:
+        self.session.add(pedido)
         await self.session.flush()
-        return order
+        return pedido
 
-    async def update(self, order: Order) -> Order:
+    async def update(self, pedido: Pedido) -> Pedido:
         await self.session.flush()
-        await self.session.refresh(order)
-        return order
+        await self.session.refresh(pedido)
+        return pedido

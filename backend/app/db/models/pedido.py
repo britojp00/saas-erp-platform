@@ -1,3 +1,4 @@
+import enum
 from decimal import Decimal
 
 from sqlalchemy import (
@@ -19,35 +20,42 @@ from app.db.mixins import (
 )
 
 
-class Order(
+class StatusPedido(str, enum.Enum):
+    RASCUNHO = "RASCUNHO"
+    CONFIRMADO = "CONFIRMADO"
+    CONCLUIDO = "CONCLUIDO"
+    CANCELADO = "CANCELADO"
+
+
+class Pedido(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
     Base,
 ):
-    __tablename__ = "orders"
+    __tablename__ = "pedidos"
 
     __table_args__ = (
         UniqueConstraint(
             "tenant_id",
-            "order_number",
-            name="uq_orders_tenant_number",
+            "numero_pedido",
+            name="uq_pedidos_tenant_numero",
         ),
         UniqueConstraint(
             "tenant_id",
             "id",
-            name="uq_orders_tenant_id",
+            name="uq_pedidos_tenant_id",
         ),
         ForeignKeyConstraint(
             ["tenant_id", "cliente_id"],
             ["clientes.tenant_id", "clientes.id"],
-            name="fk_orders_tenant_cliente",
+            name="fk_pedidos_tenant_cliente",
             ondelete="RESTRICT",
         ),
     )
 
-    order_number: Mapped[int] = mapped_column(
+    numero_pedido: Mapped[int] = mapped_column(
         BigInteger,
         nullable=False,
     )
@@ -58,11 +66,11 @@ class Order(
         index=True,
     )
 
-    status: Mapped[str] = mapped_column(
+    status: Mapped[StatusPedido] = mapped_column(
         String(30),
         nullable=False,
-        default="DRAFT",
-        server_default="DRAFT",
+        default=StatusPedido.RASCUNHO,
+        server_default="RASCUNHO",
         index=True,
     )
 

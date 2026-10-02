@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.categoria import Categoria
 from app.db.models.estoque import Estoque
-from app.db.models.order_item import OrderItem
+from app.db.models.pedido_item import PedidoItem
 from app.db.models.produto import Produto
 
 SORT_FIELDS = {
@@ -119,16 +119,16 @@ class ProdutoRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none() is not None
 
-    async def has_order_items(
+    async def tem_itens_pedido(
         self,
         tenant_id: int,
         produto_id: int,
     ) -> bool:
         stmt = (
-            select(OrderItem)
+            select(PedidoItem)
             .where(
-                OrderItem.tenant_id == tenant_id,
-                OrderItem.produto_id == produto_id,
+                PedidoItem.tenant_id == tenant_id,
+                PedidoItem.produto_id == produto_id,
             )
             .limit(1)
         )

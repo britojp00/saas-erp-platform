@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.cliente import Cliente
 from app.db.models.estoque import Estoque
-from app.db.models.order import Order
+from app.db.models.pedido import Pedido
 from app.db.models.permission import Permission
 from app.db.models.produto import Produto
 from app.db.models.role import Role
@@ -195,23 +195,23 @@ async def estoque_b(
 
 
 @pytest.fixture
-async def order_with_items(
+async def pedido_com_itens(
     db_session: AsyncSession,
     test_tenant: Tenant,
     test_user: User,
     cliente: Cliente,
     produto: Produto,
     estoque: Estoque,
-) -> Order:
+) -> Pedido:
     role = await _create_role_with_perms(
         db_session,
         test_tenant.id,
-        "order_admin",
+        "pedido_admin",
         [
-            "order.read",
-            "order.create",
-            "order.update",
-            "order.cancel",
+            "pedido.ler",
+            "pedido.criar",
+            "pedido.atualizar",
+            "pedido.cancelar",
         ],
     )
     await _assign_role_to_user(db_session, test_tenant.id, test_user.id, role.id)
@@ -219,8 +219,8 @@ async def order_with_items(
     return cliente  # type: ignore[return-value]
 
 
-class TestOrderCreate:
-    async def test_create_order_with_items(
+class TestPedidoCriacao:
+    async def test_criar_pedido_com_itens(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -233,8 +233,8 @@ class TestOrderCreate:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_creator",
-            ["order.read", "order.create"],
+            "pedido_creator",
+            ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -245,25 +245,25 @@ class TestOrderCreate:
         await db_session.commit()
 
         response = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 2}],
+                "itens": [{"produto_id": produto.id, "quantity": 2}],
             },
             headers=authenticated_headers,
         )
         assert response.status_code == 201
         data = response.json()
-        assert data["status"] == "DRAFT"
+        assert data["status"] == "RASCUNHO"
         assert data["cliente_id"] == cliente.id
-        assert len(data["items"]) == 1
-        assert data["items"][0]["produto_id"] == produto.id
-        assert data["items"][0]["quantity"] == 2.0
-        assert data["items"][0]["unit_price"] == float(produto.price)
+        assert len(data["itens"]) == 1
+        assert data["itens"][0]["produto_id"] == produto.id
+        assert data["itens"][0]["quantity"] == 2.0
+        assert data["itens"][0]["unit_price"] == float(produto.price)
         assert data["total_amount"] == float(produto.price) * 2
-        assert isinstance(data["order_number"], int)
+        assert isinstance(data["numero_pedido"], int)
 
-    async def test_create_order_multiple_items(
+    async def test_criar_pedido_multiplos_itens(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -278,8 +278,8 @@ class TestOrderCreate:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_creator",
-            ["order.read", "order.create"],
+            "pedido_creator",
+            ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -290,10 +290,10 @@ class TestOrderCreate:
         await db_session.commit()
 
         response = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [
+                "itens": [
                     {"produto_id": produto.id, "quantity": 2},
                     {"produto_id": produto_b.id, "quantity": 1},
                 ],
@@ -302,11 +302,11 @@ class TestOrderCreate:
         )
         assert response.status_code == 201
         data = response.json()
-        assert len(data["items"]) == 2
+        assert len(data["itens"]) == 2
         expected_total = float(produto.price) * 2 + float(produto_b.price) * 1
         assert float(Decimal(str(data["total_amount"]))) == expected_total
 
-    async def test_create_order_empty_items_fails(
+    async def test_criar_pedido_sem_itens_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -317,8 +317,8 @@ class TestOrderCreate:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_creator",
-            ["order.read", "order.create"],
+            "pedido_creator",
+            ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -329,13 +329,13 @@ class TestOrderCreate:
         await db_session.commit()
 
         response = await client.post(
-            "/api/v1/orders",
-            json={"cliente_id": cliente.id, "items": []},
+            "/api/v1/pedidos",
+            json={"cliente_id": cliente.id, "itens": []},
             headers=authenticated_headers,
         )
         assert response.status_code == 422
 
-    async def test_create_order_nonexistent_cliente_fails(
+    async def test_criar_pedido_cliente_inexistente_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -347,8 +347,8 @@ class TestOrderCreate:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_creator",
-            ["order.read", "order.create"],
+            "pedido_creator",
+            ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -359,16 +359,16 @@ class TestOrderCreate:
         await db_session.commit()
 
         response = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": 99999,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
         assert response.status_code == 409
 
-    async def test_create_order_nonexistent_produto_fails(
+    async def test_criar_pedido_produto_inexistente_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -379,8 +379,8 @@ class TestOrderCreate:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_creator",
-            ["order.read", "order.create"],
+            "pedido_creator",
+            ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -391,16 +391,16 @@ class TestOrderCreate:
         await db_session.commit()
 
         response = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": 99999, "quantity": 1}],
+                "itens": [{"produto_id": 99999, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
         assert response.status_code == 409
 
-    async def test_create_order_duplicate_produto_fails(
+    async def test_criar_pedido_produto_duplicado_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -413,8 +413,8 @@ class TestOrderCreate:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_creator",
-            ["order.read", "order.create"],
+            "pedido_creator",
+            ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -425,10 +425,10 @@ class TestOrderCreate:
         await db_session.commit()
 
         response = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [
+                "itens": [
                     {"produto_id": produto.id, "quantity": 1},
                     {"produto_id": produto.id, "quantity": 2},
                 ],
@@ -437,7 +437,7 @@ class TestOrderCreate:
         )
         assert response.status_code == 409
 
-    async def test_create_order_with_custom_unit_price(
+    async def test_criar_pedido_com_preco_unitario_customizado(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -450,8 +450,8 @@ class TestOrderCreate:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_creator",
-            ["order.read", "order.create"],
+            "pedido_creator",
+            ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -463,10 +463,10 @@ class TestOrderCreate:
 
         custom_price = Decimal("99.99")
         response = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [
+                "itens": [
                     {
                         "produto_id": produto.id,
                         "quantity": 3,
@@ -478,14 +478,14 @@ class TestOrderCreate:
         )
         assert response.status_code == 201
         data = response.json()
-        assert data["items"][0]["unit_price"] == float(custom_price)
+        assert data["itens"][0]["unit_price"] == float(custom_price)
         assert abs(Decimal(str(data["total_amount"])) - custom_price * 3) < Decimal(
             "0.01"
         )
 
 
-class TestOrderNumber:
-    async def test_order_number_sequential(
+class TestPedidoNumero:
+    async def test_numero_pedido_sequencial(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -498,8 +498,8 @@ class TestOrderNumber:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_creator",
-            ["order.read", "order.create"],
+            "pedido_creator",
+            ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -510,32 +510,32 @@ class TestOrderNumber:
         await db_session.commit()
 
         resp1 = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
         assert resp1.status_code == 201
-        num1 = resp1.json()["order_number"]
+        num1 = resp1.json()["numero_pedido"]
 
         resp2 = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
         assert resp2.status_code == 201
-        num2 = resp2.json()["order_number"]
+        num2 = resp2.json()["numero_pedido"]
 
         assert num2 == num1 + 1
 
 
-class TestOrderListAndDetail:
-    async def test_list_orders(
+class TestPedidoListaEDetalhe:
+    async def test_listar_pedidos(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -548,8 +548,8 @@ class TestOrderListAndDetail:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_list",
-            ["order.read", "order.create"],
+            "pedido_list",
+            ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -560,24 +560,24 @@ class TestOrderListAndDetail:
         await db_session.commit()
 
         await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
 
         response = await client.get(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             headers=authenticated_headers,
         )
         assert response.status_code == 200
         data = response.json()
         assert data["total"] >= 1
-        assert len(data["items"]) >= 1
+        assert len(data["itens"]) >= 1
 
-    async def test_list_orders_filter_by_status(
+    async def test_listar_pedidos_filtro_por_status(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -590,8 +590,8 @@ class TestOrderListAndDetail:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_list",
-            ["order.read", "order.create"],
+            "pedido_list",
+            ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -602,24 +602,24 @@ class TestOrderListAndDetail:
         await db_session.commit()
 
         await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
 
         response = await client.get(
-            "/api/v1/orders",
-            params={"status": "DRAFT"},
+            "/api/v1/pedidos",
+            params={"status": "RASCUNHO"},
             headers=authenticated_headers,
         )
         assert response.status_code == 200
-        for item in response.json()["items"]:
-            assert item["status"] == "DRAFT"
+        for item in response.json()["itens"]:
+            assert item["status"] == "RASCUNHO"
 
-    async def test_get_order_detail(
+    async def test_obter_detalhe_pedido(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -632,8 +632,8 @@ class TestOrderListAndDetail:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_detail",
-            ["order.read", "order.create"],
+            "pedido_detail",
+            ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -644,25 +644,25 @@ class TestOrderListAndDetail:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         response = await client.get(
-            f"/api/v1/orders/{order_id}",
+            f"/api/v1/pedidos/{pedido_id}",
             headers=authenticated_headers,
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["id"] == order_id
-        assert len(data["items"]) == 1
+        assert data["id"] == pedido_id
+        assert len(data["itens"]) == 1
 
-    async def test_get_nonexistent_order_fails(
+    async def test_obter_pedido_inexistente_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -672,8 +672,8 @@ class TestOrderListAndDetail:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_detail",
-            ["order.read"],
+            "pedido_detail",
+            ["pedido.ler"],
         )
         await _assign_role_to_user(
             db_session,
@@ -684,14 +684,14 @@ class TestOrderListAndDetail:
         await db_session.commit()
 
         response = await client.get(
-            "/api/v1/orders/99999",
+            "/api/v1/pedidos/99999",
             headers=authenticated_headers,
         )
         assert response.status_code == 404
 
 
-class TestOrderUpdate:
-    async def test_update_order_cliente(
+class TestPedidoAtualizacao:
+    async def test_atualizar_pedido_cliente(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -704,8 +704,8 @@ class TestOrderUpdate:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_update",
-            ["order.read", "order.create", "order.update"],
+            "pedido_update",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -716,14 +716,14 @@ class TestOrderUpdate:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         new_cliente = await _create_cliente_in_db(
             db_session, test_tenant.id, "Novo Cliente"
@@ -731,14 +731,14 @@ class TestOrderUpdate:
         await db_session.commit()
 
         response = await client.patch(
-            f"/api/v1/orders/{order_id}",
+            f"/api/v1/pedidos/{pedido_id}",
             json={"cliente_id": new_cliente.id},
             headers=authenticated_headers,
         )
         assert response.status_code == 200
         assert response.json()["cliente_id"] == new_cliente.id
 
-    async def test_update_order_not_draft_fails(
+    async def test_atualizar_pedido_nao_rascunho_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -751,8 +751,8 @@ class TestOrderUpdate:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_update",
-            ["order.read", "order.create", "order.update", "order.cancel"],
+            "pedido_update",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar", "pedido.cancelar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -763,30 +763,30 @@ class TestOrderUpdate:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         await client.post(
-            f"/api/v1/orders/{order_id}/confirm",
+            f"/api/v1/pedidos/{pedido_id}/confirmar",
             headers=authenticated_headers,
         )
 
         response = await client.patch(
-            f"/api/v1/orders/{order_id}",
+            f"/api/v1/pedidos/{pedido_id}",
             json={"notes": "Should fail"},
             headers=authenticated_headers,
         )
         assert response.status_code == 409
 
 
-class TestOrderItems:
-    async def test_add_item_to_order(
+class TestPedidoItens:
+    async def test_adicionar_item_ao_pedido(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -801,8 +801,8 @@ class TestOrderItems:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_items",
-            ["order.read", "order.create", "order.update"],
+            "pedido_items",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -813,17 +813,17 @@ class TestOrderItems:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         response = await client.post(
-            f"/api/v1/orders/{order_id}/items",
+            f"/api/v1/pedidos/{pedido_id}/itens",
             json={"produto_id": produto_b.id, "quantity": 3},
             headers=authenticated_headers,
         )
@@ -833,13 +833,13 @@ class TestOrderItems:
         assert data["quantity"] == 3.0
 
         detail_resp = await client.get(
-            f"/api/v1/orders/{order_id}",
+            f"/api/v1/pedidos/{pedido_id}",
             headers=authenticated_headers,
         )
         assert detail_resp.status_code == 200
-        assert len(detail_resp.json()["items"]) == 2
+        assert len(detail_resp.json()["itens"]) == 2
 
-    async def test_add_duplicate_produto_to_order_fails(
+    async def test_adicionar_produto_duplicado_ao_pedido_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -852,8 +852,8 @@ class TestOrderItems:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_items",
-            ["order.read", "order.create", "order.update"],
+            "pedido_items",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -864,23 +864,23 @@ class TestOrderItems:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         response = await client.post(
-            f"/api/v1/orders/{order_id}/items",
+            f"/api/v1/pedidos/{pedido_id}/itens",
             json={"produto_id": produto.id, "quantity": 2},
             headers=authenticated_headers,
         )
         assert response.status_code == 409
 
-    async def test_update_item_quantity(
+    async def test_atualizar_quantidade_item(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -893,8 +893,8 @@ class TestOrderItems:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_items",
-            ["order.read", "order.create", "order.update"],
+            "pedido_items",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -905,18 +905,18 @@ class TestOrderItems:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
-        item_id = create_resp.json()["items"][0]["id"]
+        pedido_id = create_resp.json()["id"]
+        item_id = create_resp.json()["itens"][0]["id"]
 
         response = await client.patch(
-            f"/api/v1/orders/{order_id}/items/{item_id}",
+            f"/api/v1/pedidos/{pedido_id}/itens/{item_id}",
             json={"quantity": 5},
             headers=authenticated_headers,
         )
@@ -924,7 +924,7 @@ class TestOrderItems:
         assert response.json()["quantity"] == 5.0
 
         detail_resp = await client.get(
-            f"/api/v1/orders/{order_id}",
+            f"/api/v1/pedidos/{pedido_id}",
             headers=authenticated_headers,
         )
         assert (
@@ -932,7 +932,7 @@ class TestOrderItems:
             == float(produto.price) * 5
         )
 
-    async def test_remove_item_from_order(
+    async def test_remover_item_do_pedido(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -947,8 +947,8 @@ class TestOrderItems:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_items",
-            ["order.read", "order.create", "order.update"],
+            "pedido_items",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -959,32 +959,32 @@ class TestOrderItems:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [
+                "itens": [
                     {"produto_id": produto.id, "quantity": 1},
                     {"produto_id": produto_b.id, "quantity": 2},
                 ],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
-        item_to_remove = create_resp.json()["items"][1]["id"]
+        pedido_id = create_resp.json()["id"]
+        item_to_remove = create_resp.json()["itens"][1]["id"]
 
         response = await client.delete(
-            f"/api/v1/orders/{order_id}/items/{item_to_remove}",
+            f"/api/v1/pedidos/{pedido_id}/itens/{item_to_remove}",
             headers=authenticated_headers,
         )
         assert response.status_code == 204
 
         detail_resp = await client.get(
-            f"/api/v1/orders/{order_id}",
+            f"/api/v1/pedidos/{pedido_id}",
             headers=authenticated_headers,
         )
-        assert len(detail_resp.json()["items"]) == 1
+        assert len(detail_resp.json()["itens"]) == 1
 
-    async def test_remove_last_item_fails(
+    async def test_remover_ultimo_item_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -997,8 +997,8 @@ class TestOrderItems:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_items",
-            ["order.read", "order.create", "order.update"],
+            "pedido_items",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -1009,23 +1009,23 @@ class TestOrderItems:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
-        item_id = create_resp.json()["items"][0]["id"]
+        pedido_id = create_resp.json()["id"]
+        item_id = create_resp.json()["itens"][0]["id"]
 
         response = await client.delete(
-            f"/api/v1/orders/{order_id}/items/{item_id}",
+            f"/api/v1/pedidos/{pedido_id}/itens/{item_id}",
             headers=authenticated_headers,
         )
         assert response.status_code == 409
 
-    async def test_add_item_to_non_draft_fails(
+    async def test_adicionar_item_em_nao_rascunho_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -1040,8 +1040,8 @@ class TestOrderItems:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_items",
-            ["order.read", "order.create", "order.update", "order.cancel"],
+            "pedido_items",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar", "pedido.cancelar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -1052,30 +1052,30 @@ class TestOrderItems:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         await client.post(
-            f"/api/v1/orders/{order_id}/confirm",
+            f"/api/v1/pedidos/{pedido_id}/confirmar",
             headers=authenticated_headers,
         )
 
         response = await client.post(
-            f"/api/v1/orders/{order_id}/items",
+            f"/api/v1/pedidos/{pedido_id}/itens",
             json={"produto_id": produto_b.id, "quantity": 1},
             headers=authenticated_headers,
         )
         assert response.status_code == 409
 
 
-class TestOrderStateMachine:
-    async def test_confirm_order(
+class TestPedidoMaquinaDeEstados:
+    async def test_confirmar_pedido(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -1088,11 +1088,11 @@ class TestOrderStateMachine:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_confirm",
+            "pedido_confirm",
             [
-                "order.read",
-                "order.create",
-                "order.update",
+                "pedido.ler",
+                "pedido.criar",
+                "pedido.atualizar",
                 "estoque.ler",
                 "estoque.atualizar",
             ],
@@ -1106,21 +1106,21 @@ class TestOrderStateMachine:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 5}],
+                "itens": [{"produto_id": produto.id, "quantity": 5}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         response = await client.post(
-            f"/api/v1/orders/{order_id}/confirm",
+            f"/api/v1/pedidos/{pedido_id}/confirmar",
             headers=authenticated_headers,
         )
         assert response.status_code == 200
-        assert response.json()["status"] == "CONFIRMED"
+        assert response.json()["status"] == "CONFIRMADO"
 
         inv_resp = await client.get(
             f"/api/v1/estoque/{produto.id}",
@@ -1129,7 +1129,7 @@ class TestOrderStateMachine:
         assert inv_resp.status_code == 200
         assert float(inv_resp.json()["reserved_quantity"]) == 5.0
 
-    async def test_complete_order(
+    async def test_concluir_pedido(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -1142,8 +1142,8 @@ class TestOrderStateMachine:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_complete",
-            ["order.read", "order.create", "order.update", "estoque.ler"],
+            "pedido_complete",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar", "estoque.ler"],
         )
         await _assign_role_to_user(
             db_session,
@@ -1154,26 +1154,26 @@ class TestOrderStateMachine:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 5}],
+                "itens": [{"produto_id": produto.id, "quantity": 5}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         await client.post(
-            f"/api/v1/orders/{order_id}/confirm",
+            f"/api/v1/pedidos/{pedido_id}/confirmar",
             headers=authenticated_headers,
         )
 
         response = await client.post(
-            f"/api/v1/orders/{order_id}/complete",
+            f"/api/v1/pedidos/{pedido_id}/concluir",
             headers=authenticated_headers,
         )
         assert response.status_code == 200
-        assert response.json()["status"] == "COMPLETED"
+        assert response.json()["status"] == "CONCLUIDO"
 
         inv_resp = await client.get(
             f"/api/v1/estoque/{produto.id}",
@@ -1183,7 +1183,7 @@ class TestOrderStateMachine:
         assert float(inv_resp.json()["quantity"]) == 95.0
         assert float(inv_resp.json()["reserved_quantity"]) == 0.0
 
-    async def test_cancel_draft_order(
+    async def test_cancelar_pedido_rascunho(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -1196,8 +1196,8 @@ class TestOrderStateMachine:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_cancel",
-            ["order.read", "order.create", "order.update", "order.cancel"],
+            "pedido_cancel",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar", "pedido.cancelar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -1208,23 +1208,23 @@ class TestOrderStateMachine:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 5}],
+                "itens": [{"produto_id": produto.id, "quantity": 5}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         response = await client.post(
-            f"/api/v1/orders/{order_id}/cancel",
+            f"/api/v1/pedidos/{pedido_id}/cancelar",
             headers=authenticated_headers,
         )
         assert response.status_code == 200
-        assert response.json()["status"] == "CANCELLED"
+        assert response.json()["status"] == "CANCELADO"
 
-    async def test_cancel_confirmed_order_releases_reservations(
+    async def test_cancelar_pedido_confirmado_libera_reservas(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -1237,12 +1237,12 @@ class TestOrderStateMachine:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_cancel",
+            "pedido_cancel",
             [
-                "order.read",
-                "order.create",
-                "order.update",
-                "order.cancel",
+                "pedido.ler",
+                "pedido.criar",
+                "pedido.atualizar",
+                "pedido.cancelar",
                 "estoque.ler",
             ],
         )
@@ -1255,26 +1255,26 @@ class TestOrderStateMachine:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 5}],
+                "itens": [{"produto_id": produto.id, "quantity": 5}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         await client.post(
-            f"/api/v1/orders/{order_id}/confirm",
+            f"/api/v1/pedidos/{pedido_id}/confirmar",
             headers=authenticated_headers,
         )
 
         response = await client.post(
-            f"/api/v1/orders/{order_id}/cancel",
+            f"/api/v1/pedidos/{pedido_id}/cancelar",
             headers=authenticated_headers,
         )
         assert response.status_code == 200
-        assert response.json()["status"] == "CANCELLED"
+        assert response.json()["status"] == "CANCELADO"
 
         inv_resp = await client.get(
             f"/api/v1/estoque/{produto.id}",
@@ -1283,7 +1283,7 @@ class TestOrderStateMachine:
         assert inv_resp.status_code == 200
         assert float(inv_resp.json()["reserved_quantity"]) == 0.0
 
-    async def test_complete_without_confirm_fails(
+    async def test_concluir_sem_confirmar_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -1296,8 +1296,8 @@ class TestOrderStateMachine:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_complete",
-            ["order.read", "order.create", "order.update"],
+            "pedido_complete",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -1308,22 +1308,22 @@ class TestOrderStateMachine:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         response = await client.post(
-            f"/api/v1/orders/{order_id}/complete",
+            f"/api/v1/pedidos/{pedido_id}/concluir",
             headers=authenticated_headers,
         )
         assert response.status_code == 409
 
-    async def test_confirm_completed_order_fails(
+    async def test_confirmar_pedido_concluido_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -1336,8 +1336,8 @@ class TestOrderStateMachine:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_terminal",
-            ["order.read", "order.create", "order.update"],
+            "pedido_terminal",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -1348,31 +1348,31 @@ class TestOrderStateMachine:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         await client.post(
-            f"/api/v1/orders/{order_id}/confirm",
+            f"/api/v1/pedidos/{pedido_id}/confirmar",
             headers=authenticated_headers,
         )
         await client.post(
-            f"/api/v1/orders/{order_id}/complete",
+            f"/api/v1/pedidos/{pedido_id}/concluir",
             headers=authenticated_headers,
         )
 
         response = await client.post(
-            f"/api/v1/orders/{order_id}/confirm",
+            f"/api/v1/pedidos/{pedido_id}/confirmar",
             headers=authenticated_headers,
         )
         assert response.status_code == 409
 
-    async def test_confirm_cancelled_order_fails(
+    async def test_confirmar_pedido_cancelado_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -1385,8 +1385,8 @@ class TestOrderStateMachine:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_terminal",
-            ["order.read", "order.create", "order.update", "order.cancel"],
+            "pedido_terminal",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar", "pedido.cancelar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -1397,68 +1397,68 @@ class TestOrderStateMachine:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 1}],
+                "itens": [{"produto_id": produto.id, "quantity": 1}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         await client.post(
-            f"/api/v1/orders/{order_id}/cancel",
+            f"/api/v1/pedidos/{pedido_id}/cancelar",
             headers=authenticated_headers,
         )
 
         response = await client.post(
-            f"/api/v1/orders/{order_id}/confirm",
+            f"/api/v1/pedidos/{pedido_id}/confirmar",
             headers=authenticated_headers,
         )
         assert response.status_code == 409
 
 
-class TestOrderRBAC:
-    async def test_create_order_no_permission_fails(
+class TestPedidoRBAC:
+    async def test_criar_pedido_sem_permissao_falha(
         self,
         client: AsyncClient,
         test_tenant: Tenant,
         authenticated_headers: dict,
     ) -> None:
         response = await client.post(
-            "/api/v1/orders",
-            json={"cliente_id": 1, "items": [{"produto_id": 1, "quantity": 1}]},
+            "/api/v1/pedidos",
+            json={"cliente_id": 1, "itens": [{"produto_id": 1, "quantity": 1}]},
             headers=authenticated_headers,
         )
         assert response.status_code == 403
 
-    async def test_list_orders_no_permission_fails(
+    async def test_listar_pedidos_sem_permissao_falha(
         self,
         client: AsyncClient,
         test_tenant: Tenant,
         authenticated_headers: dict,
     ) -> None:
         response = await client.get(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             headers=authenticated_headers,
         )
         assert response.status_code == 403
 
-    async def test_get_order_no_permission_fails(
+    async def test_obter_pedido_sem_permissao_falha(
         self,
         client: AsyncClient,
         test_tenant: Tenant,
         authenticated_headers: dict,
     ) -> None:
         response = await client.get(
-            "/api/v1/orders/1",
+            "/api/v1/pedidos/1",
             headers=authenticated_headers,
         )
         assert response.status_code == 403
 
 
-class TestOrderMultiTenancy:
-    async def test_cannot_access_other_tenant_order(
+class TestPedidoMultiTenancy:
+    async def test_nao_acessa_pedido_de_outro_tenant(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -1496,11 +1496,11 @@ class TestOrderMultiTenancy:
         db_session.add(other_estoque)
         await db_session.flush()
 
-        other_perm = Permission(tenant_id=other_tenant.id, name="order.read")
+        other_perm = Permission(tenant_id=other_tenant.id, name="pedido.ler")
         db_session.add(other_perm)
         await db_session.flush()
 
-        other_perm_create = Permission(tenant_id=other_tenant.id, name="order.create")
+        other_perm_create = Permission(tenant_id=other_tenant.id, name="pedido.criar")
         db_session.add(other_perm_create)
         await db_session.flush()
 
@@ -1550,25 +1550,25 @@ class TestOrderMultiTenancy:
         other_headers = {"Authorization": f"Bearer {other_token}"}
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": other_cliente.id,
-                "items": [{"produto_id": other_produto.id, "quantity": 1}],
+                "itens": [{"produto_id": other_produto.id, "quantity": 1}],
             },
             headers=other_headers,
         )
         assert create_resp.status_code == 201
-        other_order_id = create_resp.json()["id"]
+        other_pedido_id = create_resp.json()["id"]
 
         response = await client.get(
-            f"/api/v1/orders/{other_order_id}",
+            f"/api/v1/pedidos/{other_pedido_id}",
             headers=authenticated_headers,
         )
         assert response.status_code in (403, 404)
 
 
-class TestOrderEstoqueIntegration:
-    async def test_insufficient_stock_fails(
+class TestPedidoEstoqueIntegracao:
+    async def test_estoque_insuficiente_falha(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
@@ -1581,8 +1581,8 @@ class TestOrderEstoqueIntegration:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
-            "order_insufficient",
-            ["order.read", "order.create", "order.update"],
+            "pedido_insufficient",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
@@ -1593,17 +1593,17 @@ class TestOrderEstoqueIntegration:
         await db_session.commit()
 
         create_resp = await client.post(
-            "/api/v1/orders",
+            "/api/v1/pedidos",
             json={
                 "cliente_id": cliente.id,
-                "items": [{"produto_id": produto.id, "quantity": 200}],
+                "itens": [{"produto_id": produto.id, "quantity": 200}],
             },
             headers=authenticated_headers,
         )
-        order_id = create_resp.json()["id"]
+        pedido_id = create_resp.json()["id"]
 
         response = await client.post(
-            f"/api/v1/orders/{order_id}/confirm",
+            f"/api/v1/pedidos/{pedido_id}/confirmar",
             headers=authenticated_headers,
         )
         assert response.status_code == 409

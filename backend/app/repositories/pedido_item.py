@@ -1,25 +1,25 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.order_item import OrderItem
+from app.db.models.pedido_item import PedidoItem
 
 
-class OrderItemRepository:
+class PedidoItemRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def list_by_order(
+    async def listar_por_pedido(
         self,
         tenant_id: int,
-        order_id: int,
-    ) -> list[OrderItem]:
+        pedido_id: int,
+    ) -> list[PedidoItem]:
         stmt = (
-            select(OrderItem)
+            select(PedidoItem)
             .where(
-                OrderItem.tenant_id == tenant_id,
-                OrderItem.order_id == order_id,
+                PedidoItem.tenant_id == tenant_id,
+                PedidoItem.pedido_id == pedido_id,
             )
-            .order_by(OrderItem.id.asc())
+            .order_by(PedidoItem.id.asc())
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
@@ -28,71 +28,71 @@ class OrderItemRepository:
         self,
         tenant_id: int,
         item_id: int,
-    ) -> OrderItem | None:
-        stmt = select(OrderItem).where(
-            OrderItem.id == item_id,
-            OrderItem.tenant_id == tenant_id,
+    ) -> PedidoItem | None:
+        stmt = select(PedidoItem).where(
+            PedidoItem.id == item_id,
+            PedidoItem.tenant_id == tenant_id,
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_by_id_and_order(
+    async def obter_por_id_e_pedido(
         self,
         tenant_id: int,
         item_id: int,
-        order_id: int,
-    ) -> OrderItem | None:
-        stmt = select(OrderItem).where(
-            OrderItem.id == item_id,
-            OrderItem.tenant_id == tenant_id,
-            OrderItem.order_id == order_id,
+        pedido_id: int,
+    ) -> PedidoItem | None:
+        stmt = select(PedidoItem).where(
+            PedidoItem.id == item_id,
+            PedidoItem.tenant_id == tenant_id,
+            PedidoItem.pedido_id == pedido_id,
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def exists_produto_in_order(
+    async def existe_produto_no_pedido(
         self,
         tenant_id: int,
-        order_id: int,
+        pedido_id: int,
         produto_id: int,
         exclude_item_id: int | None = None,
     ) -> bool:
-        stmt = select(OrderItem).where(
-            OrderItem.tenant_id == tenant_id,
-            OrderItem.order_id == order_id,
-            OrderItem.produto_id == produto_id,
+        stmt = select(PedidoItem).where(
+            PedidoItem.tenant_id == tenant_id,
+            PedidoItem.pedido_id == pedido_id,
+            PedidoItem.produto_id == produto_id,
         )
         if exclude_item_id is not None:
-            stmt = stmt.where(OrderItem.id != exclude_item_id)
+            stmt = stmt.where(PedidoItem.id != exclude_item_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none() is not None
 
-    async def count_by_order(
+    async def contar_por_pedido(
         self,
         tenant_id: int,
-        order_id: int,
+        pedido_id: int,
     ) -> int:
         stmt = (
             select(func.count())
-            .select_from(OrderItem)
+            .select_from(PedidoItem)
             .where(
-                OrderItem.tenant_id == tenant_id,
-                OrderItem.order_id == order_id,
+                PedidoItem.tenant_id == tenant_id,
+                PedidoItem.pedido_id == pedido_id,
             )
         )
         result = await self.session.execute(stmt)
         return result.scalar_one()
 
-    async def create(self, item: OrderItem) -> OrderItem:
+    async def create(self, item: PedidoItem) -> PedidoItem:
         self.session.add(item)
         await self.session.flush()
         return item
 
-    async def update(self, item: OrderItem) -> OrderItem:
+    async def update(self, item: PedidoItem) -> PedidoItem:
         await self.session.flush()
         await self.session.refresh(item)
         return item
 
-    async def delete(self, item: OrderItem) -> None:
+    async def delete(self, item: PedidoItem) -> None:
         await self.session.delete(item)
         await self.session.flush()

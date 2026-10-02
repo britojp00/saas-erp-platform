@@ -63,7 +63,7 @@ class ReservaCriarPayload(BaseModel):
     reference: str | None = Field(default=None, max_length=255)
     notes: str | None = Field(default=None, max_length=500)
     idempotency_key: str = Field(min_length=1, max_length=255)
-    order_item_id: int | None = Field(default=None)
+    pedido_item_id: int | None = Field(default=None)
 
     @field_validator("quantity")
     @classmethod
@@ -84,7 +84,7 @@ class ReservaResposta(BaseModel):
     reference: str | None
     notes: str | None
     idempotency_key: str
-    order_item_id: int | None
+    pedido_item_id: int | None
     reserved_at: datetime
     confirmed_at: datetime | None
     released_at: datetime | None
@@ -161,7 +161,7 @@ class ConfirmarReservaResposta(BaseModel):
     reference: str | None
     notes: str | None
     idempotency_key: str
-    order_item_id: int | None
+    pedido_item_id: int | None
     reserved_at: datetime
     confirmed_at: datetime | None
     released_at: datetime | None
