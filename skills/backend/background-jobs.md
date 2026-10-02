@@ -1177,7 +1177,7 @@ Exemplos:
 cliente.sync
 product.sync
 order.export
-inventory.recalculate
+estoque.recalcular
 notification.send
 
 Evitar nomes genéricos como:

@@ -53,7 +53,7 @@ repositories/
 ├── cliente.py
 ├── produto.py
 ├── categoria.py
-├── inventory.py
+├── estoque.py
 ├── order.py
 └── user.py
 
@@ -691,7 +691,7 @@ OrderService
    ↓
 OrderRepository
    ↓
-InventoryRepository
+EstoqueRepository
    ↓
 commit
 43. Rollback

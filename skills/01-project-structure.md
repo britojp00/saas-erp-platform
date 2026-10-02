@@ -53,7 +53,7 @@ backend/
 │   │   │   ├── clientes.py
 │   │   │   ├── categorias.py
 │   │   │   ├── produtos.py
-│   │   │   ├── inventory.py
+│   │   │   ├── estoque.py
 │   │   │   ├── orders.py
 │   │   │   └── audit_logs.py
 │   │   ├── middleware.py
@@ -75,7 +75,7 @@ backend/
 │   │   ├── cliente.py
 │   │   ├── categoria.py
 │   │   ├── produto.py
-│   │   ├── inventory.py
+│   │   ├── estoque.py
 │   │   ├── order.py
 │   │   └── audit_log.py
 │   ├── repositories/
@@ -84,9 +84,9 @@ backend/
 │   │   ├── cliente.py
 │   │   ├── categoria.py
 │   │   ├── produto.py
-│   │   ├── inventory.py
-│   │   ├── inventory_movement.py
-│   │   ├── inventory_reservation.py
+│   │   ├── estoque.py
+│   │   ├── movimentacao_estoque.py
+│   │   ├── reserva_estoque.py
 │   │   ├── order.py
 │   │   ├── order_item.py
 │   │   ├── role.py
@@ -98,7 +98,7 @@ backend/
 │   │   ├── cliente.py
 │   │   ├── categoria.py
 │   │   ├── produto.py
-│   │   ├── inventory.py
+│   │   ├── estoque.py
 │   │   ├── order.py
 │   │   └── audit_log.py
 │   └── main.py
@@ -112,7 +112,7 @@ backend/
 │   │   ├── test_clientes.py
 │   │   ├── test_categorias.py
 │   │   ├── test_produtos.py
-│   │   ├── test_inventory.py
+│   │   ├── test_estoque.py
 │   │   ├── test_orders.py
 │   │   ├── test_audit_logs.py
 │   │   └── test_observability.py
@@ -173,7 +173,7 @@ auth.py
 clientes.py
 categorias.py
 produtos.py
-inventory.py
+estoque.py
 orders.py
 audit_logs.py
 
@@ -223,9 +223,9 @@ permission.py
 cliente.py
 categoria.py
 produto.py
-inventory.py
-inventory_movement.py
-inventory_reservation.py
+estoque.py
+movimentacao_estoque.py
+reserva_estoque.py
 order.py
 order_item.py
 audit_log.py
@@ -249,7 +249,7 @@ auth.py
 cliente.py
 categoria.py
 produto.py
-inventory.py
+estoque.py
 order.py
 audit_log.py
 
@@ -280,9 +280,9 @@ tenant.py
 cliente.py
 categoria.py
 produto.py
-inventory.py
-inventory_movement.py
-inventory_reservation.py
+estoque.py
+movimentacao_estoque.py
+reserva_estoque.py
 order.py
 order_item.py
 role.py
@@ -314,7 +314,7 @@ authorization.py
 cliente.py
 categoria.py
 produto.py
-inventory.py
+estoque.py
 order.py
 audit_log.py
 
@@ -379,7 +379,7 @@ backend/tests/
 │   ├── test_clientes.py
 │   ├── test_categorias.py
 │   ├── test_produtos.py
-│   ├── test_inventory.py
+│   ├── test_estoque.py
 │   ├── test_orders.py
 │   ├── test_audit_logs.py
 │   └── test_observability.py
@@ -414,7 +414,7 @@ test_rbac.py
 test_clientes.py
 test_categorias.py
 test_produtos.py
-test_inventory.py
+test_estoque.py
 test_orders.py
 test_audit_logs.py
 test_observability.py

@@ -308,7 +308,7 @@ Cliente
 ↓
 Produto
 ↓
-Inventory
+Estoque
 ↓
 Order
 
@@ -1001,7 +1001,7 @@ Preferir:
 get_current_user
 create_cliente
 cancel_order
-reserve_stock
+create_reserva
 
 Evitar:
 

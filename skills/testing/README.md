@@ -417,7 +417,7 @@ total
 
 quando fizerem parte do domínio.
 
-26. Inventory Tests
+26. Estoque Tests
 
 Estoque deve possuir testes para:
 
@@ -593,7 +593,7 @@ login
 cliente creation
 produto creation
 order creation
-inventory movement
+estoque movement
 permission management
 
 Não testar cada pequena variação da interface em E2E.

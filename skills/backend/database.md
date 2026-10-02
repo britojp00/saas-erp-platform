@@ -130,7 +130,7 @@ models/
 ├── cliente.py
 ├── produto.py
 ├── categoria.py
-├── inventory.py
+├── estoque.py
 ├── order.py
 └── audit_log.py
 
@@ -534,7 +534,7 @@ verifica estoque
    ↓
 OrderRepository
    ↓
-InventoryRepository
+EstoqueRepository
    ↓
 commit
 

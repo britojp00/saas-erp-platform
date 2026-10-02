@@ -176,7 +176,7 @@ cliente.atualizar
 cliente.excluir
 order.created
 order.cancelled
-inventory.reserved
+reserva.criada
 integration.failed
 
 Preferir:

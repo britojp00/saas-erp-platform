@@ -58,7 +58,7 @@ app/
     └── v1/
         ├── clientes.py
         ├── produtos.py
-        ├── inventory.py
+        ├── estoque.py
         ├── orders.py
         └── auth.py
 
@@ -73,7 +73,7 @@ Exemplo:
 /clientes
 /produtos
 /categorias
-/inventory
+/estoque
 /orders
 
 Preferir substantivos no nome da rota.

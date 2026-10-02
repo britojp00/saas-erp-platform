@@ -46,7 +46,7 @@ PostgreSQL
                 ├── clientes
                 ├── produtos
                 ├── orders
-                └── inventory
+                └── estoque
 
 Não criar schemas PostgreSQL separados por tenant.
 

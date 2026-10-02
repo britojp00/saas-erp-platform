@@ -817,7 +817,7 @@ Evitar uma dependency única que faça:
 authentication
 authorization
 cliente lookup
-inventory validation
+estoque validation
 audit
 
 Tudo ao mesmo tempo.
