@@ -1,7 +1,7 @@
 import type { AsyncState } from '../../hooks/useDashboardData'
 import {
-  ORDER_STATUSES,
-  ORDER_STATUS_LABELS,
+  STATUS_PEDIDOS,
+  ROTULOS_STATUS_PEDIDO,
 } from '../../types/dashboard'
 import type { DashboardSummary } from '../../types/dashboard'
 import { formatNumber, formatPercent } from '../../utils/format'
@@ -39,8 +39,8 @@ export default function SummaryPanel({ state, onRetry }: SummaryPanelProps) {
         />
         <StatCard
           label="Pedidos"
-          value={formatNumber(data.ordersTotal)}
-          hint={`${formatNumber(data.ordersByStatus.DRAFT)} em rascunho`}
+          value={formatNumber(data.pedidosTotal)}
+          hint={`${formatNumber(data.pedidosPorStatus.RASCUNHO)} em rascunho`}
         />
         <StatCard
           label="Registros de estoque"
@@ -54,17 +54,17 @@ export default function SummaryPanel({ state, onRetry }: SummaryPanelProps) {
       </div>
 
       <div className="panel-grid">
-        <section className="panel" aria-labelledby="orders-by-status-title">
-          <h2 id="orders-by-status-title">Pedidos por situação</h2>
+        <section className="panel" aria-labelledby="pedidos-por-status-title">
+          <h2 id="pedidos-por-status-title">Pedidos por situação</h2>
           <ul className="status-list">
-            {ORDER_STATUSES.map((status) => {
-              const count = data.ordersByStatus[status]
+            {STATUS_PEDIDOS.map((status) => {
+              const count = data.pedidosPorStatus[status]
               const ratio =
-                data.ordersTotal > 0 ? count / data.ordersTotal : 0
+                data.pedidosTotal > 0 ? count / data.pedidosTotal : 0
               return (
                 <li key={status} className="status-row">
                   <div className="status-row__head">
-                    <span>{ORDER_STATUS_LABELS[status]}</span>
+                    <span>{ROTULOS_STATUS_PEDIDO[status]}</span>
                     <span className="status-row__count">
                       {formatNumber(count)}
                       <span className="status-row__percent">
@@ -85,12 +85,12 @@ export default function SummaryPanel({ state, onRetry }: SummaryPanelProps) {
                 </li>
               )
             })}
-            {data.ordersUnclassified > 0 && (
+            {data.pedidosNaoClassificados > 0 && (
               <li className="status-row">
                 <div className="status-row__head">
                   <span>Outros</span>
                   <span className="status-row__count">
-                    {formatNumber(data.ordersUnclassified)}
+                    {formatNumber(data.pedidosNaoClassificados)}
                   </span>
                 </div>
               </li>

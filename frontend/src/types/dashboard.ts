@@ -5,26 +5,33 @@ export interface PaginatedResponse<T> {
   total: number
 }
 
-export type OrderStatus = 'DRAFT' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'
+export type StatusPedido = 'RASCUNHO' | 'CONFIRMADO' | 'CONCLUIDO' | 'CANCELADO'
 
-export const ORDER_STATUSES: readonly OrderStatus[] = [
-  'DRAFT',
-  'CONFIRMED',
-  'COMPLETED',
-  'CANCELLED',
+export const STATUS_PEDIDOS: readonly StatusPedido[] = [
+  'RASCUNHO',
+  'CONFIRMADO',
+  'CONCLUIDO',
+  'CANCELADO',
 ]
 
-export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  DRAFT: 'Rascunho',
-  CONFIRMED: 'Confirmado',
-  COMPLETED: 'Concluído',
-  CANCELLED: 'Cancelado',
+export const ROTULOS_STATUS_PEDIDO: Record<StatusPedido, string> = {
+  RASCUNHO: 'Rascunho',
+  CONFIRMADO: 'Confirmado',
+  CONCLUIDO: 'Concluído',
+  CANCELADO: 'Cancelado',
 }
 
-export interface OrderListItem {
+export interface ListaPedidosResposta<T> {
+  itens: T[]
+  page: number
+  page_size: number
+  total: number
+}
+
+export interface PedidoResumo {
   id: number
   tenant_id: number
-  order_number: number
+  numero_pedido: number
   cliente_id: number
   status: string
   total_amount: number
@@ -65,9 +72,9 @@ export interface DashboardSummary {
   clientesTotal: number
   produtosTotal: number
   produtosAtivosTotal: number
-  ordersTotal: number
-  ordersByStatus: Record<OrderStatus, number>
-  ordersUnclassified: number
+  pedidosTotal: number
+  pedidosPorStatus: Record<StatusPedido, number>
+  pedidosNaoClassificados: number
   estoque: ResumoEstoque
   movimentosTotal: number
   reservasTotal: number

@@ -1,30 +1,30 @@
 import type { AsyncState } from '../../hooks/useDashboardData'
-import { ORDER_STATUSES, ORDER_STATUS_LABELS } from '../../types/dashboard'
-import type { OrderListItem, OrderStatus } from '../../types/dashboard'
+import { STATUS_PEDIDOS, ROTULOS_STATUS_PEDIDO } from '../../types/dashboard'
+import type { PedidoResumo, StatusPedido } from '../../types/dashboard'
 import { formatAmount, formatDateTime } from '../../utils/format'
 import { SectionError, SectionLoading } from './SectionState'
 
-interface RecentOrdersProps {
-  state: AsyncState<OrderListItem[]>
+interface PedidosRecentesProps {
+  state: AsyncState<PedidoResumo[]>
   onRetry: () => void
 }
 
-function isOrderStatus(value: string): value is OrderStatus {
-  return (ORDER_STATUSES as readonly string[]).includes(value)
+function ehStatusPedido(value: string): value is StatusPedido {
+  return (STATUS_PEDIDOS as readonly string[]).includes(value)
 }
 
 function statusLabel(status: string): string {
-  return isOrderStatus(status) ? ORDER_STATUS_LABELS[status] : status
+  return ehStatusPedido(status) ? ROTULOS_STATUS_PEDIDO[status] : status
 }
 
 function statusClass(status: string): string {
   return `badge badge--${status.toLowerCase()}`
 }
 
-export default function RecentOrders({ state, onRetry }: RecentOrdersProps) {
+export default function PedidosRecentes({ state, onRetry }: PedidosRecentesProps) {
   return (
-    <section className="panel" aria-labelledby="recent-orders-title">
-      <h2 id="recent-orders-title">Pedidos recentes</h2>
+    <section className="panel" aria-labelledby="pedidos-recentes-title">
+      <h2 id="pedidos-recentes-title">Pedidos recentes</h2>
       {state.status === 'loading' && (
         <SectionLoading label="Carregando pedidos..." />
       )}
@@ -36,19 +36,19 @@ export default function RecentOrders({ state, onRetry }: RecentOrdersProps) {
           <p className="empty-state">Nenhum pedido registrado.</p>
         ) : (
           <ul className="feed-list">
-            {state.data.map((order) => (
-              <li key={order.id} className="feed-item">
+            {state.data.map((pedido) => (
+              <li key={pedido.id} className="feed-item">
                 <div className="feed-item__main">
                   <span className="feed-item__title">
-                    Pedido #{order.order_number}
+                    Pedido #{pedido.numero_pedido}
                   </span>
-                  <span className={statusClass(order.status)}>
-                    {statusLabel(order.status)}
+                  <span className={statusClass(pedido.status)}>
+                    {statusLabel(pedido.status)}
                   </span>
                 </div>
                 <div className="feed-item__meta">
-                  <span>{formatDateTime(order.created_at)}</span>
-                  <span>{formatAmount(order.total_amount)}</span>
+                  <span>{formatDateTime(pedido.created_at)}</span>
+                  <span>{formatAmount(pedido.total_amount)}</span>
                 </div>
               </li>
             ))}

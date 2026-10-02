@@ -48,19 +48,19 @@
   --color-overlay: rgba(0, 0, 0, 0.45);
 
   --color-status-track: #e5e7eb;
-  --color-status-draft: #6b7280;
-  --color-status-confirmed: #2563eb;
-  --color-status-completed: #16a34a;
-  --color-status-cancelled: #dc2626;
+  --color-status-rascunho: #6b7280;
+  --color-status-confirmado: #2563eb;
+  --color-status-concluido: #16a34a;
+  --color-status-cancelado: #dc2626;
 
-  --color-badge-draft-background: #f3f4f6;
-  --color-badge-draft-text: #374151;
-  --color-badge-confirmed-background: #dbeafe;
-  --color-badge-confirmed-text: #1d4ed8;
-  --color-badge-completed-background: #dcfce7;
-  --color-badge-completed-text: #15803d;
-  --color-badge-cancelled-background: #fee2e2;
-  --color-badge-cancelled-text: #b91c1c;
+  --color-badge-rascunho-background: #f3f4f6;
+  --color-badge-rascunho-text: #374151;
+  --color-badge-confirmado-background: #dbeafe;
+  --color-badge-confirmado-text: #1d4ed8;
+  --color-badge-concluido-background: #dcfce7;
+  --color-badge-concluido-text: #15803d;
+  --color-badge-cancelado-background: #fee2e2;
+  --color-badge-cancelado-text: #b91c1c;
 }
 
 :root[data-theme='dark'] {
@@ -111,19 +111,19 @@
   --color-overlay: rgba(0, 0, 0, 0.45);
 
   --color-status-track: #374151;
-  --color-status-draft: #9ca3af;
-  --color-status-confirmed: #3b82f6;
-  --color-status-completed: #22c55e;
-  --color-status-cancelled: #ef4444;
+  --color-status-rascunho: #9ca3af;
+  --color-status-confirmado: #3b82f6;
+  --color-status-concluido: #22c55e;
+  --color-status-cancelado: #ef4444;
 
-  --color-badge-draft-background: #374151;
-  --color-badge-draft-text: #e5e7eb;
-  --color-badge-confirmed-background: #1e3a8a;
-  --color-badge-confirmed-text: #93c5fd;
-  --color-badge-completed-background: #14532d;
-  --color-badge-completed-text: #86efac;
-  --color-badge-cancelled-background: #7f1d1d;
-  --color-badge-cancelled-text: #fca5a5;
+  --color-badge-rascunho-background: #374151;
+  --color-badge-rascunho-text: #e5e7eb;
+  --color-badge-confirmado-background: #1e3a8a;
+  --color-badge-confirmado-text: #93c5fd;
+  --color-badge-concluido-background: #14532d;
+  --color-badge-concluido-text: #86efac;
+  --color-badge-cancelado-background: #7f1d1d;
+  --color-badge-cancelado-text: #fca5a5;
 }
 
 * {
@@ -588,20 +588,20 @@ a:focus-visible {
   border-radius: 999px;
 }
 
-.status-row__fill--draft {
-  background: var(--color-status-draft);
+.status-row__fill--rascunho {
+  background: var(--color-status-rascunho);
 }
 
-.status-row__fill--confirmed {
-  background: var(--color-status-confirmed);
+.status-row__fill--confirmado {
+  background: var(--color-status-confirmado);
 }
 
-.status-row__fill--completed {
-  background: var(--color-status-completed);
+.status-row__fill--concluido {
+  background: var(--color-status-concluido);
 }
 
-.status-row__fill--cancelled {
-  background: var(--color-status-cancelled);
+.status-row__fill--cancelado {
+  background: var(--color-status-cancelado);
 }
 
 .metric-list {
@@ -687,24 +687,24 @@ a:focus-visible {
   font-weight: 600;
 }
 
-.badge--draft {
-  background: var(--color-badge-draft-background);
-  color: var(--color-badge-draft-text);
+.badge--rascunho {
+  background: var(--color-badge-rascunho-background);
+  color: var(--color-badge-rascunho-text);
 }
 
-.badge--confirmed {
-  background: var(--color-badge-confirmed-background);
-  color: var(--color-badge-confirmed-text);
+.badge--confirmado {
+  background: var(--color-badge-confirmado-background);
+  color: var(--color-badge-confirmado-text);
 }
 
-.badge--completed {
-  background: var(--color-badge-completed-background);
-  color: var(--color-badge-completed-text);
+.badge--concluido {
+  background: var(--color-badge-concluido-background);
+  color: var(--color-badge-concluido-text);
 }
 
-.badge--cancelled {
-  background: var(--color-badge-cancelled-background);
-  color: var(--color-badge-cancelled-text);
+.badge--cancelado {
+  background: var(--color-badge-cancelado-background);
+  color: var(--color-badge-cancelado-text);
 }
 
 .section-state,

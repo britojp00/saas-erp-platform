@@ -7,7 +7,7 @@ import PaginaListaClientes from './pages/PaginaListaClientes'
 import DashboardPage from './pages/DashboardPage'
 import PaginaEstoque from './pages/PaginaEstoque'
 import LoginPage from './pages/LoginPage'
-import OrdersPage from './pages/OrdersPage'
+import PaginaPedidos from './pages/PaginaPedidos'
 import PaginaListaProdutos from './pages/PaginaListaProdutos'
 import ProtectedRoute from './routes/ProtectedRoute'
 
@@ -25,7 +25,7 @@ export default function App() {
           <Route path="/clientes/:id/edit" element={<PaginaEditarCliente />} />
           <Route path="/produtos" element={<PaginaListaProdutos />} />
           <Route path="/estoque" element={<PaginaEstoque />} />
-          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/pedidos" element={<PaginaPedidos />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

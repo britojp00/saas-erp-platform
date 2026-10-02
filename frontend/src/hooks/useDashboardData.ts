@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError, api } from '../services/api'
-import { ORDER_STATUSES } from '../types/dashboard'
+import { STATUS_PEDIDOS } from '../types/dashboard'
 import type {
   AuditLogItem,
   DashboardSummary,
   ItemEstoque,
   ResumoEstoque,
-  OrderListItem,
+  ListaPedidosResposta,
+  PedidoResumo,
   PaginatedResponse,
 } from '../types/dashboard'
 
@@ -19,7 +20,7 @@ export type AsyncState<T> =
   | { status: 'error'; message: string }
   | { status: 'ready'; data: T }
 
-export type DashboardSection = 'summary' | 'orders' | 'activity'
+export type DashboardSection = 'summary' | 'pedidos' | 'activity'
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) return error.message
@@ -84,11 +85,11 @@ async function fetchSummary(): Promise<DashboardSummary> {
     clientesRes,
     produtosRes,
     activeProdutosRes,
-    ordersRes,
-    draftRes,
-    confirmedRes,
-    completedRes,
-    cancelledRes,
+    pedidosRes,
+    rascunhoRes,
+    confirmadoRes,
+    concluidoRes,
+    canceladoRes,
     estoqueRes,
     movimentosRes,
     reservasRes,
@@ -100,18 +101,18 @@ async function fetchSummary(): Promise<DashboardSummary> {
     api.get<PaginatedResponse<unknown>>(
       '/api/v1/produtos?page=1&page_size=1&is_active=true',
     ),
-    api.get<PaginatedResponse<unknown>>('/api/v1/orders?page=1&page_size=1'),
+    api.get<PaginatedResponse<unknown>>('/api/v1/pedidos?page=1&page_size=1'),
     api.get<PaginatedResponse<unknown>>(
-      '/api/v1/orders?page=1&page_size=1&status=DRAFT',
+      '/api/v1/pedidos?page=1&page_size=1&status=RASCUNHO',
     ),
     api.get<PaginatedResponse<unknown>>(
-      '/api/v1/orders?page=1&page_size=1&status=CONFIRMED',
+      '/api/v1/pedidos?page=1&page_size=1&status=CONFIRMADO',
     ),
     api.get<PaginatedResponse<unknown>>(
-      '/api/v1/orders?page=1&page_size=1&status=COMPLETED',
+      '/api/v1/pedidos?page=1&page_size=1&status=CONCLUIDO',
     ),
     api.get<PaginatedResponse<unknown>>(
-      '/api/v1/orders?page=1&page_size=1&status=CANCELLED',
+      '/api/v1/pedidos?page=1&page_size=1&status=CANCELADO',
     ),
     fetchResumoEstoque(),
     api.get<PaginatedResponse<unknown>>(
@@ -122,15 +123,15 @@ async function fetchSummary(): Promise<DashboardSummary> {
     ),
   ])
 
-  const ordersByStatus = {
-    DRAFT: draftRes.total,
-    CONFIRMED: confirmedRes.total,
-    COMPLETED: completedRes.total,
-    CANCELLED: cancelledRes.total,
+  const pedidosPorStatus = {
+    RASCUNHO: rascunhoRes.total,
+    CONFIRMADO: confirmadoRes.total,
+    CONCLUIDO: concluidoRes.total,
+    CANCELADO: canceladoRes.total,
   }
 
-  const classified = ORDER_STATUSES.reduce(
-    (sum, status) => sum + ordersByStatus[status],
+  const classified = STATUS_PEDIDOS.reduce(
+    (sum, status) => sum + pedidosPorStatus[status],
     0,
   )
 
@@ -138,20 +139,20 @@ async function fetchSummary(): Promise<DashboardSummary> {
     clientesTotal: clientesRes.total,
     produtosTotal: produtosRes.total,
     produtosAtivosTotal: activeProdutosRes.total,
-    ordersTotal: ordersRes.total,
-    ordersByStatus,
-    ordersUnclassified: Math.max(ordersRes.total - classified, 0),
+    pedidosTotal: pedidosRes.total,
+    pedidosPorStatus,
+    pedidosNaoClassificados: Math.max(pedidosRes.total - classified, 0),
     estoque: estoqueRes,
     movimentosTotal: movimentosRes.total,
     reservasTotal: reservasRes.total,
   }
 }
 
-async function fetchRecentOrders(): Promise<OrderListItem[]> {
-  const response = await api.get<PaginatedResponse<OrderListItem>>(
-    `/api/v1/orders?page=1&page_size=${RECENT_LIMIT}&sort=created_at&order=desc`,
+async function buscarPedidosRecentes(): Promise<PedidoResumo[]> {
+  const response = await api.get<ListaPedidosResposta<PedidoResumo>>(
+    `/api/v1/pedidos?page=1&page_size=${RECENT_LIMIT}&sort=created_at&order=desc`,
   )
-  return response.items
+  return response.itens
 }
 
 async function fetchRecentActivity(): Promise<AuditLogItem[]> {
@@ -165,14 +166,14 @@ export function useDashboardData() {
   const [summary, setSummary] = useState<AsyncState<DashboardSummary>>({
     status: 'loading',
   })
-  const [recentOrders, setRecentOrders] = useState<AsyncState<OrderListItem[]>>(
-    { status: 'loading' },
-  )
+  const [pedidosRecentes, setPedidosRecentes] = useState<
+    AsyncState<PedidoResumo[]>
+  >({ status: 'loading' })
   const [recentActivity, setRecentActivity] = useState<
     AsyncState<AuditLogItem[]>
   >({ status: 'loading' })
 
-  const sequence = useRef({ summary: 0, orders: 0, activity: 0 })
+  const sequence = useRef({ summary: 0, pedidos: 0, activity: 0 })
 
   const loadSummary = useCallback(async () => {
     const current = ++sequence.current.summary
@@ -187,17 +188,17 @@ export function useDashboardData() {
     }
   }, [])
 
-  const loadOrders = useCallback(async () => {
-    const current = ++sequence.current.orders
-    setRecentOrders({ status: 'loading' })
+  const carregarPedidos = useCallback(async () => {
+    const current = ++sequence.current.pedidos
+    setPedidosRecentes({ status: 'loading' })
     try {
-      const data = await fetchRecentOrders()
-      if (current === sequence.current.orders) {
-        setRecentOrders({ status: 'ready', data })
+      const data = await buscarPedidosRecentes()
+      if (current === sequence.current.pedidos) {
+        setPedidosRecentes({ status: 'ready', data })
       }
     } catch (error) {
-      if (current === sequence.current.orders) {
-        setRecentOrders({ status: 'error', message: errorMessage(error) })
+      if (current === sequence.current.pedidos) {
+        setPedidosRecentes({ status: 'error', message: errorMessage(error) })
       }
     }
   }, [])
@@ -219,18 +220,18 @@ export function useDashboardData() {
 
   useEffect(() => {
     void loadSummary()
-    void loadOrders()
+    void carregarPedidos()
     void loadActivity()
-  }, [loadSummary, loadOrders, loadActivity])
+  }, [loadSummary, carregarPedidos, loadActivity])
 
   const retry = useCallback(
     (section: DashboardSection) => {
       if (section === 'summary') void loadSummary()
-      else if (section === 'orders') void loadOrders()
+      else if (section === 'pedidos') void carregarPedidos()
       else void loadActivity()
     },
-    [loadSummary, loadOrders, loadActivity],
+    [loadSummary, carregarPedidos, loadActivity],
   )
 
-  return { summary, recentOrders, recentActivity, retry }
+  return { summary, pedidosRecentes, recentActivity, retry }
 }
