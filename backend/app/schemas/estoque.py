@@ -6,9 +6,9 @@ from pydantic import BaseModel, Field, field_serializer, field_validator
 from app.core.config import settings
 
 
-class MovementCreate(BaseModel):
+class MovimentacaoCriarPayload(BaseModel):
     produto_id: int
-    movement_type: str = Field(pattern=r"^(IN|OUT|ADJUSTMENT)$")
+    tipo_movimentacao: str = Field(pattern=r"^(ENTRADA|SAIDA|AJUSTE)$")
     quantity: Decimal = Field(max_digits=15, decimal_places=3)
     reference: str | None = Field(default=None, max_length=255)
     notes: str | None = Field(default=None, max_length=500)
@@ -22,13 +22,13 @@ class MovementCreate(BaseModel):
         return v
 
 
-class MovementResponse(BaseModel):
+class MovimentacaoResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
     tenant_id: int
     produto_id: int
-    movement_type: str
+    tipo_movimentacao: str
     quantity: Decimal
     reference: str | None
     notes: str | None
@@ -50,14 +50,14 @@ class MovementResponse(BaseModel):
         return value.astimezone(settings.tz).isoformat()
 
 
-class MovementListResponse(BaseModel):
-    items: list[MovementResponse]
+class ListaMovimentacoesResposta(BaseModel):
+    items: list[MovimentacaoResposta]
     page: int
     page_size: int
     total: int
 
 
-class ReservationCreate(BaseModel):
+class ReservaCriarPayload(BaseModel):
     produto_id: int
     quantity: Decimal = Field(max_digits=15, decimal_places=3)
     reference: str | None = Field(default=None, max_length=255)
@@ -73,7 +73,7 @@ class ReservationCreate(BaseModel):
         return v
 
 
-class ReservationResponse(BaseModel):
+class ReservaResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
@@ -116,14 +116,14 @@ class ReservationResponse(BaseModel):
         return value.astimezone(settings.tz).isoformat()
 
 
-class ReservationListResponse(BaseModel):
-    items: list[ReservationResponse]
+class ListaReservasResposta(BaseModel):
+    items: list[ReservaResposta]
     page: int
     page_size: int
     total: int
 
 
-class InventoryResponse(BaseModel):
+class EstoqueResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
@@ -143,14 +143,14 @@ class InventoryResponse(BaseModel):
         return value.astimezone(settings.tz).isoformat()
 
 
-class InventoryListResponse(BaseModel):
-    items: list[InventoryResponse]
+class ListaEstoquesResposta(BaseModel):
+    items: list[EstoqueResposta]
     page: int
     page_size: int
     total: int
 
 
-class ConfirmReservationResponse(BaseModel):
+class ConfirmarReservaResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int

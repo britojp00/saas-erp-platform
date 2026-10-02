@@ -184,7 +184,7 @@ Exemplos:
 
 ClienteRepository
 ProdutoRepository
-InventoryRepository
+EstoqueRepository
 OrderRepository
 
 Responsabilidades:
@@ -226,7 +226,7 @@ Permission
 Cliente
 Produto
 Categoria
-Inventory
+Estoque
 Order
 OrderItem
 AuditLog
@@ -432,7 +432,7 @@ Tenant
   +---- Clientes
   +---- Produtos
   +---- Orders
-  +---- Inventory
+  +---- Estoque
 
 Entidades de negócio pertencentes a um tenant devem possuir
 referência ao tenant correspondente quando aplicável.
@@ -547,7 +547,7 @@ Permissoes implementadas:
 cliente.ler, cliente.criar, cliente.atualizar, cliente.excluir
 categoria.ler, categoria.criar, categoria.atualizar, categoria.excluir
 produto.ler, produto.criar, produto.atualizar, produto.excluir
-inventory.read, inventory.update
+estoque.ler, estoque.atualizar
 order.read, order.create, order.update, order.cancel
 
 Exemplo de uso:
@@ -578,7 +578,7 @@ Criar pedido
      |
      +---- criar OrderItems
      |
-     +---- atualizar Inventory
+     +---- atualizar Estoque
 
 Se uma operação crítica falhar, os dados dependentes
 devem permanecer consistentes.

@@ -21,36 +21,30 @@ from app.db.mixins import (
 )
 
 
-class ReservationStatus(str, enum.Enum):
-    ACTIVE = "ACTIVE"
-    CONFIRMED = "CONFIRMED"
-    RELEASED = "RELEASED"
-    CANCELLED = "CANCELLED"
+class TipoMovimentacao(str, enum.Enum):
+    ENTRADA = "ENTRADA"
+    SAIDA = "SAIDA"
+    AJUSTE = "AJUSTE"
 
 
-class InventoryReservation(
+class MovimentacaoEstoque(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     TenantScopedMixin,
     Base,
 ):
-    __tablename__ = "inventory_reservations"
+    __tablename__ = "estoque_movimentacoes"
 
     __table_args__ = (
         UniqueConstraint(
             "tenant_id",
             "idempotency_key",
-            name="uq_inventory_reservations_tenant_idempotency",
+            name="uq_estoque_movimentacoes_tenant_idempotency",
         ),
         ForeignKeyConstraint(
             ["tenant_id", "produto_id"],
             ["produtos.tenant_id", "produtos.id"],
             ondelete="RESTRICT",
-        ),
-        ForeignKeyConstraint(
-            ["order_item_id"],
-            ["order_items.id"],
-            ondelete="SET NULL",
         ),
     )
 
@@ -60,15 +54,14 @@ class InventoryReservation(
         index=True,
     )
 
-    quantity: Mapped[Decimal] = mapped_column(
-        Numeric(15, 3),
+    tipo_movimentacao: Mapped[TipoMovimentacao] = mapped_column(
+        String(20),
         nullable=False,
     )
 
-    status: Mapped[ReservationStatus] = mapped_column(
-        String(20),
+    quantity: Mapped[Decimal] = mapped_column(
+        Numeric(15, 3),
         nullable=False,
-        default=ReservationStatus.ACTIVE,
     )
 
     reference: Mapped[str | None] = mapped_column(
@@ -86,24 +79,8 @@ class InventoryReservation(
         nullable=False,
     )
 
-    order_item_id: Mapped[int | None] = mapped_column(
-        BigInteger,
-        nullable=True,
-        index=True,
-    )
-
-    reserved_at: Mapped[datetime] = mapped_column(
+    performed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-    )
-
-    confirmed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-    )
-
-    released_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
     )

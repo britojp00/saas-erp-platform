@@ -163,7 +163,7 @@ Tenant
    +---- Clientes
    +---- Produtos
    +---- Orders
-   +---- Inventory
+   +---- Estoque
 
 Entidades de negócio que pertencem a um tenant devem seguir
 as regras definidas em:
@@ -257,7 +257,7 @@ Criar pedido
     |
     +---- criar OrderItem
     |
-    +---- atualizar Inventory
+    +---- atualizar Estoque
 
 Essas operações devem permanecer consistentes.
 

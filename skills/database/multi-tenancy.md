@@ -30,7 +30,7 @@ PostgreSQL
                 ├── clientes
                 ├── produtos
                 ├── orders
-                └── inventory
+                └── estoque
 
 O isolamento lógico será realizado através do campo:
 
@@ -132,7 +132,7 @@ Exemplos que normalmente pertencem a um tenant:
 clientes
 produtos
 orders
-inventory
+estoque
 
 A ausência de tenant_id deve ser uma decisão explícita.
 
@@ -451,7 +451,7 @@ price
 created_at
 updated_at
 deleted_at
-inventory
+estoque
 
 id
 tenant_id

@@ -1,9 +1,9 @@
 import ModulePlaceholder from '../components/ModulePlaceholder'
 
-export default function InventoryPage() {
+export default function PaginaEstoque() {
   return (
     <ModulePlaceholder
-      title="Inventory"
+      title="Estoque"
       description="Estoque, movimentações e reservas."
     />
   )

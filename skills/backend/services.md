@@ -57,8 +57,8 @@ Exemplo:
 OrderService.create_order()
 OrderService.cancel_order()
 OrderService.confirm_order()
-InventoryService.reserve_stock()
-InventoryService.release_stock()
+EstoqueService.create_reserva()
+EstoqueService.release_reserva()
 
 Os métodos devem representar casos de uso.
 
@@ -75,7 +75,7 @@ services/
 ├── cliente.py
 ├── produto.py
 ├── categoria.py
-├── inventory.py
+├── estoque.py
 ├── order.py
 └── ...
 
@@ -231,7 +231,7 @@ Evitar um único arquivo contendo:
 
 Cliente
 Produto
-Inventory
+Estoque
 Order
 Authentication
 Reports
@@ -271,8 +271,8 @@ create_cliente
 update_cliente
 cancel_order
 confirm_order
-reserve_stock
-release_stock
+create_reserva
+release_reserva
 
 Evitar nomes genéricos como:
 
@@ -376,7 +376,7 @@ create order
     ↓
 create items
     ↓
-update inventory
+update estoque
     ↓
 commit
 
@@ -488,13 +488,13 @@ Exemplo:
 
 OrderService
     ↓
-InventoryService
+EstoqueService
 
 Mas evitar dependências circulares:
 
 OrderService
     ↓
-InventoryService
+EstoqueService
     ↓
 OrderService
 
@@ -600,9 +600,9 @@ Operações de estoque devem preservar as regras do domínio.
 
 Exemplo:
 
-reserve_stock()
-release_stock()
-adjust_stock()
+create_reserva()
+release_reserva()
+create_movimentacao()
 
 Quando aplicável, validar:
 
@@ -694,7 +694,7 @@ Exemplo:
 
 order.created
 order.cancelled
-inventory.reserved
+reserva.criada
 cliente.criar
 
 Quando apropriado:

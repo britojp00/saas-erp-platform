@@ -80,7 +80,7 @@ tests/
 │   ├── test_clientes.py
 │   ├── test_categorias.py
 │   ├── test_produtos.py
-│   ├── test_inventory.py
+│   ├── test_estoque.py
 │   ├── test_orders.py
 │   ├── test_audit_logs.py
 │   └── test_observability.py
@@ -1199,7 +1199,7 @@ reserva com estoque insuficiente
 reserva de produto inexistente
 reserva de produto inativo
 
-InventoryReservation:
+ReservaEstoque:
 
 order_item_id (nullable, FK para order_items)
 reference (formato "order:{order_id}")

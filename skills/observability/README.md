@@ -335,7 +335,7 @@ Exemplos:
 orders_created
 orders_cancelled
 products_created
-inventory_adjustments
+estoque_ajustes
 
 Essas métricas devem ser escolhidas conforme os requisitos do sistema.
 
@@ -1319,7 +1319,7 @@ LOG_JSON=true     # true=JSON, false=Text
 | request_failed | ERROR | middleware (exception) |
 | cliente.nao_encontrado | WARNING | exceptions.py |
 | produto.nao_encontrado | WARNING | exceptions.py |
-| inventory.not_found | WARNING | exceptions.py |
+| estoque.nao_encontrado | WARNING | exceptions.py |
 | order.not_found | WARNING | exceptions.py |
 | order.invalid_state | WARNING | exceptions.py |
 | categoria.nao_encontrada | WARNING | exceptions.py |

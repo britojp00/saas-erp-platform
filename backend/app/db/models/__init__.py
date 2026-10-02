@@ -1,13 +1,13 @@
 from app.db.models.audit_log import AuditLog
 from app.db.models.categoria import Categoria
 from app.db.models.cliente import Cliente
-from app.db.models.inventory import Inventory
-from app.db.models.inventory_movement import InventoryMovement
-from app.db.models.inventory_reservation import InventoryReservation
+from app.db.models.estoque import Estoque
+from app.db.models.movimentacao_estoque import MovimentacaoEstoque
 from app.db.models.order import Order
 from app.db.models.order_item import OrderItem
 from app.db.models.permission import Permission
 from app.db.models.produto import Produto
+from app.db.models.reserva_estoque import ReservaEstoque
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
 from app.db.models.tenant import Tenant
@@ -18,13 +18,13 @@ __all__ = [
     "AuditLog",
     "Categoria",
     "Cliente",
-    "Inventory",
-    "InventoryMovement",
-    "InventoryReservation",
+    "Estoque",
+    "MovimentacaoEstoque",
     "Order",
     "OrderItem",
     "Permission",
     "Produto",
+    "ReservaEstoque",
     "Role",
     "RolePermission",
     "Tenant",

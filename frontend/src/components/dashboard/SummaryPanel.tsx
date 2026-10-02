@@ -23,7 +23,7 @@ export default function SummaryPanel({ state, onRetry }: SummaryPanelProps) {
   }
 
   const data = state.data
-  const { inventory } = data
+  const { estoque } = data
 
   return (
     <>
@@ -44,10 +44,10 @@ export default function SummaryPanel({ state, onRetry }: SummaryPanelProps) {
         />
         <StatCard
           label="Registros de estoque"
-          value={formatNumber(inventory.total)}
+          value={formatNumber(estoque.total)}
           hint={
-            inventory.available !== null
-              ? `${formatNumber(inventory.available)} disponíveis`
+            estoque.available !== null
+              ? `${formatNumber(estoque.available)} disponíveis`
               : 'somas indisponíveis'
           }
         />
@@ -102,31 +102,31 @@ export default function SummaryPanel({ state, onRetry }: SummaryPanelProps) {
           <h2 id="stock-title">Estoque</h2>
           <dl className="metric-list">
             <dt>Registros</dt>
-            <dd>{formatNumber(inventory.total)}</dd>
+            <dd>{formatNumber(estoque.total)}</dd>
             <dt>Em estoque</dt>
             <dd>
-              {inventory.quantity !== null
-                ? formatNumber(inventory.quantity)
+              {estoque.quantity !== null
+                ? formatNumber(estoque.quantity)
                 : '—'}
             </dd>
             <dt>Reservado</dt>
             <dd>
-              {inventory.reserved !== null
-                ? formatNumber(inventory.reserved)
+              {estoque.reserved !== null
+                ? formatNumber(estoque.reserved)
                 : '—'}
             </dd>
             <dt>Disponível</dt>
             <dd>
-              {inventory.available !== null
-                ? formatNumber(inventory.available)
+              {estoque.available !== null
+                ? formatNumber(estoque.available)
                 : '—'}
             </dd>
             <dt>Movimentações</dt>
-            <dd>{formatNumber(data.movementsTotal)}</dd>
+            <dd>{formatNumber(data.movimentosTotal)}</dd>
             <dt>Reservas</dt>
-            <dd>{formatNumber(data.reservationsTotal)}</dd>
+            <dd>{formatNumber(data.reservasTotal)}</dd>
           </dl>
-          {!inventory.complete && (
+          {!estoque.complete && (
             <p className="muted section-note">
               Somas de quantidade não exibidas: a lista de estoque excede o
               limite de leitura do dashboard.

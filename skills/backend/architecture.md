@@ -147,7 +147,7 @@ Estrutura conceitual:
 services/
 ├── cliente.py
 ├── produto.py
-├── inventory.py
+├── estoque.py
 ├── order.py
 └── ...
 
@@ -181,7 +181,7 @@ Estrutura conceitual:
 repositories/
 ├── cliente.py
 ├── produto.py
-├── inventory.py
+├── estoque.py
 └── order.py
 
 Um repository pode realizar:

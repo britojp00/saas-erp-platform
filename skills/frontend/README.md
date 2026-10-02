@@ -335,7 +335,7 @@ pages/
 ├── Dashboard
 ├── Clientes
 ├── Produtos
-├── Inventory
+├── Estoque
 └── Orders
 
 Pages podem coordenar componentes, hooks e services.
@@ -435,7 +435,7 @@ Exemplos:
 clientes
 produtos
 orders
-inventory
+estoque
 
 Quando a aplicação crescer, poderá ser considerada uma biblioteca específica para server state.
 
@@ -703,7 +703,7 @@ Exemplo:
 /dashboard
 /clientes
 /produtos
-/inventory
+/estoque
 /orders
 
 Rotas protegidas devem exigir autenticação.

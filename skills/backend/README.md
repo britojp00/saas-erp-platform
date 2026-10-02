@@ -148,9 +148,9 @@ Permission
 Cliente
 Categoria
 Produto
-Inventory
-InventoryMovement
-InventoryReservation
+Estoque
+MovimentacaoEstoque
+ReservaEstoque
 Order
 OrderItem
 AuditLog
@@ -225,7 +225,7 @@ Permissoes implementadas:
 cliente.ler, cliente.criar, cliente.atualizar, cliente.excluir
 categoria.ler, categoria.criar, categoria.atualizar, categoria.excluir
 produto.ler, produto.criar, produto.atualizar, produto.excluir
-inventory.read, inventory.update
+estoque.ler, estoque.atualizar
 order.read, order.create, order.update, order.cancel
 
 As verificações de autorização devem ocorrer em local consistente
@@ -416,7 +416,7 @@ auth (unit + api)
 clientes (api)
 categorias (api)
 produtos (api)
-inventory (api)
+estoque (api)
 orders (api)
 
 Os testes devem cobrir principalmente:

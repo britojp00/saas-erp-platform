@@ -50,7 +50,7 @@ produtos
 categorias
 orders
 order_items
-inventory
+estoque
 audit_logs
 
 Não utilizar:
@@ -142,7 +142,7 @@ Exemplo:
 clientes
 produtos
 orders
-inventory
+estoque
 
 Estrutura conceitual:
 

@@ -1,10 +1,10 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.inventory import Inventory
+from app.db.models.estoque import Estoque
 
 
-class InventoryRepository:
+class EstoqueRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -12,11 +12,11 @@ class InventoryRepository:
         self,
         tenant_id: int,
         produto_id: int,
-    ) -> Inventory | None:
-        stmt = select(Inventory).where(
-            Inventory.tenant_id == tenant_id,
-            Inventory.produto_id == produto_id,
-            Inventory.deleted_at.is_(None),
+    ) -> Estoque | None:
+        stmt = select(Estoque).where(
+            Estoque.tenant_id == tenant_id,
+            Estoque.produto_id == produto_id,
+            Estoque.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -25,13 +25,13 @@ class InventoryRepository:
         self,
         tenant_id: int,
         produto_id: int,
-    ) -> Inventory | None:
+    ) -> Estoque | None:
         stmt = (
-            select(Inventory)
+            select(Estoque)
             .where(
-                Inventory.tenant_id == tenant_id,
-                Inventory.produto_id == produto_id,
-                Inventory.deleted_at.is_(None),
+                Estoque.tenant_id == tenant_id,
+                Estoque.produto_id == produto_id,
+                Estoque.deleted_at.is_(None),
             )
             .with_for_update()
         )
@@ -45,19 +45,19 @@ class InventoryRepository:
         offset: int,
         limit: int,
         produto_id: int | None = None,
-    ) -> tuple[list[Inventory], int]:
-        base_stmt = select(Inventory).where(
-            Inventory.tenant_id == tenant_id,
-            Inventory.deleted_at.is_(None),
+    ) -> tuple[list[Estoque], int]:
+        base_stmt = select(Estoque).where(
+            Estoque.tenant_id == tenant_id,
+            Estoque.deleted_at.is_(None),
         )
         if produto_id is not None:
-            base_stmt = base_stmt.where(Inventory.produto_id == produto_id)
+            base_stmt = base_stmt.where(Estoque.produto_id == produto_id)
 
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
         total_result = await self.session.execute(count_stmt)
         total = total_result.scalar_one()
 
-        base_stmt = base_stmt.order_by(Inventory.created_at.desc(), Inventory.id.desc())
+        base_stmt = base_stmt.order_by(Estoque.created_at.desc(), Estoque.id.desc())
         base_stmt = base_stmt.offset(offset).limit(limit)
         result = await self.session.execute(base_stmt)
         items = list(result.scalars().all())
@@ -68,13 +68,13 @@ class InventoryRepository:
         self,
         tenant_id: int,
         produto_id: int,
-    ) -> Inventory:
-        inventory = await self.get_by_produto_id(tenant_id, produto_id)
-        if inventory is None:
-            inventory = Inventory(
+    ) -> Estoque:
+        estoque = await self.get_by_produto_id(tenant_id, produto_id)
+        if estoque is None:
+            estoque = Estoque(
                 tenant_id=tenant_id,
                 produto_id=produto_id,
             )
-            self.session.add(inventory)
+            self.session.add(estoque)
             await self.session.flush()
-        return inventory
+        return estoque

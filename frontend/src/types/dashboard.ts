@@ -32,7 +32,7 @@ export interface OrderListItem {
   updated_at: string
 }
 
-export interface InventoryItem {
+export interface ItemEstoque {
   id: number
   tenant_id: number
   produto_id: number
@@ -53,7 +53,7 @@ export interface AuditLogItem {
   created_at: string
 }
 
-export interface InventorySummary {
+export interface ResumoEstoque {
   total: number
   complete: boolean
   quantity: number | null
@@ -68,7 +68,7 @@ export interface DashboardSummary {
   ordersTotal: number
   ordersByStatus: Record<OrderStatus, number>
   ordersUnclassified: number
-  inventory: InventorySummary
-  movementsTotal: number
-  reservationsTotal: number
+  estoque: ResumoEstoque
+  movimentosTotal: number
+  reservasTotal: number
 }

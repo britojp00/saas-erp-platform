@@ -41,7 +41,7 @@ schemas/
 ├── cliente.py
 ├── produto.py
 ├── categoria.py
-├── inventory.py
+├── estoque.py
 ├── order.py
 └── common.py
 

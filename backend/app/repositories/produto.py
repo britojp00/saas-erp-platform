@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.categoria import Categoria
-from app.db.models.inventory import Inventory
+from app.db.models.estoque import Estoque
 from app.db.models.order_item import OrderItem
 from app.db.models.produto import Produto
 
@@ -103,16 +103,16 @@ class ProdutoRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none() is not None
 
-    async def has_inventory(
+    async def tem_estoque(
         self,
         tenant_id: int,
         produto_id: int,
     ) -> bool:
         stmt = (
-            select(Inventory)
+            select(Estoque)
             .where(
-                Inventory.tenant_id == tenant_id,
-                Inventory.produto_id == produto_id,
+                Estoque.tenant_id == tenant_id,
+                Estoque.produto_id == produto_id,
             )
             .limit(1)
         )
