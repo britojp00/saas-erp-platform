@@ -4,14 +4,14 @@ import { ORDER_STATUSES } from '../types/dashboard'
 import type {
   AuditLogItem,
   DashboardSummary,
-  InventoryItem,
-  InventorySummary,
+  ItemEstoque,
+  ResumoEstoque,
   OrderListItem,
   PaginatedResponse,
 } from '../types/dashboard'
 
-const INVENTORY_PAGE_SIZE = 100
-const MAX_INVENTORY_PAGES = 10
+const TAMANHO_PAGINA_ESTOQUE = 100
+const MAX_PAGINAS_ESTOQUE = 10
 const RECENT_LIMIT = 5
 
 export type AsyncState<T> =
@@ -26,9 +26,9 @@ function errorMessage(error: unknown): string {
   return 'Não foi possível carregar os dados da API.'
 }
 
-async function fetchInventorySummary(): Promise<InventorySummary> {
-  const first = await api.get<PaginatedResponse<InventoryItem>>(
-    `/api/v1/inventory?page=1&page_size=${INVENTORY_PAGE_SIZE}`,
+async function fetchResumoEstoque(): Promise<ResumoEstoque> {
+  const first = await api.get<PaginatedResponse<ItemEstoque>>(
+    `/api/v1/estoque?page=1&page_size=${TAMANHO_PAGINA_ESTOQUE}`,
   )
 
   let items = first.items
@@ -36,14 +36,14 @@ async function fetchInventorySummary(): Promise<InventorySummary> {
   if (items.length < first.total) {
     const remainingPages =
       Math.min(
-        Math.ceil(first.total / INVENTORY_PAGE_SIZE),
-        MAX_INVENTORY_PAGES,
+        Math.ceil(first.total / TAMANHO_PAGINA_ESTOQUE),
+        MAX_PAGINAS_ESTOQUE,
       ) - 1
 
     const pages = await Promise.all(
       Array.from({ length: remainingPages }, (_, index) =>
-        api.get<PaginatedResponse<InventoryItem>>(
-          `/api/v1/inventory?page=${index + 2}&page_size=${INVENTORY_PAGE_SIZE}`,
+        api.get<PaginatedResponse<ItemEstoque>>(
+          `/api/v1/estoque?page=${index + 2}&page_size=${TAMANHO_PAGINA_ESTOQUE}`,
         ),
       ),
     )
@@ -89,9 +89,9 @@ async function fetchSummary(): Promise<DashboardSummary> {
     confirmedRes,
     completedRes,
     cancelledRes,
-    inventoryRes,
-    movementsRes,
-    reservationsRes,
+    estoqueRes,
+    movimentosRes,
+    reservasRes,
   ] = await Promise.all([
     api.get<PaginatedResponse<unknown>>(
       '/api/v1/clientes?page=1&page_size=1',
@@ -113,12 +113,12 @@ async function fetchSummary(): Promise<DashboardSummary> {
     api.get<PaginatedResponse<unknown>>(
       '/api/v1/orders?page=1&page_size=1&status=CANCELLED',
     ),
-    fetchInventorySummary(),
+    fetchResumoEstoque(),
     api.get<PaginatedResponse<unknown>>(
-      '/api/v1/inventory/movements/list?page=1&page_size=1',
+      '/api/v1/estoque/movimentacoes/list?page=1&page_size=1',
     ),
     api.get<PaginatedResponse<unknown>>(
-      '/api/v1/inventory/reservations/list?page=1&page_size=1',
+      '/api/v1/estoque/reservas/list?page=1&page_size=1',
     ),
   ])
 
@@ -141,9 +141,9 @@ async function fetchSummary(): Promise<DashboardSummary> {
     ordersTotal: ordersRes.total,
     ordersByStatus,
     ordersUnclassified: Math.max(ordersRes.total - classified, 0),
-    inventory: inventoryRes,
-    movementsTotal: movementsRes.total,
-    reservationsTotal: reservationsRes.total,
+    estoque: estoqueRes,
+    movimentosTotal: movimentosRes.total,
+    reservasTotal: reservasRes.total,
   }
 }
 

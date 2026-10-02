@@ -5,7 +5,7 @@ import PaginaDetalheCliente from './pages/PaginaDetalheCliente'
 import PaginaEditarCliente from './pages/PaginaEditarCliente'
 import PaginaListaClientes from './pages/PaginaListaClientes'
 import DashboardPage from './pages/DashboardPage'
-import InventoryPage from './pages/InventoryPage'
+import PaginaEstoque from './pages/PaginaEstoque'
 import LoginPage from './pages/LoginPage'
 import OrdersPage from './pages/OrdersPage'
 import PaginaListaProdutos from './pages/PaginaListaProdutos'
@@ -24,7 +24,7 @@ export default function App() {
           <Route path="/clientes/:id" element={<PaginaDetalheCliente />} />
           <Route path="/clientes/:id/edit" element={<PaginaEditarCliente />} />
           <Route path="/produtos" element={<PaginaListaProdutos />} />
-          <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/estoque" element={<PaginaEstoque />} />
           <Route path="/orders" element={<OrdersPage />} />
         </Route>
       </Route>
