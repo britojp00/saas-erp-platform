@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import create_access_token, get_password_hash
 from app.db.models.categoria import Categoria
 from app.db.models.cliente import Cliente
-from app.db.models.inventory import Inventory
+from app.db.models.estoque import Estoque
 from app.db.models.order import Order
 from app.db.models.order_item import OrderItem
 from app.db.models.permission import Permission
@@ -138,20 +138,20 @@ async def _create_produto_in_db(
     return produto
 
 
-async def _create_inventory_in_db(
+async def _create_estoque_in_db(
     session: AsyncSession,
     tenant_id: int,
     produto_id: int,
-) -> Inventory:
-    inventory = Inventory(
+) -> Estoque:
+    estoque = Estoque(
         tenant_id=tenant_id,
         produto_id=produto_id,
         quantity=Decimal("5.000"),
         reserved_quantity=Decimal("0.000"),
     )
-    session.add(inventory)
+    session.add(estoque)
     await session.flush()
-    return inventory
+    return estoque
 
 
 async def _create_order_with_item(
@@ -1339,7 +1339,7 @@ async def test_delete_produto_without_permission(
 
 
 @pytest.mark.asyncio
-async def test_delete_produto_with_inventory_blocked(
+async def test_delete_produto_with_estoque_blocked(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1348,7 +1348,7 @@ async def test_delete_produto_with_inventory_blocked(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Laptop", "SKU-DINV"
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.delete(

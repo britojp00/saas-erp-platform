@@ -94,28 +94,28 @@ class ErroProdutoCategoriaInvalida(DomainError):
     """Levantado quando a categoria especificada é inválida para o produto."""
 
 
-class InventoryNotFoundError(DomainError):
-    """Raised when an inventory record is not found."""
+class ErroEstoqueNaoEncontrado(DomainError):
+    """Levantado quando o registro de estoque nao e encontrado."""
 
 
-class InsufficientStockError(DomainError):
-    """Raised when there is not enough stock for an operation."""
+class ErroEstoqueInsuficiente(DomainError):
+    """Levantado quando o estoque disponivel e insuficiente para a operacao."""
 
 
-class InvalidInventoryOperationError(DomainError):
-    """Raised when an inventory operation is invalid."""
+class ErroOperacaoEstoqueInvalida(DomainError):
+    """Levantado quando a operacao de estoque e invalida."""
 
 
-class ReservationNotFoundError(DomainError):
-    """Raised when a reservation is not found."""
+class ErroReservaNaoEncontrada(DomainError):
+    """Levantado quando a reserva nao e encontrada."""
 
 
-class InvalidReservationStateError(DomainError):
-    """Raised when a reservation state transition is invalid."""
+class ErroEstadoReservaInvalido(DomainError):
+    """Levantado quando a transicao de estado da reserva e invalida."""
 
 
-class DuplicateIdempotencyKeyError(DomainError):
-    """Raised when an idempotency key already exists for a different request."""
+class ErroChaveIdempotenciaDuplicada(DomainError):
+    """Levantado quando a chave de idempotencia ja foi usada em outra requisicao."""
 
 
 class OrderNotFoundError(DomainError):
@@ -386,78 +386,78 @@ def register_exception_handlers(app: FastAPI) -> None:
             },
         )
 
-    @app.exception_handler(InventoryNotFoundError)
-    async def inventory_not_found_error_handler(
-        request: Request, exc: InventoryNotFoundError
+    @app.exception_handler(ErroEstoqueNaoEncontrado)
+    async def estoque_nao_encontrado_error_handler(
+        request: Request, exc: ErroEstoqueNaoEncontrado
     ) -> JSONResponse:
         logger.warning(
-            "inventory.not_found",
-            extra={"event": "inventory.not_found"},
+            "estoque.nao_encontrado",
+            extra={"event": "estoque.nao_encontrado"},
         )
         return JSONResponse(
             status_code=404,
             content={"detail": "Registro de estoque não encontrado"},
         )
 
-    @app.exception_handler(InsufficientStockError)
-    async def insufficient_stock_error_handler(
-        request: Request, exc: InsufficientStockError
+    @app.exception_handler(ErroEstoqueInsuficiente)
+    async def estoque_insuficiente_error_handler(
+        request: Request, exc: ErroEstoqueInsuficiente
     ) -> JSONResponse:
         logger.warning(
-            "inventory.insufficient_stock",
-            extra={"event": "inventory.insufficient_stock"},
+            "estoque.insuficiente",
+            extra={"event": "estoque.insuficiente"},
         )
         return JSONResponse(
             status_code=409,
             content={"detail": "Estoque insuficiente para esta operação"},
         )
 
-    @app.exception_handler(InvalidInventoryOperationError)
-    async def invalid_inventory_operation_error_handler(
-        request: Request, exc: InvalidInventoryOperationError
+    @app.exception_handler(ErroOperacaoEstoqueInvalida)
+    async def operacao_estoque_invalida_error_handler(
+        request: Request, exc: ErroOperacaoEstoqueInvalida
     ) -> JSONResponse:
         logger.warning(
-            "inventory.invalid_operation",
-            extra={"event": "inventory.invalid_operation"},
+            "estoque.operacao_invalida",
+            extra={"event": "estoque.operacao_invalida"},
         )
         return JSONResponse(
             status_code=409,
             content={"detail": "Operação de estoque inválida"},
         )
 
-    @app.exception_handler(ReservationNotFoundError)
-    async def reservation_not_found_error_handler(
-        request: Request, exc: ReservationNotFoundError
+    @app.exception_handler(ErroReservaNaoEncontrada)
+    async def reserva_nao_encontrada_error_handler(
+        request: Request, exc: ErroReservaNaoEncontrada
     ) -> JSONResponse:
         logger.warning(
-            "reservation.not_found",
-            extra={"event": "reservation.not_found"},
+            "reserva.nao_encontrada",
+            extra={"event": "reserva.nao_encontrada"},
         )
         return JSONResponse(
             status_code=404,
             content={"detail": "Reserva não encontrada"},
         )
 
-    @app.exception_handler(InvalidReservationStateError)
-    async def invalid_reservation_state_error_handler(
-        request: Request, exc: InvalidReservationStateError
+    @app.exception_handler(ErroEstadoReservaInvalido)
+    async def estado_reserva_invalido_error_handler(
+        request: Request, exc: ErroEstadoReservaInvalido
     ) -> JSONResponse:
         logger.warning(
-            "reservation.invalid_state",
-            extra={"event": "reservation.invalid_state"},
+            "reserva.estado_invalido",
+            extra={"event": "reserva.estado_invalido"},
         )
         return JSONResponse(
             status_code=409,
             content={"detail": "Transição de estado da reserva é inválida"},
         )
 
-    @app.exception_handler(DuplicateIdempotencyKeyError)
-    async def duplicate_idempotency_key_error_handler(
-        request: Request, exc: DuplicateIdempotencyKeyError
+    @app.exception_handler(ErroChaveIdempotenciaDuplicada)
+    async def chave_idempotencia_duplicada_error_handler(
+        request: Request, exc: ErroChaveIdempotenciaDuplicada
     ) -> JSONResponse:
         logger.warning(
-            "idempotency.duplicate_key",
-            extra={"event": "idempotency.duplicate_key"},
+            "idempotencia.chave_duplicada",
+            extra={"event": "idempotencia.chave_duplicada"},
         )
         return JSONResponse(
             status_code=409,

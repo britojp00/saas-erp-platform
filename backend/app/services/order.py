@@ -14,16 +14,16 @@ from app.core.exceptions import (
     OrderNotFoundError,
 )
 from app.db.models.cliente import Cliente
-from app.db.models.inventory_reservation import InventoryReservation, ReservationStatus
 from app.db.models.order import Order
 from app.db.models.order_item import OrderItem
 from app.db.models.produto import Produto
+from app.db.models.reserva_estoque import ReservaEstoque, StatusReserva
 from app.repositories.cliente import ClienteRepository
-from app.repositories.inventory import InventoryRepository
-from app.repositories.inventory_reservation import InventoryReservationRepository
+from app.repositories.estoque import EstoqueRepository
 from app.repositories.order import OrderRepository
 from app.repositories.order_item import OrderItemRepository
 from app.repositories.produto import ProdutoRepository
+from app.repositories.reserva_estoque import ReservaEstoqueRepository
 from app.schemas.order import (
     OrderCreate,
     OrderItemCreate,
@@ -45,8 +45,8 @@ class OrderService:
         self.item_repo = OrderItemRepository(session)
         self.produto_repo = ProdutoRepository(session)
         self.cliente_repo = ClienteRepository(session)
-        self.inventory_repo = InventoryRepository(session)
-        self.reservation_repo = InventoryReservationRepository(session)
+        self.estoque_repo = EstoqueRepository(session)
+        self.reserva_repo = ReservaEstoqueRepository(session)
         self.audit_service = AuditLogService(session)
 
     async def list(
@@ -400,28 +400,26 @@ class OrderService:
             ):
                 raise ErroPedidoProdutoInativo()
 
-            inventory = await self.inventory_repo.get_for_update(
-                tenant_id, item.produto_id
-            )
-            if inventory is None:
+            estoque = await self.estoque_repo.get_for_update(tenant_id, item.produto_id)
+            if estoque is None:
                 raise ErroPedidoProdutoInativo()
 
-            available = inventory.quantity - inventory.reserved_quantity
+            available = estoque.quantity - estoque.reserved_quantity
             if available < item.quantity:
                 raise ErroPedidoProdutoInativo()
 
-            inventory.reserved_quantity = inventory.reserved_quantity + item.quantity
+            estoque.reserved_quantity = estoque.reserved_quantity + item.quantity
 
-            reservation = InventoryReservation(
+            reserva = ReservaEstoque(
                 tenant_id=tenant_id,
                 produto_id=item.produto_id,
                 quantity=item.quantity,
-                status=ReservationStatus.ACTIVE,
+                status=StatusReserva.ATIVA,
                 reference=f"order:{order.id}",
                 order_item_id=item.id,
                 idempotency_key=f"order:{order.id}:item:{item.id}",
             )
-            await self.reservation_repo.create(reservation)
+            await self.reserva_repo.create(reserva)
 
         old_status = order.status
         order.status = "CONFIRMED"
@@ -455,21 +453,19 @@ class OrderService:
             raise InvalidOrderStateError()
 
         reference = f"order:{order.id}"
-        reservations = await self.reservation_repo.list_active_by_reference(
+        reservas = await self.reserva_repo.list_active_by_reference(
             tenant_id, reference
         )
-        for reservation in reservations:
-            inventory = await self.inventory_repo.get_for_update(
-                tenant_id, reservation.produto_id
+        for reserva in reservas:
+            estoque = await self.estoque_repo.get_for_update(
+                tenant_id, reserva.produto_id
             )
-            if inventory is not None:
-                inventory.reserved_quantity = (
-                    inventory.reserved_quantity - reservation.quantity
-                )
+            if estoque is not None:
+                estoque.reserved_quantity = estoque.reserved_quantity - reserva.quantity
 
-            reservation.status = ReservationStatus.CANCELLED
-            reservation.released_at = datetime.now(UTC)
-            await self.reservation_repo.update(reservation)
+            reserva.status = StatusReserva.CANCELADA
+            reserva.released_at = datetime.now(UTC)
+            await self.reserva_repo.update(reserva)
 
         old_status = order.status
         order.status = "CANCELLED"
@@ -503,22 +499,20 @@ class OrderService:
             raise InvalidOrderStateError()
 
         reference = f"order:{order.id}"
-        reservations = await self.reservation_repo.list_active_by_reference(
+        reservas = await self.reserva_repo.list_active_by_reference(
             tenant_id, reference
         )
-        for reservation in reservations:
-            inventory = await self.inventory_repo.get_for_update(
-                tenant_id, reservation.produto_id
+        for reserva in reservas:
+            estoque = await self.estoque_repo.get_for_update(
+                tenant_id, reserva.produto_id
             )
-            if inventory is not None:
-                inventory.quantity = inventory.quantity - reservation.quantity
-                inventory.reserved_quantity = (
-                    inventory.reserved_quantity - reservation.quantity
-                )
+            if estoque is not None:
+                estoque.quantity = estoque.quantity - reserva.quantity
+                estoque.reserved_quantity = estoque.reserved_quantity - reserva.quantity
 
-            reservation.status = ReservationStatus.CONFIRMED
-            reservation.confirmed_at = datetime.now(UTC)
-            await self.reservation_repo.update(reservation)
+            reserva.status = StatusReserva.CONFIRMADA
+            reserva.confirmed_at = datetime.now(UTC)
+            await self.reserva_repo.update(reserva)
 
         old_status = order.status
         order.status = "COMPLETED"

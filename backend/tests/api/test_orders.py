@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.cliente import Cliente
-from app.db.models.inventory import Inventory
+from app.db.models.estoque import Estoque
 from app.db.models.order import Order
 from app.db.models.permission import Permission
 from app.db.models.produto import Produto
@@ -147,20 +147,20 @@ async def _create_produto(
     return produto
 
 
-async def _create_inventory(
+async def _create_estoque(
     session: AsyncSession,
     tenant_id: int,
     produto_id: int,
     quantity: Decimal = Decimal("100.000"),
-) -> Inventory:
-    inventory = Inventory(
+) -> Estoque:
+    estoque = Estoque(
         tenant_id=tenant_id,
         produto_id=produto_id,
         quantity=quantity,
     )
-    session.add(inventory)
+    session.add(estoque)
     await session.flush()
-    return inventory
+    return estoque
 
 
 @pytest.fixture
@@ -181,17 +181,17 @@ async def produto_b(db_session: AsyncSession, test_tenant: Tenant) -> Produto:
 
 
 @pytest.fixture
-async def inventory(
+async def estoque(
     db_session: AsyncSession, test_tenant: Tenant, produto: Produto
-) -> Inventory:
-    return await _create_inventory(db_session, test_tenant.id, produto.id)
+) -> Estoque:
+    return await _create_estoque(db_session, test_tenant.id, produto.id)
 
 
 @pytest.fixture
-async def inventory_b(
+async def estoque_b(
     db_session: AsyncSession, test_tenant: Tenant, produto_b: Produto
-) -> Inventory:
-    return await _create_inventory(db_session, test_tenant.id, produto_b.id)
+) -> Estoque:
+    return await _create_estoque(db_session, test_tenant.id, produto_b.id)
 
 
 @pytest.fixture
@@ -201,7 +201,7 @@ async def order_with_items(
     test_user: User,
     cliente: Cliente,
     produto: Produto,
-    inventory: Inventory,
+    estoque: Estoque,
 ) -> Order:
     role = await _create_role_with_perms(
         db_session,
@@ -228,7 +228,7 @@ class TestOrderCreate:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -272,8 +272,8 @@ class TestOrderCreate:
         cliente: Cliente,
         produto: Produto,
         produto_b: Produto,
-        inventory: Inventory,
-        inventory_b: Inventory,
+        estoque: Estoque,
+        estoque_b: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -342,7 +342,7 @@ class TestOrderCreate:
         test_tenant: Tenant,
         authenticated_headers: dict,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -408,7 +408,7 @@ class TestOrderCreate:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -445,7 +445,7 @@ class TestOrderCreate:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -493,7 +493,7 @@ class TestOrderNumber:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -543,7 +543,7 @@ class TestOrderListAndDetail:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -585,7 +585,7 @@ class TestOrderListAndDetail:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -627,7 +627,7 @@ class TestOrderListAndDetail:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -699,7 +699,7 @@ class TestOrderUpdate:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -746,7 +746,7 @@ class TestOrderUpdate:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -795,8 +795,8 @@ class TestOrderItems:
         cliente: Cliente,
         produto: Produto,
         produto_b: Produto,
-        inventory: Inventory,
-        inventory_b: Inventory,
+        estoque: Estoque,
+        estoque_b: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -847,7 +847,7 @@ class TestOrderItems:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -888,7 +888,7 @@ class TestOrderItems:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -941,8 +941,8 @@ class TestOrderItems:
         cliente: Cliente,
         produto: Produto,
         produto_b: Produto,
-        inventory: Inventory,
-        inventory_b: Inventory,
+        estoque: Estoque,
+        estoque_b: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -992,7 +992,7 @@ class TestOrderItems:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -1034,8 +1034,8 @@ class TestOrderItems:
         cliente: Cliente,
         produto: Produto,
         produto_b: Produto,
-        inventory: Inventory,
-        inventory_b: Inventory,
+        estoque: Estoque,
+        estoque_b: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -1083,7 +1083,7 @@ class TestOrderStateMachine:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -1093,8 +1093,8 @@ class TestOrderStateMachine:
                 "order.read",
                 "order.create",
                 "order.update",
-                "inventory.read",
-                "inventory.update",
+                "estoque.ler",
+                "estoque.atualizar",
             ],
         )
         await _assign_role_to_user(
@@ -1123,7 +1123,7 @@ class TestOrderStateMachine:
         assert response.json()["status"] == "CONFIRMED"
 
         inv_resp = await client.get(
-            f"/api/v1/inventory/{produto.id}",
+            f"/api/v1/estoque/{produto.id}",
             headers=authenticated_headers,
         )
         assert inv_resp.status_code == 200
@@ -1137,13 +1137,13 @@ class TestOrderStateMachine:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
             test_tenant.id,
             "order_complete",
-            ["order.read", "order.create", "order.update", "inventory.read"],
+            ["order.read", "order.create", "order.update", "estoque.ler"],
         )
         await _assign_role_to_user(
             db_session,
@@ -1176,7 +1176,7 @@ class TestOrderStateMachine:
         assert response.json()["status"] == "COMPLETED"
 
         inv_resp = await client.get(
-            f"/api/v1/inventory/{produto.id}",
+            f"/api/v1/estoque/{produto.id}",
             headers=authenticated_headers,
         )
         assert inv_resp.status_code == 200
@@ -1191,7 +1191,7 @@ class TestOrderStateMachine:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -1232,7 +1232,7 @@ class TestOrderStateMachine:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -1243,7 +1243,7 @@ class TestOrderStateMachine:
                 "order.create",
                 "order.update",
                 "order.cancel",
-                "inventory.read",
+                "estoque.ler",
             ],
         )
         await _assign_role_to_user(
@@ -1277,7 +1277,7 @@ class TestOrderStateMachine:
         assert response.json()["status"] == "CANCELLED"
 
         inv_resp = await client.get(
-            f"/api/v1/inventory/{produto.id}",
+            f"/api/v1/estoque/{produto.id}",
             headers=authenticated_headers,
         )
         assert inv_resp.status_code == 200
@@ -1291,7 +1291,7 @@ class TestOrderStateMachine:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -1331,7 +1331,7 @@ class TestOrderStateMachine:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -1380,7 +1380,7 @@ class TestOrderStateMachine:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
@@ -1467,7 +1467,7 @@ class TestOrderMultiTenancy:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         from app.core.security import create_access_token
 
@@ -1488,12 +1488,12 @@ class TestOrderMultiTenancy:
         db_session.add(other_produto)
         await db_session.flush()
 
-        other_inventory = Inventory(
+        other_estoque = Estoque(
             tenant_id=other_tenant.id,
             produto_id=other_produto.id,
             quantity=Decimal("100.000"),
         )
-        db_session.add(other_inventory)
+        db_session.add(other_estoque)
         await db_session.flush()
 
         other_perm = Permission(tenant_id=other_tenant.id, name="order.read")
@@ -1567,7 +1567,7 @@ class TestOrderMultiTenancy:
         assert response.status_code in (403, 404)
 
 
-class TestOrderInventoryIntegration:
+class TestOrderEstoqueIntegration:
     async def test_insufficient_stock_fails(
         self,
         client: AsyncClient,
@@ -1576,7 +1576,7 @@ class TestOrderInventoryIntegration:
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
-        inventory: Inventory,
+        estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,

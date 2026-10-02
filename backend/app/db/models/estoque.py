@@ -12,20 +12,20 @@ from app.db.mixins import (
 )
 
 
-class Inventory(
+class Estoque(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
     TenantScopedMixin,
     Base,
 ):
-    __tablename__ = "inventory"
+    __tablename__ = "estoque"
 
     __table_args__ = (
         UniqueConstraint(
             "tenant_id",
             "produto_id",
-            name="uq_inventory_tenant_produto",
+            name="uq_estoque_tenant_produto",
         ),
         ForeignKeyConstraint(
             ["tenant_id", "produto_id"],

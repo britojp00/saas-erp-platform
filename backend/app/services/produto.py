@@ -186,7 +186,7 @@ class ProdutoService:
         if produto is None:
             raise ErroProdutoNaoEncontrado()
 
-        if await self.repo.has_inventory(tenant_id, produto.id):
+        if await self.repo.tem_estoque(tenant_id, produto.id):
             raise ErroProdutoEmUso()
 
         if await self.repo.has_order_items(tenant_id, produto.id):

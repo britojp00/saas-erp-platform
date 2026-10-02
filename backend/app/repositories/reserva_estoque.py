@@ -3,26 +3,26 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.inventory_reservation import InventoryReservation, ReservationStatus
+from app.db.models.reserva_estoque import ReservaEstoque, StatusReserva
 
 
-class InventoryReservationRepository:
+class ReservaEstoqueRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def create(self, reservation: InventoryReservation) -> InventoryReservation:
-        self.session.add(reservation)
+    async def create(self, reserva: ReservaEstoque) -> ReservaEstoque:
+        self.session.add(reserva)
         await self.session.flush()
-        return reservation
+        return reserva
 
     async def get_by_id(
         self,
         tenant_id: int,
-        reservation_id: int,
-    ) -> InventoryReservation | None:
-        stmt = select(InventoryReservation).where(
-            InventoryReservation.tenant_id == tenant_id,
-            InventoryReservation.id == reservation_id,
+        reserva_id: int,
+    ) -> ReservaEstoque | None:
+        stmt = select(ReservaEstoque).where(
+            ReservaEstoque.tenant_id == tenant_id,
+            ReservaEstoque.id == reserva_id,
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -34,20 +34,20 @@ class InventoryReservationRepository:
         offset: int,
         limit: int,
         produto_id: int | None = None,
-    ) -> tuple[list[InventoryReservation], int]:
-        base_stmt = select(InventoryReservation).where(
-            InventoryReservation.tenant_id == tenant_id,
+    ) -> tuple[list[ReservaEstoque], int]:
+        base_stmt = select(ReservaEstoque).where(
+            ReservaEstoque.tenant_id == tenant_id,
         )
         if produto_id is not None:
-            base_stmt = base_stmt.where(InventoryReservation.produto_id == produto_id)
+            base_stmt = base_stmt.where(ReservaEstoque.produto_id == produto_id)
 
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
         total_result = await self.session.execute(count_stmt)
         total = total_result.scalar_one()
 
         base_stmt = base_stmt.order_by(
-            InventoryReservation.reserved_at.desc(),
-            InventoryReservation.id.desc(),
+            ReservaEstoque.reserved_at.desc(),
+            ReservaEstoque.id.desc(),
         )
         base_stmt = base_stmt.offset(offset).limit(limit)
         result = await self.session.execute(base_stmt)
@@ -59,15 +59,15 @@ class InventoryReservationRepository:
         self,
         tenant_id: int,
         reference: str,
-    ) -> list[InventoryReservation]:
+    ) -> list[ReservaEstoque]:
         stmt = (
-            select(InventoryReservation)
+            select(ReservaEstoque)
             .where(
-                InventoryReservation.tenant_id == tenant_id,
-                InventoryReservation.reference == reference,
-                InventoryReservation.status == ReservationStatus.ACTIVE,
+                ReservaEstoque.tenant_id == tenant_id,
+                ReservaEstoque.reference == reference,
+                ReservaEstoque.status == StatusReserva.ATIVA,
             )
-            .order_by(InventoryReservation.produto_id.asc())
+            .order_by(ReservaEstoque.produto_id.asc())
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
@@ -77,14 +77,14 @@ class InventoryReservationRepository:
         tenant_id: int,
         idempotency_key: str,
     ) -> bool:
-        stmt = select(InventoryReservation).where(
-            InventoryReservation.tenant_id == tenant_id,
-            InventoryReservation.idempotency_key == idempotency_key,
+        stmt = select(ReservaEstoque).where(
+            ReservaEstoque.tenant_id == tenant_id,
+            ReservaEstoque.idempotency_key == idempotency_key,
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none() is not None
 
-    async def update(self, reservation: InventoryReservation) -> InventoryReservation:
+    async def update(self, reserva: ReservaEstoque) -> ReservaEstoque:
         await self.session.flush()
-        await self.session.refresh(reservation)
-        return reservation
+        await self.session.refresh(reserva)
+        return reserva

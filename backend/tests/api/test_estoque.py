@@ -8,11 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, get_password_hash
 from app.db.models.categoria import Categoria
-from app.db.models.inventory import Inventory
-from app.db.models.inventory_movement import InventoryMovement, MovementType
-from app.db.models.inventory_reservation import InventoryReservation, ReservationStatus
+from app.db.models.estoque import Estoque
+from app.db.models.movimentacao_estoque import MovimentacaoEstoque, TipoMovimentacao
 from app.db.models.permission import Permission
 from app.db.models.produto import Produto
+from app.db.models.reserva_estoque import ReservaEstoque, StatusReserva
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
 from app.db.models.tenant import Tenant
@@ -134,91 +134,91 @@ async def _create_produto_in_db(
     return produto
 
 
-async def _create_inventory_in_db(
+async def _create_estoque_in_db(
     session: AsyncSession,
     tenant_id: int,
     produto_id: int,
     quantity: Decimal = Decimal("100.000"),
     reserved_quantity: Decimal = Decimal("0.000"),
-) -> Inventory:
-    inventory = Inventory(
+) -> Estoque:
+    estoque = Estoque(
         tenant_id=tenant_id,
         produto_id=produto_id,
         quantity=quantity,
         reserved_quantity=reserved_quantity,
     )
-    session.add(inventory)
+    session.add(estoque)
     await session.flush()
-    return inventory
+    return estoque
 
 
-async def _create_movement_in_db(
+async def _create_movimentacao_in_db(
     session: AsyncSession,
     tenant_id: int,
     produto_id: int,
-    movement_type: str = "IN",
+    tipo_movimentacao: str = "ENTRADA",
     quantity: Decimal = Decimal("10.000"),
     idempotency_key: str = "test-key",
-) -> InventoryMovement:
-    movement = InventoryMovement(
+) -> MovimentacaoEstoque:
+    movimentacao = MovimentacaoEstoque(
         tenant_id=tenant_id,
         produto_id=produto_id,
-        movement_type=MovementType(movement_type),
+        tipo_movimentacao=TipoMovimentacao(tipo_movimentacao),
         quantity=quantity,
         idempotency_key=idempotency_key,
     )
-    session.add(movement)
+    session.add(movimentacao)
     await session.flush()
-    return movement
+    return movimentacao
 
 
-async def _create_reservation_in_db(
+async def _create_reserva_in_db(
     session: AsyncSession,
     tenant_id: int,
     produto_id: int,
     quantity: Decimal = Decimal("5.000"),
-    status: ReservationStatus = ReservationStatus.ACTIVE,
-    idempotency_key: str = "test-reservation-key",
-) -> InventoryReservation:
-    reservation = InventoryReservation(
+    status: StatusReserva = StatusReserva.ATIVA,
+    idempotency_key: str = "test-reserva-key",
+) -> ReservaEstoque:
+    reserva = ReservaEstoque(
         tenant_id=tenant_id,
         produto_id=produto_id,
         quantity=quantity,
         status=status,
         idempotency_key=idempotency_key,
     )
-    session.add(reservation)
+    session.add(reserva)
     await session.flush()
-    return reservation
+    return reserva
 
 
 @pytest.fixture
-async def all_inventory_perms(
+async def all_estoque_perms(
     db_session: AsyncSession,
     test_tenant: Tenant,
 ) -> Role:
     return await _create_role_with_perms(
         db_session,
         test_tenant.id,
-        "inventory_admin",
+        "estoque_admin",
         [
-            "inventory.read",
-            "inventory.update",
+            "estoque.ler",
+            "estoque.atualizar",
         ],
     )
 
 
 @pytest.fixture
-async def read_only_inventory_perms(
+async def read_only_estoque_perms(
     db_session: AsyncSession,
     test_tenant: Tenant,
 ) -> Role:
     return await _create_role_with_perms(
         db_session,
         test_tenant.id,
-        "inventory_reader",
+        "estoque_reader",
         [
-            "inventory.read",
+            "estoque.ler",
         ],
     )
 
@@ -228,10 +228,10 @@ async def admin_user(
     db_session: AsyncSession,
     test_tenant: Tenant,
     test_user: User,
-    all_inventory_perms: Role,
+    all_estoque_perms: Role,
 ) -> User:
     await _assign_role_to_user(
-        db_session, test_tenant.id, test_user.id, all_inventory_perms.id
+        db_session, test_tenant.id, test_user.id, all_estoque_perms.id
     )
     await db_session.commit()
     return test_user
@@ -256,10 +256,10 @@ async def read_only_user(
     db_session: AsyncSession,
     test_tenant: Tenant,
     test_user: User,
-    read_only_inventory_perms: Role,
+    read_only_estoque_perms: Role,
 ) -> User:
     await _assign_role_to_user(
-        db_session, test_tenant.id, test_user.id, read_only_inventory_perms.id
+        db_session, test_tenant.id, test_user.id, read_only_estoque_perms.id
     )
     await db_session.commit()
     return test_user
@@ -283,7 +283,7 @@ async def read_only_headers(
 async def other_tenant(db_session: AsyncSession) -> Tenant:
     tenant = Tenant(
         name="Other Tenant",
-        slug="other-inventory-tenant",
+        slug="other-estoque-tenant",
         is_active=True,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
@@ -321,10 +321,10 @@ async def other_tenant_headers(
     role = await _create_role_with_perms(
         db_session,
         other_tenant.id,
-        "other_inventory_all",
+        "other_estoque_all",
         [
-            "inventory.read",
-            "inventory.update",
+            "estoque.ler",
+            "estoque.atualizar",
         ],
     )
     await _assign_role_to_user(
@@ -340,11 +340,11 @@ async def other_tenant_headers(
     return {"Authorization": f"Bearer {token}"}
 
 
-# --- Movement tests ---
+# --- MOVIMENTACAO ---
 
 
 @pytest.mark.asyncio
-async def test_create_in_movement(
+async def test_create_entrada_movimentacao(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -357,26 +357,26 @@ async def test_create_in_movement(
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "IN",
+            "tipo_movimentacao": "ENTRADA",
             "quantity": "50.000",
             "reference": "PO-001",
-            "idempotency_key": "in-movement-1",
+            "idempotency_key": "in-movimentacao-1",
         },
         headers=admin_headers,
     )
     assert response.status_code == 201
     data = response.json()
-    assert data["movement_type"] == "IN"
+    assert data["tipo_movimentacao"] == "ENTRADA"
     assert data["quantity"] == "50.000"
     assert data["produto_id"] == produto.id
     assert data["reference"] == "PO-001"
 
 
 @pytest.mark.asyncio
-async def test_create_out_movement(
+async def test_create_saida_movimentacao(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -386,27 +386,27 @@ async def test_create_out_movement(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto B", "SKU-B", categoria.id
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "OUT",
+            "tipo_movimentacao": "SAIDA",
             "quantity": "10.000",
-            "idempotency_key": "out-movement-1",
+            "idempotency_key": "out-movimentacao-1",
         },
         headers=admin_headers,
     )
     assert response.status_code == 201
     data = response.json()
-    assert data["movement_type"] == "OUT"
+    assert data["tipo_movimentacao"] == "SAIDA"
     assert data["quantity"] == "10.000"
 
 
 @pytest.mark.asyncio
-async def test_adjustment_movement(
+async def test_ajuste_movimentacao(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -416,27 +416,27 @@ async def test_adjustment_movement(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto C", "SKU-C", categoria.id
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "ADJUSTMENT",
+            "tipo_movimentacao": "AJUSTE",
             "quantity": "75.000",
             "notes": "Stock count correction",
-            "idempotency_key": "adj-movement-1",
+            "idempotency_key": "adj-movimentacao-1",
         },
         headers=admin_headers,
     )
     assert response.status_code == 201
     data = response.json()
-    assert data["movement_type"] == "ADJUSTMENT"
+    assert data["tipo_movimentacao"] == "AJUSTE"
 
 
 @pytest.mark.asyncio
-async def test_movement_updates_balance(
+async def test_movimentacao_updates_saldo(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -446,16 +446,16 @@ async def test_movement_updates_balance(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto D", "SKU-D", categoria.id
     )
-    await _create_inventory_in_db(
+    await _create_estoque_in_db(
         db_session, test_tenant.id, produto.id, quantity=Decimal("50.000")
     )
     await db_session.commit()
 
     await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "IN",
+            "tipo_movimentacao": "ENTRADA",
             "quantity": "25.000",
             "idempotency_key": "in-25",
         },
@@ -463,7 +463,7 @@ async def test_movement_updates_balance(
     )
 
     response = await client.get(
-        f"/api/v1/inventory/{produto.id}",
+        f"/api/v1/estoque/{produto.id}",
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -472,7 +472,7 @@ async def test_movement_updates_balance(
 
 
 @pytest.mark.asyncio
-async def test_out_movement_insufficient_stock(
+async def test_saida_movimentacao_insufficient_stock(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -482,16 +482,16 @@ async def test_out_movement_insufficient_stock(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto E", "SKU-E", categoria.id
     )
-    await _create_inventory_in_db(
+    await _create_estoque_in_db(
         db_session, test_tenant.id, produto.id, quantity=Decimal("5.000")
     )
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "OUT",
+            "tipo_movimentacao": "SAIDA",
             "quantity": "10.000",
             "idempotency_key": "out-10",
         },
@@ -501,7 +501,7 @@ async def test_out_movement_insufficient_stock(
 
 
 @pytest.mark.asyncio
-async def test_out_movement_cannot_consume_reserved(
+async def test_saida_movimentacao_cannot_consume_reserved(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -511,7 +511,7 @@ async def test_out_movement_cannot_consume_reserved(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto F", "SKU-F", categoria.id
     )
-    await _create_inventory_in_db(
+    await _create_estoque_in_db(
         db_session,
         test_tenant.id,
         produto.id,
@@ -521,10 +521,10 @@ async def test_out_movement_cannot_consume_reserved(
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "OUT",
+            "tipo_movimentacao": "SAIDA",
             "quantity": "8.000",
             "idempotency_key": "out-8",
         },
@@ -534,7 +534,7 @@ async def test_out_movement_cannot_consume_reserved(
 
 
 @pytest.mark.asyncio
-async def test_adjustment_leaves_reserved_exceeds_quantity(
+async def test_ajuste_leaves_reserved_exceeds_quantity(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -544,7 +544,7 @@ async def test_adjustment_leaves_reserved_exceeds_quantity(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto G", "SKU-G", categoria.id
     )
-    await _create_inventory_in_db(
+    await _create_estoque_in_db(
         db_session,
         test_tenant.id,
         produto.id,
@@ -554,10 +554,10 @@ async def test_adjustment_leaves_reserved_exceeds_quantity(
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "ADJUSTMENT",
+            "tipo_movimentacao": "AJUSTE",
             "quantity": "3.000",
             "idempotency_key": "adj-3",
         },
@@ -567,7 +567,7 @@ async def test_adjustment_leaves_reserved_exceeds_quantity(
 
 
 @pytest.mark.asyncio
-async def test_idempotent_movement_returns_same(
+async def test_idempotent_movimentacao_returns_same(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -580,10 +580,10 @@ async def test_idempotent_movement_returns_same(
     await db_session.commit()
 
     response1 = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "IN",
+            "tipo_movimentacao": "ENTRADA",
             "quantity": "10.000",
             "idempotency_key": "idempotent-1",
         },
@@ -592,10 +592,10 @@ async def test_idempotent_movement_returns_same(
     assert response1.status_code == 201
 
     response2 = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "IN",
+            "tipo_movimentacao": "ENTRADA",
             "quantity": "20.000",
             "idempotency_key": "idempotent-1",
         },
@@ -605,7 +605,7 @@ async def test_idempotent_movement_returns_same(
 
 
 @pytest.mark.asyncio
-async def test_list_movements(
+async def test_list_movimentacoes(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -615,16 +615,16 @@ async def test_list_movements(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto I", "SKU-I", categoria.id
     )
-    await _create_movement_in_db(
-        db_session, test_tenant.id, produto.id, "IN", Decimal("10.000"), "key-1"
+    await _create_movimentacao_in_db(
+        db_session, test_tenant.id, produto.id, "ENTRADA", Decimal("10.000"), "key-1"
     )
-    await _create_movement_in_db(
-        db_session, test_tenant.id, produto.id, "OUT", Decimal("5.000"), "key-2"
+    await _create_movimentacao_in_db(
+        db_session, test_tenant.id, produto.id, "SAIDA", Decimal("5.000"), "key-2"
     )
     await db_session.commit()
 
     response = await client.get(
-        "/api/v1/inventory/movements/list",
+        "/api/v1/estoque/movimentacoes/list",
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -633,11 +633,11 @@ async def test_list_movements(
     assert len(data["items"]) == 2
 
 
-# --- Reservation tests ---
+# --- RESERVA ---
 
 
 @pytest.mark.asyncio
-async def test_create_reservation(
+async def test_create_reserva(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -647,11 +647,11 @@ async def test_create_reservation(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto J", "SKU-J", categoria.id
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/reservations",
+        "/api/v1/estoque/reservas",
         json={
             "produto_id": produto.id,
             "quantity": "5.000",
@@ -662,13 +662,13 @@ async def test_create_reservation(
     )
     assert response.status_code == 201
     data = response.json()
-    assert data["status"] == "ACTIVE"
+    assert data["status"] == "ATIVA"
     assert data["quantity"] == "5.000"
     assert data["produto_id"] == produto.id
 
 
 @pytest.mark.asyncio
-async def test_reservation_updates_reserved_quantity(
+async def test_reserva_updates_reserved_quantity(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -678,13 +678,13 @@ async def test_reservation_updates_reserved_quantity(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto K", "SKU-K", categoria.id
     )
-    await _create_inventory_in_db(
+    await _create_estoque_in_db(
         db_session, test_tenant.id, produto.id, quantity=Decimal("20.000")
     )
     await db_session.commit()
 
     await client.post(
-        "/api/v1/inventory/reservations",
+        "/api/v1/estoque/reservas",
         json={
             "produto_id": produto.id,
             "quantity": "7.000",
@@ -694,7 +694,7 @@ async def test_reservation_updates_reserved_quantity(
     )
 
     response = await client.get(
-        f"/api/v1/inventory/{produto.id}",
+        f"/api/v1/estoque/{produto.id}",
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -704,7 +704,7 @@ async def test_reservation_updates_reserved_quantity(
 
 
 @pytest.mark.asyncio
-async def test_reservation_insufficient_stock(
+async def test_reserva_insufficient_stock(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -714,7 +714,7 @@ async def test_reservation_insufficient_stock(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto L", "SKU-L", categoria.id
     )
-    await _create_inventory_in_db(
+    await _create_estoque_in_db(
         db_session,
         test_tenant.id,
         produto.id,
@@ -724,7 +724,7 @@ async def test_reservation_insufficient_stock(
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/reservations",
+        "/api/v1/estoque/reservas",
         json={
             "produto_id": produto.id,
             "quantity": "5.000",
@@ -736,7 +736,7 @@ async def test_reservation_insufficient_stock(
 
 
 @pytest.mark.asyncio
-async def test_reservation_inactive_produto(
+async def test_reserva_inactive_produto(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -746,11 +746,11 @@ async def test_reservation_inactive_produto(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto M", "SKU-M", categoria.id, is_active=False
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/reservations",
+        "/api/v1/estoque/reservas",
         json={
             "produto_id": produto.id,
             "quantity": "2.000",
@@ -762,7 +762,7 @@ async def test_reservation_inactive_produto(
 
 
 @pytest.mark.asyncio
-async def test_confirm_reservation(
+async def test_confirm_reserva(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -772,33 +772,33 @@ async def test_confirm_reservation(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto N", "SKU-N", categoria.id
     )
-    inventory = await _create_inventory_in_db(
+    estoque = await _create_estoque_in_db(
         db_session, test_tenant.id, produto.id, quantity=Decimal("20.000")
     )
-    reservation = await _create_reservation_in_db(
+    reserva = await _create_reserva_in_db(
         db_session, test_tenant.id, produto.id, Decimal("5.000")
     )
-    inventory.reserved_quantity = Decimal("5.000")
+    estoque.reserved_quantity = Decimal("5.000")
     await db_session.commit()
 
     response = await client.post(
-        f"/api/v1/inventory/reservations/{reservation.id}/confirm",
+        f"/api/v1/estoque/reservas/{reserva.id}/confirmar",
         headers=admin_headers,
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "CONFIRMED"
+    assert data["status"] == "CONFIRMADA"
     assert data["confirmed_at"] is not None
 
     response2 = await client.get(
-        f"/api/v1/inventory/{produto.id}",
+        f"/api/v1/estoque/{produto.id}",
         headers=admin_headers,
     )
     assert response2.json()["reserved_quantity"] == "0.000"
 
 
 @pytest.mark.asyncio
-async def test_release_reservation(
+async def test_release_reserva(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -808,27 +808,27 @@ async def test_release_reservation(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto O", "SKU-O", categoria.id
     )
-    inventory = await _create_inventory_in_db(
+    estoque = await _create_estoque_in_db(
         db_session, test_tenant.id, produto.id, quantity=Decimal("20.000")
     )
-    reservation = await _create_reservation_in_db(
+    reserva = await _create_reserva_in_db(
         db_session, test_tenant.id, produto.id, Decimal("5.000")
     )
-    inventory.reserved_quantity = Decimal("5.000")
+    estoque.reserved_quantity = Decimal("5.000")
     await db_session.commit()
 
     response = await client.post(
-        f"/api/v1/inventory/reservations/{reservation.id}/release",
+        f"/api/v1/estoque/reservas/{reserva.id}/liberar",
         headers=admin_headers,
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "RELEASED"
+    assert data["status"] == "LIBERADA"
     assert data["released_at"] is not None
 
 
 @pytest.mark.asyncio
-async def test_cancel_reservation(
+async def test_cancel_reserva(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -838,27 +838,27 @@ async def test_cancel_reservation(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto P", "SKU-P", categoria.id
     )
-    inventory = await _create_inventory_in_db(
+    estoque = await _create_estoque_in_db(
         db_session, test_tenant.id, produto.id, quantity=Decimal("20.000")
     )
-    reservation = await _create_reservation_in_db(
+    reserva = await _create_reserva_in_db(
         db_session, test_tenant.id, produto.id, Decimal("5.000")
     )
-    inventory.reserved_quantity = Decimal("5.000")
+    estoque.reserved_quantity = Decimal("5.000")
     await db_session.commit()
 
     response = await client.post(
-        f"/api/v1/inventory/reservations/{reservation.id}/cancel",
+        f"/api/v1/estoque/reservas/{reserva.id}/cancelar",
         headers=admin_headers,
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "CANCELLED"
+    assert data["status"] == "CANCELADA"
     assert data["released_at"] is not None
 
 
 @pytest.mark.asyncio
-async def test_confirm_already_confirmed_reservation(
+async def test_confirm_already_confirmed_reserva(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -868,24 +868,24 @@ async def test_confirm_already_confirmed_reservation(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto Q", "SKU-Q", categoria.id
     )
-    reservation = await _create_reservation_in_db(
+    reserva = await _create_reserva_in_db(
         db_session,
         test_tenant.id,
         produto.id,
         Decimal("5.000"),
-        ReservationStatus.CONFIRMED,
+        StatusReserva.CONFIRMADA,
     )
     await db_session.commit()
 
     response = await client.post(
-        f"/api/v1/inventory/reservations/{reservation.id}/confirm",
+        f"/api/v1/estoque/reservas/{reserva.id}/confirmar",
         headers=admin_headers,
     )
     assert response.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_list_reservations(
+async def test_list_reservas(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -895,16 +895,16 @@ async def test_list_reservations(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Produto R", "SKU-R", categoria.id
     )
-    await _create_reservation_in_db(
+    await _create_reserva_in_db(
         db_session, test_tenant.id, produto.id, Decimal("5.000"), idempotency_key="r1"
     )
-    await _create_reservation_in_db(
+    await _create_reserva_in_db(
         db_session, test_tenant.id, produto.id, Decimal("3.000"), idempotency_key="r2"
     )
     await db_session.commit()
 
     response = await client.get(
-        "/api/v1/inventory/reservations/list",
+        "/api/v1/estoque/reservas/list",
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -913,11 +913,11 @@ async def test_list_reservations(
     assert len(data["items"]) == 2
 
 
-# --- Balance tests ---
+# --- SALDO ---
 
 
 @pytest.mark.asyncio
-async def test_list_inventory_balances(
+async def test_list_estoque_saldos(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -930,12 +930,12 @@ async def test_list_inventory_balances(
     p2 = await _create_produto_in_db(
         db_session, test_tenant.id, "Prod 2", "SKU-2", categoria.id
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, p1.id)
-    await _create_inventory_in_db(db_session, test_tenant.id, p2.id)
+    await _create_estoque_in_db(db_session, test_tenant.id, p1.id)
+    await _create_estoque_in_db(db_session, test_tenant.id, p2.id)
     await db_session.commit()
 
     response = await client.get(
-        "/api/v1/inventory",
+        "/api/v1/estoque",
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -944,7 +944,7 @@ async def test_list_inventory_balances(
 
 
 @pytest.mark.asyncio
-async def test_get_single_balance(
+async def test_get_single_saldo(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -954,13 +954,13 @@ async def test_get_single_balance(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Prod Single", "SKU-S", categoria.id
     )
-    await _create_inventory_in_db(
+    await _create_estoque_in_db(
         db_session, test_tenant.id, produto.id, quantity=Decimal("42.000")
     )
     await db_session.commit()
 
     response = await client.get(
-        f"/api/v1/inventory/{produto.id}",
+        f"/api/v1/estoque/{produto.id}",
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -970,22 +970,22 @@ async def test_get_single_balance(
 
 
 @pytest.mark.asyncio
-async def test_get_nonexistent_balance(
+async def test_get_nonexistent_saldo(
     client: AsyncClient,
     admin_headers: dict[str, str],
 ) -> None:
     response = await client.get(
-        "/api/v1/inventory/99999",
+        "/api/v1/estoque/99999",
         headers=admin_headers,
     )
     assert response.status_code == 404
 
 
-# --- Multi-tenancy tests ---
+# --- MULTI-TENANCY ---
 
 
 @pytest.mark.asyncio
-async def test_cannot_access_other_tenant_inventory(
+async def test_cannot_access_other_tenant_estoque(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -997,17 +997,17 @@ async def test_cannot_access_other_tenant_inventory(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "TenantProd", "SKU-TP", categoria.id
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.get(
-        f"/api/v1/inventory/{produto.id}",
+        f"/api/v1/estoque/{produto.id}",
         headers=other_tenant_headers,
     )
     assert response.status_code == 404
 
 
-# --- RBAC tests ---
+# --- RBAC ---
 
 
 @pytest.mark.asyncio
@@ -1018,20 +1018,20 @@ async def test_read_only_user_can_list(
     read_only_headers: dict[str, str],
 ) -> None:
     response = await client.get(
-        "/api/v1/inventory",
+        "/api/v1/estoque",
         headers=read_only_headers,
     )
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
-async def test_read_only_user_cannot_create_movement(
+async def test_read_only_user_cannot_create_movimentacao(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
 ) -> None:
     ro_role = await _create_role_with_perms(
-        db_session, test_tenant.id, "inv_readonly", ["inventory.read"]
+        db_session, test_tenant.id, "inv_readonly", ["estoque.ler"]
     )
     ro_user = User(
         tenant_id=test_tenant.id,
@@ -1059,12 +1059,12 @@ async def test_read_only_user_cannot_create_movement(
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "IN",
+            "tipo_movimentacao": "ENTRADA",
             "quantity": "10.000",
-            "idempotency_key": "ro-movement",
+            "idempotency_key": "ro-movimentacao",
         },
         headers=ro_headers,
     )
@@ -1075,12 +1075,12 @@ async def test_read_only_user_cannot_create_movement(
 async def test_unauthenticated_cannot_access(
     client: AsyncClient,
 ) -> None:
-    response = await client.get("/api/v1/inventory")
+    response = await client.get("/api/v1/estoque")
     assert response.status_code in (401, 403)
 
 
 @pytest.mark.asyncio
-async def test_movement_on_inactive_produto_allowed(
+async def test_movimentacao_on_inactive_produto_allowed(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1095,14 +1095,14 @@ async def test_movement_on_inactive_produto_allowed(
         categoria.id,
         is_active=False,
     )
-    await _create_inventory_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "IN",
+            "tipo_movimentacao": "ENTRADA",
             "quantity": "5.000",
             "idempotency_key": "inactive-in",
         },
@@ -1112,7 +1112,7 @@ async def test_movement_on_inactive_produto_allowed(
 
 
 @pytest.mark.asyncio
-async def test_adjustment_must_be_positive(
+async def test_ajuste_must_be_positive(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1125,10 +1125,10 @@ async def test_adjustment_must_be_positive(
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "ADJUSTMENT",
+            "tipo_movimentacao": "AJUSTE",
             "quantity": "0.000",
             "idempotency_key": "adj-zero",
         },
@@ -1138,7 +1138,7 @@ async def test_adjustment_must_be_positive(
 
 
 @pytest.mark.asyncio
-async def test_invalid_movement_type(
+async def test_invalid_tipo_movimentacao(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1151,10 +1151,10 @@ async def test_invalid_movement_type(
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "INVALID",
+            "tipo_movimentacao": "INVALID",
             "quantity": "5.000",
             "idempotency_key": "bad-type",
         },
@@ -1175,18 +1175,18 @@ async def test_pagination_works(
         db_session, test_tenant.id, "PagProd", "SKU-PAG", categoria.id
     )
     for i in range(5):
-        await _create_movement_in_db(
+        await _create_movimentacao_in_db(
             db_session,
             test_tenant.id,
             produto.id,
-            "IN",
+            "ENTRADA",
             Decimal("1.000"),
             f"pag-key-{i}",
         )
     await db_session.commit()
 
     response = await client.get(
-        "/api/v1/inventory/movements/list?page=1&page_size=2",
+        "/api/v1/estoque/movimentacoes/list?page=1&page_size=2",
         headers=admin_headers,
     )
     assert response.status_code == 200
@@ -1197,11 +1197,11 @@ async def test_pagination_works(
     assert data["page_size"] == 2
 
 
-# --- Critical audit tests ---
+# --- AUDITORIA CRITICA ---
 
 
 @pytest.mark.asyncio
-async def test_idempotent_reservation_returns_same(
+async def test_idempotent_reserva_returns_same(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1211,13 +1211,13 @@ async def test_idempotent_reservation_returns_same(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "IdemRes", "SKU-IR", categoria.id
     )
-    await _create_inventory_in_db(
+    await _create_estoque_in_db(
         db_session, test_tenant.id, produto.id, quantity=Decimal("50.000")
     )
     await db_session.commit()
 
     response1 = await client.post(
-        "/api/v1/inventory/reservations",
+        "/api/v1/estoque/reservas",
         json={
             "produto_id": produto.id,
             "quantity": "10.000",
@@ -1226,10 +1226,10 @@ async def test_idempotent_reservation_returns_same(
         headers=admin_headers,
     )
     assert response1.status_code == 201
-    assert response1.json()["status"] == "ACTIVE"
+    assert response1.json()["status"] == "ATIVA"
 
     response2 = await client.post(
-        "/api/v1/inventory/reservations",
+        "/api/v1/estoque/reservas",
         json={
             "produto_id": produto.id,
             "quantity": "20.000",
@@ -1241,7 +1241,7 @@ async def test_idempotent_reservation_returns_same(
 
 
 @pytest.mark.asyncio
-async def test_released_reservation_cannot_be_confirmed(
+async def test_released_reserva_cannot_be_confirmed(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1251,24 +1251,24 @@ async def test_released_reservation_cannot_be_confirmed(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "RelCf", "SKU-RC", categoria.id
     )
-    reservation = await _create_reservation_in_db(
+    reserva = await _create_reserva_in_db(
         db_session,
         test_tenant.id,
         produto.id,
         Decimal("5.000"),
-        ReservationStatus.RELEASED,
+        StatusReserva.LIBERADA,
     )
     await db_session.commit()
 
     response = await client.post(
-        f"/api/v1/inventory/reservations/{reservation.id}/confirm",
+        f"/api/v1/estoque/reservas/{reserva.id}/confirmar",
         headers=admin_headers,
     )
     assert response.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_cancelled_reservation_cannot_be_confirmed(
+async def test_cancelled_reserva_cannot_be_confirmed(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1278,24 +1278,24 @@ async def test_cancelled_reservation_cannot_be_confirmed(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "CanCf", "SKU-CC", categoria.id
     )
-    reservation = await _create_reservation_in_db(
+    reserva = await _create_reserva_in_db(
         db_session,
         test_tenant.id,
         produto.id,
         Decimal("5.000"),
-        ReservationStatus.CANCELLED,
+        StatusReserva.CANCELADA,
     )
     await db_session.commit()
 
     response = await client.post(
-        f"/api/v1/inventory/reservations/{reservation.id}/confirm",
+        f"/api/v1/estoque/reservas/{reserva.id}/confirmar",
         headers=admin_headers,
     )
     assert response.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_confirmed_reservation_cannot_be_released(
+async def test_confirmed_reserva_cannot_be_released(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1305,24 +1305,24 @@ async def test_confirmed_reservation_cannot_be_released(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "CfRel", "SKU-CR", categoria.id
     )
-    reservation = await _create_reservation_in_db(
+    reserva = await _create_reserva_in_db(
         db_session,
         test_tenant.id,
         produto.id,
         Decimal("5.000"),
-        ReservationStatus.CONFIRMED,
+        StatusReserva.CONFIRMADA,
     )
     await db_session.commit()
 
     response = await client.post(
-        f"/api/v1/inventory/reservations/{reservation.id}/release",
+        f"/api/v1/estoque/reservas/{reserva.id}/liberar",
         headers=admin_headers,
     )
     assert response.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_out_at_boundary_exactly_available(
+async def test_saida_at_boundary_exactly_available(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1332,7 +1332,7 @@ async def test_out_at_boundary_exactly_available(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "BoundOut", "SKU-BO", categoria.id
     )
-    await _create_inventory_in_db(
+    await _create_estoque_in_db(
         db_session,
         test_tenant.id,
         produto.id,
@@ -1342,10 +1342,10 @@ async def test_out_at_boundary_exactly_available(
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "OUT",
+            "tipo_movimentacao": "SAIDA",
             "quantity": "70.000",
             "idempotency_key": "out-boundary-ok",
         },
@@ -1355,7 +1355,7 @@ async def test_out_at_boundary_exactly_available(
 
 
 @pytest.mark.asyncio
-async def test_out_one_over_boundary_fails(
+async def test_saida_one_over_boundary_fails(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1365,7 +1365,7 @@ async def test_out_one_over_boundary_fails(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "BoundOutFail", "SKU-BOF", categoria.id
     )
-    await _create_inventory_in_db(
+    await _create_estoque_in_db(
         db_session,
         test_tenant.id,
         produto.id,
@@ -1375,10 +1375,10 @@ async def test_out_one_over_boundary_fails(
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "OUT",
+            "tipo_movimentacao": "SAIDA",
             "quantity": "71.000",
             "idempotency_key": "out-boundary-fail",
         },
@@ -1388,7 +1388,7 @@ async def test_out_one_over_boundary_fails(
 
 
 @pytest.mark.asyncio
-async def test_cross_tenant_cannot_create_movement_on_other_tenant_produto(
+async def test_cross_tenant_cannot_create_movimentacao_on_other_tenant_produto(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1403,12 +1403,12 @@ async def test_cross_tenant_cannot_create_movement_on_other_tenant_produto(
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/movements",
+        "/api/v1/estoque/movimentacoes",
         json={
             "produto_id": produto.id,
-            "movement_type": "IN",
+            "tipo_movimentacao": "ENTRADA",
             "quantity": "10.000",
-            "idempotency_key": "cross-tenant-movement",
+            "idempotency_key": "cross-tenant-movimentacao",
         },
         headers=other_tenant_headers,
     )
@@ -1416,7 +1416,7 @@ async def test_cross_tenant_cannot_create_movement_on_other_tenant_produto(
 
 
 @pytest.mark.asyncio
-async def test_cross_tenant_cannot_create_reservation_on_other_tenant_produto(
+async def test_cross_tenant_cannot_create_reserva_on_other_tenant_produto(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1431,11 +1431,11 @@ async def test_cross_tenant_cannot_create_reservation_on_other_tenant_produto(
     await db_session.commit()
 
     response = await client.post(
-        "/api/v1/inventory/reservations",
+        "/api/v1/estoque/reservas",
         json={
             "produto_id": produto.id,
             "quantity": "5.000",
-            "idempotency_key": "cross-tenant-reservation",
+            "idempotency_key": "cross-tenant-reserva",
         },
         headers=other_tenant_headers,
     )
