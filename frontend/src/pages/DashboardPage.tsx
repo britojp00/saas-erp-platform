@@ -1,12 +1,12 @@
 import RecentActivity from '../components/dashboard/RecentActivity'
-import RecentOrders from '../components/dashboard/RecentOrders'
+import PedidosRecentes from '../components/dashboard/PedidosRecentes'
 import SummaryPanel from '../components/dashboard/SummaryPanel'
 import { useAuth } from '../contexts/AuthContext'
 import { useDashboardData } from '../hooks/useDashboardData'
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  const { summary, recentOrders, recentActivity, retry } = useDashboardData()
+  const { summary, pedidosRecentes, recentActivity, retry } = useDashboardData()
 
   const contextLabel =
     user === null
@@ -27,7 +27,10 @@ export default function DashboardPage() {
       <SummaryPanel state={summary} onRetry={() => retry('summary')} />
 
       <div className="panel-grid">
-        <RecentOrders state={recentOrders} onRetry={() => retry('orders')} />
+        <PedidosRecentes
+          state={pedidosRecentes}
+          onRetry={() => retry('pedidos')}
+        />
         <RecentActivity
           state={recentActivity}
           onRetry={() => retry('activity')}

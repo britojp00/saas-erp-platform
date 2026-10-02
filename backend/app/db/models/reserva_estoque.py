@@ -48,8 +48,8 @@ class ReservaEstoque(
             ondelete="RESTRICT",
         ),
         ForeignKeyConstraint(
-            ["order_item_id"],
-            ["order_items.id"],
+            ["pedido_item_id"],
+            ["pedido_itens.id"],
             ondelete="SET NULL",
         ),
     )
@@ -86,7 +86,7 @@ class ReservaEstoque(
         nullable=False,
     )
 
-    order_item_id: Mapped[int | None] = mapped_column(
+    pedido_item_id: Mapped[int | None] = mapped_column(
         BigInteger,
         nullable=True,
         index=True,

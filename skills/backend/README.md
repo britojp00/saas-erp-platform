@@ -151,8 +151,8 @@ Produto
 Estoque
 MovimentacaoEstoque
 ReservaEstoque
-Order
-OrderItem
+Pedido
+PedidoItem
 AuditLog
 
 Regras importantes:
@@ -226,7 +226,7 @@ cliente.ler, cliente.criar, cliente.atualizar, cliente.excluir
 categoria.ler, categoria.criar, categoria.atualizar, categoria.excluir
 produto.ler, produto.criar, produto.atualizar, produto.excluir
 estoque.ler, estoque.atualizar
-order.read, order.create, order.update, order.cancel
+pedido.ler, pedido.criar, pedido.atualizar, pedido.cancelar
 
 As verificações de autorização devem ocorrer em local consistente
 da aplicação e não serem duplicadas arbitrariamente em cada endpoint.
@@ -417,7 +417,7 @@ clientes (api)
 categorias (api)
 produtos (api)
 estoque (api)
-orders (api)
+pedidos (api)
 
 Os testes devem cobrir principalmente:
 

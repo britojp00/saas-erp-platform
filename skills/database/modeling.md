@@ -48,8 +48,8 @@ permissions
 clientes
 produtos
 categorias
-orders
-order_items
+pedidos
+pedido_itens
 estoque
 audit_logs
 
@@ -122,7 +122,7 @@ cliente_id
 produto_id
 tenant_id
 user_id
-order_id
+pedido_id
 
 Uma foreign key deve apontar para uma primary key ou outra
 chave única apropriada.
@@ -141,7 +141,7 @@ Exemplo:
 
 clientes
 produtos
-orders
+pedidos
 estoque
 
 Estrutura conceitual:
@@ -312,7 +312,7 @@ o campo deve possuir valores claramente definidos.
 
 Exemplo:
 
-orders.status
+pedidos.status
 
 com valores previamente documentados.
 
@@ -428,15 +428,15 @@ Relacionamentos devem ser representados explicitamente.
 
 Exemplo:
 
-orders
+pedidos
     |
-    +---- order_items
+    +---- pedido_itens
 
 e:
 
 produtos
     |
-    +---- order_items
+    +---- pedido_itens
 
 Um relacionamento deve possuir foreign keys e constraints
 apropriadas.
@@ -447,13 +447,13 @@ Exemplo:
 
 Cliente
    |
-   +---- Orders
-   +---- Orders
-   +---- Orders
+   +---- Pedidos
+   +---- Pedidos
+   +---- Pedidos
 
 No banco:
 
-orders.cliente_id
+pedidos.cliente_id
 
 referencia:
 
@@ -793,7 +793,7 @@ updated_at
 deleted_at
 
 
-orders
+pedidos
 ------
 id
 tenant_id
@@ -812,11 +812,11 @@ tenants
    |
    +---- produtos
    |
-   +---- orders
+   +---- pedidos
 
 E:
 
-orders.cliente_id
+pedidos.cliente_id
         |
         v
 clientes.id

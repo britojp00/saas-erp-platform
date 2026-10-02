@@ -162,7 +162,7 @@ Tenant
    +---- Users
    +---- Clientes
    +---- Produtos
-   +---- Orders
+   +---- Pedidos
    +---- Estoque
 
 Entidades de negócio que pertencem a um tenant devem seguir
@@ -253,9 +253,9 @@ Exemplo:
 
 Criar pedido
     |
-    +---- criar Order
+    +---- criar Pedido
     |
-    +---- criar OrderItem
+    +---- criar PedidoItem
     |
     +---- atualizar Estoque
 

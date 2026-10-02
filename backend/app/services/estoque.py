@@ -203,7 +203,7 @@ class EstoqueService:
             reference=data.reference,
             notes=data.notes,
             idempotency_key=data.idempotency_key,
-            order_item_id=data.order_item_id,
+            pedido_item_id=data.pedido_item_id,
         )
 
         result = await self.reserva_repo.create(reserva)

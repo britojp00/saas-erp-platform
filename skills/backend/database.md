@@ -131,7 +131,7 @@ models/
 ├── produto.py
 ├── categoria.py
 ├── estoque.py
-├── order.py
+├── pedido.py
 └── audit_log.py
 
 Um model deve representar uma entidade persistida.
@@ -151,7 +151,7 @@ Exemplo:
 
 clientes
 produtos
-order_items
+pedido_itens
 audit_logs
 
 Colunas:
@@ -528,11 +528,11 @@ O service coordena a operação.
 
 Exemplo:
 
-OrderService
+PedidoService
    ↓
 verifica estoque
    ↓
-OrderRepository
+PedidoRepository
    ↓
 EstoqueRepository
    ↓
@@ -595,7 +595,7 @@ flush pode ser utilizado quando for necessário obter valores gerados pelo banco
 
 Exemplo conceitual:
 
-session.add(order)
+session.add(pedido)
 await session.flush()
 
 Não utilizar flush indiscriminadamente.

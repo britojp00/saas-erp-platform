@@ -11,7 +11,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/clientes', label: 'Clientes' },
   { to: '/produtos', label: 'Produtos' },
   { to: '/estoque', label: 'Estoque' },
-  { to: '/orders', label: 'Orders' },
+  { to: '/pedidos', label: 'Pedidos' },
 ]
 
 interface AppSidebarProps {

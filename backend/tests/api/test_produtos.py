@@ -11,8 +11,8 @@ from app.core.security import create_access_token, get_password_hash
 from app.db.models.categoria import Categoria
 from app.db.models.cliente import Cliente
 from app.db.models.estoque import Estoque
-from app.db.models.order import Order
-from app.db.models.order_item import OrderItem
+from app.db.models.pedido import Pedido
+from app.db.models.pedido_item import PedidoItem
 from app.db.models.permission import Permission
 from app.db.models.produto import Produto
 from app.db.models.role import Role
@@ -154,11 +154,11 @@ async def _create_estoque_in_db(
     return estoque
 
 
-async def _create_order_with_item(
+async def _create_pedido_with_item(
     session: AsyncSession,
     tenant_id: int,
     produto_id: int,
-) -> tuple[Order, OrderItem]:
+) -> tuple[Pedido, PedidoItem]:
     cliente = Cliente(
         tenant_id=tenant_id,
         name="Test Cliente",
@@ -166,27 +166,27 @@ async def _create_order_with_item(
     session.add(cliente)
     await session.flush()
 
-    order = Order(
+    pedido = Pedido(
         tenant_id=tenant_id,
-        order_number=int(time.time() * 1000),
+        numero_pedido=int(time.time() * 1000),
         cliente_id=cliente.id,
-        status="DRAFT",
+        status="RASCUNHO",
         total_amount=Decimal("100.00"),
     )
-    session.add(order)
+    session.add(pedido)
     await session.flush()
 
-    order_item = OrderItem(
+    pedido_item = PedidoItem(
         tenant_id=tenant_id,
-        order_id=order.id,
+        pedido_id=pedido.id,
         produto_id=produto_id,
         quantity=Decimal("2.000"),
         unit_price=Decimal("50.00"),
         total_price=Decimal("100.00"),
     )
-    session.add(order_item)
+    session.add(pedido_item)
     await session.flush()
-    return order, order_item
+    return pedido, pedido_item
 
 
 @pytest.fixture
@@ -1359,7 +1359,7 @@ async def test_delete_produto_with_estoque_blocked(
 
 
 @pytest.mark.asyncio
-async def test_delete_produto_with_order_items_blocked(
+async def test_delete_produto_with_pedido_itens_blocked(
     client: AsyncClient,
     db_session: AsyncSession,
     test_tenant: Tenant,
@@ -1368,7 +1368,7 @@ async def test_delete_produto_with_order_items_blocked(
     produto = await _create_produto_in_db(
         db_session, test_tenant.id, "Laptop", "SKU-DORD"
     )
-    await _create_order_with_item(db_session, test_tenant.id, produto.id)
+    await _create_pedido_with_item(db_session, test_tenant.id, produto.id)
     await db_session.commit()
 
     response = await client.delete(

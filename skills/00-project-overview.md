@@ -186,8 +186,8 @@ Clientes
 Produtos
 Categorias
 Estoque
-Orders
-Order Items
+Pedidos
+Itens do pedido
 Audit Logs
 
 Os módulos podem ser expandidos conforme a evolução do projeto.
@@ -286,16 +286,16 @@ POST   /api/v1/estoque/reservas/{id}/confirmar
 POST   /api/v1/estoque/reservas/{id}/liberar
 POST   /api/v1/estoque/reservas/{id}/cancelar
 
-GET    /api/v1/orders
-POST   /api/v1/orders
-GET    /api/v1/orders/{id}
-PATCH  /api/v1/orders/{id}
-POST   /api/v1/orders/{id}/items
-PATCH  /api/v1/orders/{id}/items/{item_id}
-DELETE /api/v1/orders/{id}/items/{item_id}
-POST   /api/v1/orders/{id}/confirm
-POST   /api/v1/orders/{id}/cancel
-POST   /api/v1/orders/{id}/complete
+GET    /api/v1/pedidos
+POST   /api/v1/pedidos
+GET    /api/v1/pedidos/{id}
+PATCH  /api/v1/pedidos/{id}
+POST   /api/v1/pedidos/{id}/itens
+PATCH  /api/v1/pedidos/{id}/itens/{item_id}
+DELETE /api/v1/pedidos/{id}/itens/{item_id}
+POST   /api/v1/pedidos/{id}/confirmar
+POST   /api/v1/pedidos/{id}/cancelar
+POST   /api/v1/pedidos/{id}/concluir
 
 GET    /api/v1/audit-logs
 Integração futura
@@ -348,7 +348,7 @@ Clientes CRUD (5 endpoints);
 Categorias CRUD (5 endpoints);
 Produtos CRUD (5 endpoints);
 Estoque (9 endpoints: movimentacoes, reservas, confirmar, liberar, cancelar);
-Orders (10 endpoints: CRUD, items, confirm, cancel, complete);
+Pedidos (10 endpoints: CRUD, itens, confirmar, cancelar, concluir);
 Audit Logs (1 endpoint: list);
 Seed de desenvolvimento;
 269 testes passando;

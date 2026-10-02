@@ -39,7 +39,7 @@ Exemplos:
 
 /api/v1/clientes
 /api/v1/produtos
-/api/v1/orders
+/api/v1/pedidos
 
 Novas alterações incompatíveis devem utilizar uma nova versão quando necessário.
 
@@ -59,7 +59,7 @@ app/
         ├── clientes.py
         ├── produtos.py
         ├── estoque.py
-        ├── orders.py
+        ├── pedidos.py
         └── auth.py
 
 A organização deve acompanhar os recursos e casos de uso da aplicação.
@@ -74,7 +74,7 @@ Exemplo:
 /produtos
 /categorias
 /estoque
-/orders
+/pedidos
 
 Preferir substantivos no nome da rota.
 
@@ -109,7 +109,7 @@ POST
 Criação ou execução de operações que não sejam idempotentes por natureza.
 
 POST /clientes
-POST /orders
+POST /pedidos
 PATCH
 
 Atualização parcial.
@@ -378,7 +378,7 @@ Filtros temporais devem possuir nomes e formato consistentes.
 
 Exemplo:
 
-GET /orders?created_from=2026-09-01&created_to=2026-09-30
+GET /pedidos?created_from=2026-09-01&created_to=2026-09-30
 
 Quando horário for relevante, utilizar formato ISO 8601.
 
@@ -394,11 +394,11 @@ Recursos relacionados podem utilizar rotas aninhadas quando isso melhorar a clar
 
 Exemplo:
 
-GET /orders/{order_id}/items
+GET /pedidos/{pedido_id}/itens
 
 Evitar aninhamento excessivamente profundo:
 
-/clientes/{cliente_id}/orders/{order_id}/items/{item_id}/...
+/clientes/{cliente_id}/pedidos/{pedido_id}/itens/{item_id}/...
 
 Quando a rota ficar difícil de compreender ou manter, preferir um recurso independente.
 
@@ -410,8 +410,8 @@ Nesses casos, uma rota de ação pode ser utilizada.
 
 Exemplo:
 
-POST /orders/{order_id}/cancel
-POST /orders/{order_id}/confirm
+POST /pedidos/{pedido_id}/cancelar
+POST /pedidos/{pedido_id}/confirmar
 
 Essas rotas devem representar ações de negócio reais.
 
@@ -423,7 +423,7 @@ Operações sujeitas a retry devem considerar idempotência quando necessário.
 
 Exemplo:
 
-POST /orders
+POST /pedidos
 Idempotency-Key: 8d9e...
 
 A estratégia deve ser implementada somente em operações que realmente necessitem desse controle.
@@ -643,7 +643,7 @@ Depois:
 
 /api/v1/clientes
 /api/v1/produtos
-/api/v1/orders
+/api/v1/pedidos
 
 Evitar duplicar manualmente /api/v1 em todos os endpoints caso isso possa ser resolvido pelo router principal.
 

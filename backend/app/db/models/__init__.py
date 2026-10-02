@@ -3,8 +3,8 @@ from app.db.models.categoria import Categoria
 from app.db.models.cliente import Cliente
 from app.db.models.estoque import Estoque
 from app.db.models.movimentacao_estoque import MovimentacaoEstoque
-from app.db.models.order import Order
-from app.db.models.order_item import OrderItem
+from app.db.models.pedido import Pedido
+from app.db.models.pedido_item import PedidoItem
 from app.db.models.permission import Permission
 from app.db.models.produto import Produto
 from app.db.models.reserva_estoque import ReservaEstoque
@@ -20,8 +20,8 @@ __all__ = [
     "Cliente",
     "Estoque",
     "MovimentacaoEstoque",
-    "Order",
-    "OrderItem",
+    "Pedido",
+    "PedidoItem",
     "Permission",
     "Produto",
     "ReservaEstoque",

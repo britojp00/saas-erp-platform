@@ -11,24 +11,24 @@ from app.db.mixins import (
 )
 
 
-class OrderItem(
+class PedidoItem(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     TenantScopedMixin,
     Base,
 ):
-    __tablename__ = "order_items"
+    __tablename__ = "pedido_itens"
 
     __table_args__ = (
         UniqueConstraint(
             "tenant_id",
-            "order_id",
+            "pedido_id",
             "produto_id",
-            name="uq_order_items_tenant_order_produto",
+            name="uq_pedido_itens_tenant_pedido_produto",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "order_id"],
-            ["orders.tenant_id", "orders.id"],
+            ["tenant_id", "pedido_id"],
+            ["pedidos.tenant_id", "pedidos.id"],
             ondelete="CASCADE",
         ),
         ForeignKeyConstraint(
@@ -38,7 +38,7 @@ class OrderItem(
         ),
     )
 
-    order_id: Mapped[int] = mapped_column(
+    pedido_id: Mapped[int] = mapped_column(
         BigInteger,
         nullable=False,
         index=True,

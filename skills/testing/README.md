@@ -432,21 +432,21 @@ produto inativo
 
 Quando houver concorrência, adicionar testes específicos.
 
-27. Order Tests
+27. Pedido Tests
 
 Pedidos devem testar o ciclo de estados definido pelo domínio.
 
 Exemplo:
 
-draft
+rascunho
 ↓
-confirmed
+confirmado
 ↓
-completed
+concluido
 
 e cenários de:
 
-cancelled
+cancelado
 
 Também testar transições inválidas.
 
@@ -592,7 +592,7 @@ Exemplos:
 login
 cliente creation
 produto creation
-order creation
+pedido creation
 estoque movement
 permission management
 
@@ -952,7 +952,7 @@ tests/
 └── api/
     ├── auth/
     ├── clientes/
-    └── orders/
+    └── pedidos/
 
 A estrutura poderá evoluir conforme o volume crescer.
 
@@ -972,7 +972,7 @@ Exemplo conceitual:
 
 ClienteFactory
 UserFactory
-OrderFactory
+PedidoFactory
 
 Criar somente quando a repetição justificar.
 

@@ -54,7 +54,7 @@ backend/
 │   │   │   ├── categorias.py
 │   │   │   ├── produtos.py
 │   │   │   ├── estoque.py
-│   │   │   ├── orders.py
+│   │   │   ├── pedidos.py
 │   │   │   └── audit_logs.py
 │   │   ├── middleware.py
 │   │   └── dependencies.py
@@ -76,7 +76,7 @@ backend/
 │   │   ├── categoria.py
 │   │   ├── produto.py
 │   │   ├── estoque.py
-│   │   ├── order.py
+│   │   ├── pedido.py
 │   │   └── audit_log.py
 │   ├── repositories/
 │   │   ├── user.py
@@ -87,8 +87,8 @@ backend/
 │   │   ├── estoque.py
 │   │   ├── movimentacao_estoque.py
 │   │   ├── reserva_estoque.py
-│   │   ├── order.py
-│   │   ├── order_item.py
+│   │   ├── pedido.py
+│   │   ├── pedido_item.py
 │   │   ├── role.py
 │   │   ├── permission.py
 │   │   └── audit_log.py
@@ -99,7 +99,7 @@ backend/
 │   │   ├── categoria.py
 │   │   ├── produto.py
 │   │   ├── estoque.py
-│   │   ├── order.py
+│   │   ├── pedido.py
 │   │   └── audit_log.py
 │   └── main.py
 │
@@ -113,7 +113,7 @@ backend/
 │   │   ├── test_categorias.py
 │   │   ├── test_produtos.py
 │   │   ├── test_estoque.py
-│   │   ├── test_orders.py
+│   │   ├── test_pedidos.py
 │   │   ├── test_audit_logs.py
 │   │   └── test_observability.py
 │   ├── unit/
@@ -174,7 +174,7 @@ clientes.py
 categorias.py
 produtos.py
 estoque.py
-orders.py
+pedidos.py
 audit_logs.py
 
 A camada de API não deve concentrar regras de negócio
@@ -226,8 +226,8 @@ produto.py
 estoque.py
 movimentacao_estoque.py
 reserva_estoque.py
-order.py
-order_item.py
+pedido.py
+pedido_item.py
 audit_log.py
 
 Models representam entidades persistidas no banco de dados.
@@ -250,7 +250,7 @@ cliente.py
 categoria.py
 produto.py
 estoque.py
-order.py
+pedido.py
 audit_log.py
 
 Responsabilidades:
@@ -283,8 +283,8 @@ produto.py
 estoque.py
 movimentacao_estoque.py
 reserva_estoque.py
-order.py
-order_item.py
+pedido.py
+pedido_item.py
 role.py
 permission.py
 audit_log.py
@@ -315,7 +315,7 @@ cliente.py
 categoria.py
 produto.py
 estoque.py
-order.py
+pedido.py
 audit_log.py
 
 Responsabilidades:
@@ -331,7 +331,7 @@ Exemplo:
 Criar pedido
     |
     v
-OrderService
+PedidoService
     |
     +---- validar cliente
     |
@@ -380,7 +380,7 @@ backend/tests/
 │   ├── test_categorias.py
 │   ├── test_produtos.py
 │   ├── test_estoque.py
-│   ├── test_orders.py
+│   ├── test_pedidos.py
 │   ├── test_audit_logs.py
 │   └── test_observability.py
 └── conftest.py
@@ -415,7 +415,7 @@ test_clientes.py
 test_categorias.py
 test_produtos.py
 test_estoque.py
-test_orders.py
+test_pedidos.py
 test_audit_logs.py
 test_observability.py
 12. Migrations

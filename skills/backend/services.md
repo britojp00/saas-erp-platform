@@ -54,9 +54,9 @@ O service deve representar comportamentos reais do domínio.
 
 Exemplo:
 
-OrderService.create_order()
-OrderService.cancel_order()
-OrderService.confirm_order()
+PedidoService.criar_pedido()
+PedidoService.cancelar_pedido()
+PedidoService.confirmar_pedido()
 EstoqueService.create_reserva()
 EstoqueService.release_reserva()
 
@@ -76,7 +76,7 @@ services/
 ├── produto.py
 ├── categoria.py
 ├── estoque.py
-├── order.py
+├── pedido.py
 └── ...
 
 A organização deve acompanhar os domínios da aplicação.
@@ -205,7 +205,7 @@ Um dos principais papéis do service é coordenar diferentes componentes.
 
 Exemplo de criação de pedido:
 
-OrderService
+PedidoService
    ↓
 validar cliente
    ↓
@@ -232,7 +232,7 @@ Evitar um único arquivo contendo:
 Cliente
 Produto
 Estoque
-Order
+Pedido
 Authentication
 Reports
 Integrations
@@ -250,13 +250,13 @@ async def process_everything(...):
 
 Preferir:
 
-async def create_order(...):
+async def criar_pedido(...):
     ...
 
-async def cancel_order(...):
+async def cancelar_pedido(...):
     ...
 
-async def confirm_order(...):
+async def confirmar_pedido(...):
     ...
 
 Cada método deve possuir um objetivo compreensível.
@@ -269,8 +269,8 @@ Preferir:
 
 create_cliente
 update_cliente
-cancel_order
-confirm_order
+cancelar_pedido
+confirmar_pedido
 create_reserva
 release_reserva
 
@@ -353,7 +353,7 @@ Uma permission pode permitir uma operação, mas não substitui as regras do dom
 Exemplo:
 
 Permission:
-order.cancel
+pedido.cancelar
 
 não significa:
 
@@ -370,11 +370,11 @@ Quando uma operação envolver múltiplas alterações relacionadas, o service d
 
 Exemplo:
 
-create_order()
+criar_pedido()
     ↓
-create order
+criar pedido
     ↓
-create items
+criar itens
     ↓
 update estoque
     ↓
@@ -412,9 +412,8 @@ ErroClienteNaoEncontrado
 ProductNotFound
 InsufficientStock
 ProductInactive
-OrderNotFound
-OrderAlreadyCancelled
-OrderNotCancelable
+ErroPedidoNaoEncontrado
+ErroEstadoPedidoInvalido
 ErroClienteDuplicado
 
 Os nomes devem refletir comportamentos reais.
@@ -486,17 +485,17 @@ Um service pode utilizar outro service quando isso representar uma dependência 
 
 Exemplo:
 
-OrderService
+PedidoService
     ↓
 EstoqueService
 
 Mas evitar dependências circulares:
 
-OrderService
+PedidoService
     ↓
 EstoqueService
     ↓
-OrderService
+PedidoService
 
 Se isso acontecer, revisar a separação das responsabilidades.
 
@@ -541,11 +540,11 @@ Testes unitários devem validar o comportamento do service.
 
 Exemplo:
 
-create_order()
+criar_pedido()
     ↓
 estoque suficiente
 → pedido criado
-create_order()
+criar_pedido()
     ↓
 estoque insuficiente
 → InsufficientStockError
@@ -564,9 +563,9 @@ Database
 
 Exemplo:
 
-OrderService
+PedidoService
     ↓
-OrderRepository
+PedidoRepository
     ↓
 PostgreSQL
 
@@ -692,8 +691,8 @@ Registrar informações úteis para diagnóstico.
 
 Exemplo:
 
-order.created
-order.cancelled
+pedido.criado
+pedido.cancelado
 reserva.criada
 cliente.criar
 
@@ -765,7 +764,7 @@ Métodos excessivamente longos devem ser avaliados.
 
 Exemplo problemático:
 
-async def create_order(...):
+async def criar_pedido(...):
     # 300 linhas
     ...
 
@@ -779,7 +778,7 @@ Métodos privados podem ser utilizados quando melhorarem a clareza.
 
 Exemplo:
 
-def _validate_order_state(...):
+def _validar_estado_pedido(...):
     ...
 
 def _calculate_total(...):
@@ -820,20 +819,20 @@ Entidades com fluxo de estados devem ter transições controladas.
 
 Exemplo:
 
-Order
+Pedido
 ↓
-draft
+rascunho
 ↓
-confirmed
+confirmado
 ↓
-completed
+concluido
 
 Não permitir transições arbitrárias.
 
 Exemplo:
 
-completed
-→ draft
+concluido
+→ rascunho
 
 somente se existir regra explícita permitindo essa transição.
 
@@ -849,14 +848,14 @@ novo estado válido
 
 Exemplo:
 
-draft
-→ confirm
-→ confirmed
+rascunho
+→ confirmar
+→ confirmado
 
 mas:
 
-cancelled
-→ confirm
+cancelado
+→ confirmar
 → inválido
 47. Consistência
 

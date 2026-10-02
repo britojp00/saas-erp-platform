@@ -189,7 +189,7 @@ class ProdutoService:
         if await self.repo.tem_estoque(tenant_id, produto.id):
             raise ErroProdutoEmUso()
 
-        if await self.repo.has_order_items(tenant_id, produto.id):
+        if await self.repo.tem_itens_pedido(tenant_id, produto.id):
             raise ErroProdutoEmUso()
 
         old_values = {

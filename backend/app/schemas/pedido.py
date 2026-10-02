@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, field_serializer, field_validator
 from app.core.config import settings
 
 
-class OrderItemCreate(BaseModel):
+class PedidoItemCriarPayload(BaseModel):
     produto_id: int
     quantity: Decimal = Field(max_digits=15, decimal_places=3)
     unit_price: Decimal | None = Field(default=None, max_digits=15, decimal_places=2)
@@ -26,7 +26,7 @@ class OrderItemCreate(BaseModel):
         return v
 
 
-class OrderItemUpdate(BaseModel):
+class PedidoItemAtualizarPayload(BaseModel):
     quantity: Decimal | None = Field(default=None, max_digits=15, decimal_places=3)
     unit_price: Decimal | None = Field(default=None, max_digits=15, decimal_places=2)
 
@@ -45,23 +45,23 @@ class OrderItemUpdate(BaseModel):
         return v
 
 
-class OrderCreate(BaseModel):
+class PedidoCriarPayload(BaseModel):
     cliente_id: int
     notes: str | None = Field(default=None, max_length=1000)
-    items: list[OrderItemCreate] = Field(min_length=1)
+    itens: list[PedidoItemCriarPayload] = Field(min_length=1)
 
 
-class OrderUpdate(BaseModel):
+class PedidoAtualizarPayload(BaseModel):
     cliente_id: int | None = Field(default=None)
     notes: str | None = Field(default=None, max_length=1000)
 
 
-class OrderItemResponse(BaseModel):
+class PedidoItemResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
     tenant_id: int
-    order_id: int
+    pedido_id: int
     produto_id: int
     quantity: Decimal
     unit_price: Decimal
@@ -90,12 +90,12 @@ class OrderItemResponse(BaseModel):
         return value.astimezone(settings.tz).isoformat()
 
 
-class OrderResponse(BaseModel):
+class PedidoResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
     tenant_id: int
-    order_number: int
+    numero_pedido: int
     cliente_id: int
     status: str
     total_amount: Decimal
@@ -103,7 +103,7 @@ class OrderResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None
-    items: list[OrderItemResponse] = Field(default_factory=list)
+    itens: list[PedidoItemResposta] = Field(default_factory=list)
 
     @field_serializer("total_amount")
     def _serialize_total_amount(self, value: Decimal, _info) -> float:
@@ -124,12 +124,12 @@ class OrderResponse(BaseModel):
         return value.astimezone(settings.tz).isoformat()
 
 
-class OrderListItem(BaseModel):
+class PedidoResumo(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
     tenant_id: int
-    order_number: int
+    numero_pedido: int
     cliente_id: int
     status: str
     total_amount: Decimal
@@ -149,8 +149,8 @@ class OrderListItem(BaseModel):
         return value.astimezone(settings.tz).isoformat()
 
 
-class OrderListResponse(BaseModel):
-    items: list[OrderListItem]
+class ListaPedidosResposta(BaseModel):
+    itens: list[PedidoResumo]
     page: int
     page_size: int
     total: int

@@ -138,7 +138,7 @@ Exemplo:
 
 application.started
 cliente.criar
-order.confirmed
+pedido.confirmado
 WARNING
 
 Situações anormais que não interromperam a operação.
@@ -153,7 +153,7 @@ Falhas de uma operação ou componente.
 
 Exemplo:
 
-order.processing_failed
+pedido.processamento_falhou
 database.query_failed
 CRITICAL
 
@@ -174,8 +174,8 @@ auth.login.failed
 cliente.criar
 cliente.atualizar
 cliente.excluir
-order.created
-order.cancelled
+pedido.criado
+pedido.cancelado
 reserva.criada
 integration.failed
 
@@ -196,7 +196,7 @@ Evitar:
 
 Preferir um evento identificável:
 
-order.creation_failed
+pedido.criacao_falhou
 
 com campos estruturados complementares.
 
@@ -455,7 +455,7 @@ Exemplo conceitual:
 
 {
   "level": "ERROR",
-  "event": "order.creation_failed",
+  "event": "pedido.criacao_falhou",
   "request_id": "uuid",
   "tenant_id": "uuid",
   "user_id": "uuid",
@@ -817,8 +817,8 @@ skills/observability/
 Preferir:
 
 {
-  "event": "order.created",
-  "order_id": "uuid",
+  "event": "pedido.criado",
+  "pedido_id": "uuid",
   "tenant_id": "uuid"
 }
 
@@ -839,15 +839,15 @@ Não construir mensagens complexas concatenando grandes quantidades de dados.
 Evitar:
 
 logger.info(
-    f"Pedido {order_id} criado pelo usuário {user_id} no tenant {tenant_id}"
+    f"Pedido {pedido_id} criado pelo usuário {user_id} no tenant {tenant_id}"
 )
 
 Preferir logging estruturado quando a biblioteca utilizada permitir:
 
 logger.info(
-    "order.created",
+    "pedido.criado",
     extra={
-        "order_id": str(order_id),
+        "pedido_id": str(pedido_id),
         "user_id": str(user_id),
         "tenant_id": str(tenant_id),
     },
@@ -1070,11 +1070,11 @@ Quando possível, eventos de log devem utilizar nomes compatíveis com métricas
 
 Exemplo:
 
-order.processing_failed
+pedido.processamento_falhou
 
 pode coexistir com:
 
-orders_processing_failures_total
+pedidos_processing_failures_total
 
 A convenção final será definida na documentação de observabilidade.
 

@@ -108,10 +108,10 @@ ALL_AUDIT_PERMS = [
     "produto.excluir",
     "estoque.ler",
     "estoque.atualizar",
-    "order.read",
-    "order.create",
-    "order.update",
-    "order.cancel",
+    "pedido.ler",
+    "pedido.criar",
+    "pedido.atualizar",
+    "pedido.cancelar",
     "role.read",
 ]
 

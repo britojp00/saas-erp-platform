@@ -118,28 +118,28 @@ class ErroChaveIdempotenciaDuplicada(DomainError):
     """Levantado quando a chave de idempotencia ja foi usada em outra requisicao."""
 
 
-class OrderNotFoundError(DomainError):
-    """Raised when an order is not found."""
+class ErroPedidoNaoEncontrado(DomainError):
+    """Levantado quando um pedido não é encontrado."""
 
 
-class InvalidOrderStateError(DomainError):
-    """Raised when an order state transition is invalid."""
+class ErroEstadoPedidoInvalido(DomainError):
+    """Levantado quando a transição de estado do pedido é inválida."""
 
 
-class OrderMustHaveItemsError(DomainError):
-    """Raised when trying to persist an order without items."""
+class ErroPedidoSemItens(DomainError):
+    """Levantado ao tentar persistir um pedido sem itens."""
 
 
-class DuplicateOrderItemError(DomainError):
+class ErroItemPedidoDuplicado(DomainError):
     """Levantado quando um produto já existe no mesmo pedido."""
 
 
-class OrderItemNotFoundError(DomainError):
-    """Raised when an order item is not found."""
+class ErroItemPedidoNaoEncontrado(DomainError):
+    """Levantado quando um item de pedido não é encontrado."""
 
 
-class OrderItemRemovalNotAllowedError(DomainError):
-    """Raised when trying to remove the last item from an order."""
+class ErroRemocaoItemPedidoNaoPermitida(DomainError):
+    """Levantado ao tentar remover o último item de um pedido."""
 
 
 class ErroPedidoClienteNaoEncontrado(DomainError):
@@ -466,78 +466,78 @@ def register_exception_handlers(app: FastAPI) -> None:
             },
         )
 
-    @app.exception_handler(OrderNotFoundError)
-    async def order_not_found_error_handler(
-        request: Request, exc: OrderNotFoundError
+    @app.exception_handler(ErroPedidoNaoEncontrado)
+    async def pedido_nao_encontrado_error_handler(
+        request: Request, exc: ErroPedidoNaoEncontrado
     ) -> JSONResponse:
         logger.warning(
-            "order.not_found",
-            extra={"event": "order.not_found"},
+            "pedido.nao_encontrado",
+            extra={"event": "pedido.nao_encontrado"},
         )
         return JSONResponse(
             status_code=404,
             content={"detail": "Pedido não encontrado"},
         )
 
-    @app.exception_handler(InvalidOrderStateError)
-    async def invalid_order_state_error_handler(
-        request: Request, exc: InvalidOrderStateError
+    @app.exception_handler(ErroEstadoPedidoInvalido)
+    async def estado_pedido_invalido_error_handler(
+        request: Request, exc: ErroEstadoPedidoInvalido
     ) -> JSONResponse:
         logger.warning(
-            "order.invalid_state",
-            extra={"event": "order.invalid_state"},
+            "pedido.estado_invalido",
+            extra={"event": "pedido.estado_invalido"},
         )
         return JSONResponse(
             status_code=409,
             content={"detail": "Transição de estado do pedido é inválida"},
         )
 
-    @app.exception_handler(OrderMustHaveItemsError)
-    async def order_must_have_items_error_handler(
-        request: Request, exc: OrderMustHaveItemsError
+    @app.exception_handler(ErroPedidoSemItens)
+    async def pedido_sem_itens_error_handler(
+        request: Request, exc: ErroPedidoSemItens
     ) -> JSONResponse:
         logger.warning(
-            "order.must_have_items",
-            extra={"event": "order.must_have_items"},
+            "pedido.sem_itens",
+            extra={"event": "pedido.sem_itens"},
         )
         return JSONResponse(
             status_code=409,
             content={"detail": "O pedido deve possuir pelo menos um item"},
         )
 
-    @app.exception_handler(DuplicateOrderItemError)
-    async def duplicate_order_item_error_handler(
-        request: Request, exc: DuplicateOrderItemError
+    @app.exception_handler(ErroItemPedidoDuplicado)
+    async def item_pedido_duplicado_error_handler(
+        request: Request, exc: ErroItemPedidoDuplicado
     ) -> JSONResponse:
         logger.warning(
-            "order.duplicate_item",
-            extra={"event": "order.duplicate_item"},
+            "pedido.item_duplicado",
+            extra={"event": "pedido.item_duplicado"},
         )
         return JSONResponse(
             status_code=409,
             content={"detail": "Já existe um item com este produto no pedido"},
         )
 
-    @app.exception_handler(OrderItemNotFoundError)
-    async def order_item_not_found_error_handler(
-        request: Request, exc: OrderItemNotFoundError
+    @app.exception_handler(ErroItemPedidoNaoEncontrado)
+    async def item_pedido_nao_encontrado_error_handler(
+        request: Request, exc: ErroItemPedidoNaoEncontrado
     ) -> JSONResponse:
         logger.warning(
-            "order_item.not_found",
-            extra={"event": "order_item.not_found"},
+            "pedido_item.nao_encontrado",
+            extra={"event": "pedido_item.nao_encontrado"},
         )
         return JSONResponse(
             status_code=404,
             content={"detail": "Item do pedido não encontrado"},
         )
 
-    @app.exception_handler(OrderItemRemovalNotAllowedError)
-    async def order_item_removal_not_allowed_error_handler(
-        request: Request, exc: OrderItemRemovalNotAllowedError
+    @app.exception_handler(ErroRemocaoItemPedidoNaoPermitida)
+    async def remocao_item_pedido_nao_permitida_error_handler(
+        request: Request, exc: ErroRemocaoItemPedidoNaoPermitida
     ) -> JSONResponse:
         logger.warning(
-            "order_item.removal_not_allowed",
-            extra={"event": "order_item.removal_not_allowed"},
+            "pedido_item.remocao_nao_permitida",
+            extra={"event": "pedido_item.remocao_nao_permitida"},
         )
         return JSONResponse(
             status_code=409,
@@ -562,8 +562,8 @@ def register_exception_handlers(app: FastAPI) -> None:
         request: Request, exc: ErroPedidoProdutoNaoEncontrado
     ) -> JSONResponse:
         logger.warning(
-            "order.produto_nao_encontrado",
-            extra={"event": "order.produto_nao_encontrado"},
+            "pedido.produto_nao_encontrado",
+            extra={"event": "pedido.produto_nao_encontrado"},
         )
         return JSONResponse(
             status_code=409,
@@ -575,8 +575,8 @@ def register_exception_handlers(app: FastAPI) -> None:
         request: Request, exc: ErroPedidoProdutoInativo
     ) -> JSONResponse:
         logger.warning(
-            "order.produto_inativo",
-            extra={"event": "order.produto_inativo"},
+            "pedido.produto_inativo",
+            extra={"event": "pedido.produto_inativo"},
         )
         return JSONResponse(
             status_code=409,

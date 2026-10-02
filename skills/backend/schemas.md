@@ -42,7 +42,7 @@ schemas/
 ├── produto.py
 ├── categoria.py
 ├── estoque.py
-├── order.py
+├── pedido.py
 └── common.py
 
 A organização deve acompanhar os domínios da aplicação.
@@ -353,10 +353,10 @@ Quando o domínio possuir um conjunto fechado de valores, considerar Enum.
 
 Exemplo:
 
-class OrderStatus(str, Enum):
-    draft = "draft"
-    confirmed = "confirmed"
-    cancelled = "cancelled"
+class StatusPedido(str, Enum):
+    RASCUNHO = "RASCUNHO"
+    CONFIRMADO = "CONFIRMADO"
+    CANCELADO = "CANCELADO"
 
 Isso evita aceitar valores arbitrários.
 
@@ -368,10 +368,10 @@ Enums podem representar estados conhecidos.
 
 Exemplo:
 
-draft
-confirmed
-completed
-cancelled
+rascunho
+confirmado
+concluido
+cancelado
 
 O schema valida que o valor pertence ao conjunto esperado.
 
@@ -506,14 +506,14 @@ Respostas podem conter estruturas aninhadas quando isso representar o contrato d
 
 Exemplo:
 
-class OrderItemResponse(BaseModel):
+class PedidoItemResposta(BaseModel):
     product_id: UUID
     quantity: int
 
 
-class OrderResponse(BaseModel):
+class PedidoResposta(BaseModel):
     id: UUID
-    items: list[OrderItemResponse]
+    itens: list[PedidoItemResposta]
 
 Evitar aninhamentos excessivamente profundos.
 

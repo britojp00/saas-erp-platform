@@ -3,53 +3,53 @@ from datetime import UTC, datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
-    DuplicateOrderItemError,
+    ErroEstadoPedidoInvalido,
+    ErroItemPedidoDuplicado,
+    ErroItemPedidoNaoEncontrado,
     ErroPedidoClienteNaoEncontrado,
+    ErroPedidoNaoEncontrado,
     ErroPedidoProdutoInativo,
     ErroPedidoProdutoNaoEncontrado,
-    InvalidOrderStateError,
-    OrderItemNotFoundError,
-    OrderItemRemovalNotAllowedError,
-    OrderMustHaveItemsError,
-    OrderNotFoundError,
+    ErroPedidoSemItens,
+    ErroRemocaoItemPedidoNaoPermitida,
 )
 from app.db.models.cliente import Cliente
-from app.db.models.order import Order
-from app.db.models.order_item import OrderItem
+from app.db.models.pedido import Pedido, StatusPedido
+from app.db.models.pedido_item import PedidoItem
 from app.db.models.produto import Produto
 from app.db.models.reserva_estoque import ReservaEstoque, StatusReserva
 from app.repositories.cliente import ClienteRepository
 from app.repositories.estoque import EstoqueRepository
-from app.repositories.order import OrderRepository
-from app.repositories.order_item import OrderItemRepository
+from app.repositories.pedido import PedidoRepository
+from app.repositories.pedido_item import PedidoItemRepository
 from app.repositories.produto import ProdutoRepository
 from app.repositories.reserva_estoque import ReservaEstoqueRepository
-from app.schemas.order import (
-    OrderCreate,
-    OrderItemCreate,
-    OrderItemUpdate,
-    OrderUpdate,
+from app.schemas.pedido import (
+    PedidoAtualizarPayload,
+    PedidoCriarPayload,
+    PedidoItemAtualizarPayload,
+    PedidoItemCriarPayload,
 )
 from app.services.audit_log import AuditLogService
 
 VALID_TRANSITIONS: dict[str, list[str]] = {
-    "DRAFT": ["CONFIRMED", "CANCELLED"],
-    "CONFIRMED": ["COMPLETED", "CANCELLED"],
+    StatusPedido.RASCUNHO: [StatusPedido.CONFIRMADO, StatusPedido.CANCELADO],
+    StatusPedido.CONFIRMADO: [StatusPedido.CONCLUIDO, StatusPedido.CANCELADO],
 }
 
 
-class OrderService:
+class PedidoService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
-        self.order_repo = OrderRepository(session)
-        self.item_repo = OrderItemRepository(session)
+        self.pedido_repo = PedidoRepository(session)
+        self.item_repo = PedidoItemRepository(session)
         self.produto_repo = ProdutoRepository(session)
         self.cliente_repo = ClienteRepository(session)
         self.estoque_repo = EstoqueRepository(session)
         self.reserva_repo = ReservaEstoqueRepository(session)
         self.audit_service = AuditLogService(session)
 
-    async def list(
+    async def listar_pedidos(
         self,
         tenant_id: int,
         *,
@@ -60,9 +60,9 @@ class OrderService:
         order: str = "desc",
         status: str | None = None,
         cliente_id: int | None = None,
-    ) -> tuple[list[Order], int]:
+    ) -> tuple[list[Pedido], int]:
         offset = (page - 1) * page_size
-        return await self.order_repo.list(
+        return await self.pedido_repo.list(
             tenant_id,
             offset=offset,
             limit=page_size,
@@ -73,26 +73,26 @@ class OrderService:
             cliente_id=cliente_id,
         )
 
-    async def get_by_id(
+    async def obter_pedido(
         self,
         tenant_id: int,
-        order_id: int,
-    ) -> Order:
-        order = await self.order_repo.get_by_id(tenant_id, order_id)
-        if order is None:
-            raise OrderNotFoundError()
-        return order
+        pedido_id: int,
+    ) -> Pedido:
+        pedido = await self.pedido_repo.get_by_id(tenant_id, pedido_id)
+        if pedido is None:
+            raise ErroPedidoNaoEncontrado()
+        return pedido
 
-    async def get_with_items(
+    async def obter_pedido_com_itens(
         self,
         tenant_id: int,
-        order_id: int,
-    ) -> Order:
-        order = await self.get_by_id(tenant_id, order_id)
-        order.items = await self.item_repo.list_by_order(tenant_id, order_id)
-        return order
+        pedido_id: int,
+    ) -> Pedido:
+        pedido = await self.obter_pedido(tenant_id, pedido_id)
+        pedido.itens = await self.item_repo.listar_por_pedido(tenant_id, pedido_id)
+        return pedido
 
-    async def _validate_cliente(
+    async def _validar_cliente(
         self,
         tenant_id: int,
         cliente_id: int,
@@ -102,7 +102,7 @@ class OrderService:
             raise ErroPedidoClienteNaoEncontrado()
         return cliente
 
-    async def _validate_produto(
+    async def _validar_produto(
         self,
         tenant_id: int,
         produto_id: int,
@@ -112,34 +112,34 @@ class OrderService:
             raise ErroPedidoProdutoNaoEncontrado()
         return produto
 
-    async def _recalculate_total(self, order: Order) -> None:
-        items = await self.item_repo.list_by_order(order.tenant_id, order.id)
-        order.total_amount = sum(item.total_price for item in items)
+    async def _recalcular_total(self, pedido: Pedido) -> None:
+        items = await self.item_repo.listar_por_pedido(pedido.tenant_id, pedido.id)
+        pedido.total_amount = sum(item.total_price for item in items)
 
-    async def create(
+    async def criar_pedido(
         self,
         tenant_id: int,
-        data: OrderCreate,
+        data: PedidoCriarPayload,
         user_id: int | None = None,
-    ) -> Order:
-        await self._validate_cliente(tenant_id, data.cliente_id)
+    ) -> Pedido:
+        await self._validar_cliente(tenant_id, data.cliente_id)
 
-        produto_ids = [item.produto_id for item in data.items]
+        produto_ids = [item.produto_id for item in data.itens]
         if len(produto_ids) != len(set(produto_ids)):
-            raise DuplicateOrderItemError()
+            raise ErroItemPedidoDuplicado()
 
-        order_number = await self.order_repo.next_order_number(tenant_id)
+        numero_pedido = await self.pedido_repo.proximo_numero_pedido(tenant_id)
 
-        order = Order(
+        pedido = Pedido(
             tenant_id=tenant_id,
-            order_number=order_number,
+            numero_pedido=numero_pedido,
             cliente_id=data.cliente_id,
             notes=data.notes,
         )
-        await self.order_repo.create(order)
+        await self.pedido_repo.create(pedido)
 
-        for item_data in data.items:
-            produto = await self._validate_produto(tenant_id, item_data.produto_id)
+        for item_data in data.itens:
+            produto = await self._validar_produto(tenant_id, item_data.produto_id)
 
             unit_price = (
                 item_data.unit_price
@@ -148,9 +148,9 @@ class OrderService:
             )
             total_price = unit_price * item_data.quantity
 
-            item = OrderItem(
+            item = PedidoItem(
                 tenant_id=tenant_id,
-                order_id=order.id,
+                pedido_id=pedido.id,
                 produto_id=produto.id,
                 quantity=item_data.quantity,
                 unit_price=unit_price,
@@ -158,53 +158,53 @@ class OrderService:
             )
             await self.item_repo.create(item)
 
-        await self._recalculate_total(order)
-        await self.order_repo.update(order)
+        await self._recalcular_total(pedido)
+        await self.pedido_repo.update(pedido)
 
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="ORDER_CREATE",
-            entity_type="order",
-            entity_id=order.id,
+            action="PEDIDO_CRIAR",
+            entity_type="pedido",
+            entity_id=pedido.id,
             new_values={
-                "order_number": order.order_number,
-                "cliente_id": order.cliente_id,
-                "status": order.status,
+                "numero_pedido": pedido.numero_pedido,
+                "cliente_id": pedido.cliente_id,
+                "status": pedido.status,
             },
         )
 
-        return order
+        return pedido
 
-    async def update(
+    async def atualizar_pedido(
         self,
         tenant_id: int,
-        order_id: int,
-        data: OrderUpdate,
+        pedido_id: int,
+        data: PedidoAtualizarPayload,
         user_id: int | None = None,
-    ) -> Order:
-        order = await self.order_repo.get_for_update(tenant_id, order_id)
-        if order is None:
-            raise OrderNotFoundError()
+    ) -> Pedido:
+        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        if pedido is None:
+            raise ErroPedidoNaoEncontrado()
 
-        if order.status != "DRAFT":
-            raise InvalidOrderStateError()
+        if pedido.status != StatusPedido.RASCUNHO:
+            raise ErroEstadoPedidoInvalido()
 
         old_values = {
-            "cliente_id": order.cliente_id,
-            "notes": order.notes,
+            "cliente_id": pedido.cliente_id,
+            "notes": pedido.notes,
         }
 
         update_data = data.model_dump(exclude_unset=True)
 
         if "cliente_id" in update_data and update_data["cliente_id"] is not None:
-            await self._validate_cliente(tenant_id, update_data["cliente_id"])
-            order.cliente_id = update_data["cliente_id"]
+            await self._validar_cliente(tenant_id, update_data["cliente_id"])
+            pedido.cliente_id = update_data["cliente_id"]
 
         if "notes" in update_data:
-            order.notes = update_data["notes"]
+            pedido.notes = update_data["notes"]
 
-        result = await self.order_repo.update(order)
+        result = await self.pedido_repo.update(pedido)
 
         new_values = {
             "cliente_id": result.cliente_id,
@@ -214,42 +214,42 @@ class OrderService:
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="ORDER_UPDATE",
-            entity_type="order",
-            entity_id=order_id,
+            action="PEDIDO_ATUALIZAR",
+            entity_type="pedido",
+            entity_id=pedido_id,
             old_values=old_values,
             new_values=new_values,
         )
 
         return result
 
-    async def add_item(
+    async def adicionar_item(
         self,
         tenant_id: int,
-        order_id: int,
-        data: OrderItemCreate,
+        pedido_id: int,
+        data: PedidoItemCriarPayload,
         user_id: int | None = None,
-    ) -> OrderItem:
-        order = await self.order_repo.get_for_update(tenant_id, order_id)
-        if order is None:
-            raise OrderNotFoundError()
+    ) -> PedidoItem:
+        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        if pedido is None:
+            raise ErroPedidoNaoEncontrado()
 
-        if order.status != "DRAFT":
-            raise InvalidOrderStateError()
+        if pedido.status != StatusPedido.RASCUNHO:
+            raise ErroEstadoPedidoInvalido()
 
-        if await self.item_repo.exists_produto_in_order(
-            tenant_id, order_id, data.produto_id
+        if await self.item_repo.existe_produto_no_pedido(
+            tenant_id, pedido_id, data.produto_id
         ):
-            raise DuplicateOrderItemError()
+            raise ErroItemPedidoDuplicado()
 
-        produto = await self._validate_produto(tenant_id, data.produto_id)
+        produto = await self._validar_produto(tenant_id, data.produto_id)
 
         unit_price = data.unit_price if data.unit_price is not None else produto.price
         total_price = unit_price * data.quantity
 
-        item = OrderItem(
+        item = PedidoItem(
             tenant_id=tenant_id,
-            order_id=order_id,
+            pedido_id=pedido_id,
             produto_id=produto.id,
             quantity=data.quantity,
             unit_price=unit_price,
@@ -257,17 +257,17 @@ class OrderService:
         )
         await self.item_repo.create(item)
 
-        await self._recalculate_total(order)
-        await self.order_repo.update(order)
+        await self._recalcular_total(pedido)
+        await self.pedido_repo.update(pedido)
 
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="ORDER_ITEM_ADD",
-            entity_type="order_item",
+            action="PEDIDO_ITEM_ADICIONAR",
+            entity_type="pedido_item",
             entity_id=item.id,
             new_values={
-                "order_id": order_id,
+                "pedido_id": pedido_id,
                 "produto_id": produto.id,
                 "quantity": str(data.quantity),
                 "unit_price": str(unit_price),
@@ -276,24 +276,24 @@ class OrderService:
 
         return item
 
-    async def update_item(
+    async def atualizar_item(
         self,
         tenant_id: int,
-        order_id: int,
+        pedido_id: int,
         item_id: int,
-        data: OrderItemUpdate,
+        data: PedidoItemAtualizarPayload,
         user_id: int | None = None,
-    ) -> OrderItem:
-        order = await self.order_repo.get_for_update(tenant_id, order_id)
-        if order is None:
-            raise OrderNotFoundError()
+    ) -> PedidoItem:
+        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        if pedido is None:
+            raise ErroPedidoNaoEncontrado()
 
-        if order.status != "DRAFT":
-            raise InvalidOrderStateError()
+        if pedido.status != StatusPedido.RASCUNHO:
+            raise ErroEstadoPedidoInvalido()
 
-        item = await self.item_repo.get_by_id_and_order(tenant_id, item_id, order_id)
+        item = await self.item_repo.obter_por_id_e_pedido(tenant_id, item_id, pedido_id)
         if item is None:
-            raise OrderItemNotFoundError()
+            raise ErroItemPedidoNaoEncontrado()
 
         old_values = {
             "quantity": str(item.quantity),
@@ -312,8 +312,8 @@ class OrderService:
 
         await self.item_repo.update(item)
 
-        await self._recalculate_total(order)
-        await self.order_repo.update(order)
+        await self._recalcular_total(pedido)
+        await self.pedido_repo.update(pedido)
 
         new_values = {
             "quantity": str(item.quantity),
@@ -323,8 +323,8 @@ class OrderService:
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="ORDER_ITEM_UPDATE",
-            entity_type="order_item",
+            action="PEDIDO_ITEM_ATUALIZAR",
+            entity_type="pedido_item",
             entity_id=item_id,
             old_values=old_values,
             new_values=new_values,
@@ -332,27 +332,27 @@ class OrderService:
 
         return item
 
-    async def remove_item(
+    async def remover_item(
         self,
         tenant_id: int,
-        order_id: int,
+        pedido_id: int,
         item_id: int,
         user_id: int | None = None,
     ) -> None:
-        order = await self.order_repo.get_for_update(tenant_id, order_id)
-        if order is None:
-            raise OrderNotFoundError()
+        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        if pedido is None:
+            raise ErroPedidoNaoEncontrado()
 
-        if order.status != "DRAFT":
-            raise InvalidOrderStateError()
+        if pedido.status != StatusPedido.RASCUNHO:
+            raise ErroEstadoPedidoInvalido()
 
-        item = await self.item_repo.get_by_id_and_order(tenant_id, item_id, order_id)
+        item = await self.item_repo.obter_por_id_e_pedido(tenant_id, item_id, pedido_id)
         if item is None:
-            raise OrderItemNotFoundError()
+            raise ErroItemPedidoNaoEncontrado()
 
-        count = await self.item_repo.count_by_order(tenant_id, order_id)
+        count = await self.item_repo.contar_por_pedido(tenant_id, pedido_id)
         if count <= 1:
-            raise OrderItemRemovalNotAllowedError()
+            raise ErroRemocaoItemPedidoNaoPermitida()
 
         old_values = {
             "produto_id": item.produto_id,
@@ -362,34 +362,34 @@ class OrderService:
 
         await self.item_repo.delete(item)
 
-        await self._recalculate_total(order)
-        await self.order_repo.update(order)
+        await self._recalcular_total(pedido)
+        await self.pedido_repo.update(pedido)
 
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="ORDER_ITEM_REMOVE",
-            entity_type="order_item",
+            action="PEDIDO_ITEM_REMOVER",
+            entity_type="pedido_item",
             entity_id=item_id,
             old_values=old_values,
         )
 
-    async def confirm(
+    async def confirmar_pedido(
         self,
         tenant_id: int,
-        order_id: int,
+        pedido_id: int,
         user_id: int | None = None,
-    ) -> Order:
-        order = await self.order_repo.get_for_update(tenant_id, order_id)
-        if order is None:
-            raise OrderNotFoundError()
+    ) -> Pedido:
+        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        if pedido is None:
+            raise ErroPedidoNaoEncontrado()
 
-        if order.status != "DRAFT":
-            raise InvalidOrderStateError()
+        if pedido.status != StatusPedido.RASCUNHO:
+            raise ErroEstadoPedidoInvalido()
 
-        items = await self.item_repo.list_by_order(tenant_id, order_id)
+        items = await self.item_repo.listar_por_pedido(tenant_id, pedido_id)
         if not items:
-            raise OrderMustHaveItemsError()
+            raise ErroPedidoSemItens()
 
         for item in items:
             produto = await self.produto_repo.get_by_id(item.produto_id, tenant_id)
@@ -415,44 +415,44 @@ class OrderService:
                 produto_id=item.produto_id,
                 quantity=item.quantity,
                 status=StatusReserva.ATIVA,
-                reference=f"order:{order.id}",
-                order_item_id=item.id,
-                idempotency_key=f"order:{order.id}:item:{item.id}",
+                reference=f"pedido:{pedido.id}",
+                pedido_item_id=item.id,
+                idempotency_key=f"pedido:{pedido.id}:item:{item.id}",
             )
             await self.reserva_repo.create(reserva)
 
-        old_status = order.status
-        order.status = "CONFIRMED"
-        order.updated_at = datetime.now(UTC)
+        old_status = pedido.status
+        pedido.status = StatusPedido.CONFIRMADO
+        pedido.updated_at = datetime.now(UTC)
 
-        result = await self.order_repo.update(order)
+        result = await self.pedido_repo.update(pedido)
 
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="ORDER_CONFIRM",
-            entity_type="order",
-            entity_id=order_id,
+            action="PEDIDO_CONFIRMAR",
+            entity_type="pedido",
+            entity_id=pedido_id,
             old_values={"status": old_status},
-            new_values={"status": "CONFIRMED"},
+            new_values={"status": "CONFIRMADO"},
         )
 
         return result
 
-    async def cancel(
+    async def cancelar_pedido(
         self,
         tenant_id: int,
-        order_id: int,
+        pedido_id: int,
         user_id: int | None = None,
-    ) -> Order:
-        order = await self.order_repo.get_for_update(tenant_id, order_id)
-        if order is None:
-            raise OrderNotFoundError()
+    ) -> Pedido:
+        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        if pedido is None:
+            raise ErroPedidoNaoEncontrado()
 
-        if order.status not in VALID_TRANSITIONS:
-            raise InvalidOrderStateError()
+        if pedido.status not in VALID_TRANSITIONS:
+            raise ErroEstadoPedidoInvalido()
 
-        reference = f"order:{order.id}"
+        reference = f"pedido:{pedido.id}"
         reservas = await self.reserva_repo.list_active_by_reference(
             tenant_id, reference
         )
@@ -467,38 +467,38 @@ class OrderService:
             reserva.released_at = datetime.now(UTC)
             await self.reserva_repo.update(reserva)
 
-        old_status = order.status
-        order.status = "CANCELLED"
-        order.updated_at = datetime.now(UTC)
+        old_status = pedido.status
+        pedido.status = StatusPedido.CANCELADO
+        pedido.updated_at = datetime.now(UTC)
 
-        result = await self.order_repo.update(order)
+        result = await self.pedido_repo.update(pedido)
 
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="ORDER_CANCEL",
-            entity_type="order",
-            entity_id=order_id,
+            action="PEDIDO_CANCELAR",
+            entity_type="pedido",
+            entity_id=pedido_id,
             old_values={"status": old_status},
-            new_values={"status": "CANCELLED"},
+            new_values={"status": "CANCELADO"},
         )
 
         return result
 
-    async def complete(
+    async def concluir_pedido(
         self,
         tenant_id: int,
-        order_id: int,
+        pedido_id: int,
         user_id: int | None = None,
-    ) -> Order:
-        order = await self.order_repo.get_for_update(tenant_id, order_id)
-        if order is None:
-            raise OrderNotFoundError()
+    ) -> Pedido:
+        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        if pedido is None:
+            raise ErroPedidoNaoEncontrado()
 
-        if order.status != "CONFIRMED":
-            raise InvalidOrderStateError()
+        if pedido.status != StatusPedido.CONFIRMADO:
+            raise ErroEstadoPedidoInvalido()
 
-        reference = f"order:{order.id}"
+        reference = f"pedido:{pedido.id}"
         reservas = await self.reserva_repo.list_active_by_reference(
             tenant_id, reference
         )
@@ -514,20 +514,20 @@ class OrderService:
             reserva.confirmed_at = datetime.now(UTC)
             await self.reserva_repo.update(reserva)
 
-        old_status = order.status
-        order.status = "COMPLETED"
-        order.updated_at = datetime.now(UTC)
+        old_status = pedido.status
+        pedido.status = StatusPedido.CONCLUIDO
+        pedido.updated_at = datetime.now(UTC)
 
-        result = await self.order_repo.update(order)
+        result = await self.pedido_repo.update(pedido)
 
         await self.audit_service.log(
             tenant_id=tenant_id,
             user_id=user_id,
-            action="ORDER_COMPLETE",
-            entity_type="order",
-            entity_id=order_id,
+            action="PEDIDO_CONCLUIR",
+            entity_type="pedido",
+            entity_id=pedido_id,
             old_values={"status": old_status},
-            new_values={"status": "COMPLETED"},
+            new_values={"status": "CONCLUIDO"},
         )
 
         return result

@@ -54,7 +54,7 @@ repositories/
 ├── produto.py
 ├── categoria.py
 ├── estoque.py
-├── order.py
+├── pedido.py
 └── user.py
 
 A organização deve acompanhar os principais domínios persistidos.
@@ -87,8 +87,8 @@ lógica do frontend
 
 Exemplo a evitar:
 
-if order.status == "completed":
-    raise OrderCannotBeCancelledError()
+if pedido.status == "CONCLUIDO":
+    raise ErroEstadoPedidoInvalido()
 
 A decisão de negócio pertence ao service.
 
@@ -364,7 +364,7 @@ flush() pode ser utilizado quando a aplicação precisar que o banco processe a 
 
 Exemplo:
 
-self.session.add(order)
+self.session.add(pedido)
 await self.session.flush()
 
 Isso pode ser útil para:
@@ -452,8 +452,8 @@ quando uma estratégia de carregamento adequada puder resolver o problema.
 
 Exemplo:
 
-stmt = select(Order).options(
-    selectinload(Order.items)
+stmt = select(Pedido).options(
+    selectinload(Pedido.itens)
 )
 
 A solução deve ser baseada no uso real.
@@ -687,9 +687,9 @@ Um repository não deve assumir que é responsável pela transação inteira qua
 
 Exemplo:
 
-OrderService
+PedidoService
    ↓
-OrderRepository
+PedidoRepository
    ↓
 EstoqueRepository
    ↓

@@ -151,8 +151,8 @@ Exemplos:
 create tenants table
 create users table
 add tenant_id to clientes
-create orders table
-add order status constraint
+create pedidos table
+add pedido status constraint
 create cliente email index
 
 Evitar mensagens genéricas como:
@@ -195,7 +195,7 @@ users
 clientes
    |
    v
-orders
+pedidos
 
 Uma tabela que possui foreign key para outra tabela
 não deve ser criada antes da existência da tabela referenciada.
