@@ -29,7 +29,7 @@ PostgreSQL
                 ├── users
                 ├── clientes
                 ├── produtos
-                ├── orders
+                ├── pedidos
                 └── estoque
 
 O isolamento lógico será realizado através do campo:
@@ -104,7 +104,7 @@ price
 created_at
 updated_at
 deleted_at
-orders
+pedidos
 
 id
 tenant_id
@@ -131,7 +131,7 @@ Exemplos que normalmente pertencem a um tenant:
 
 clientes
 produtos
-orders
+pedidos
 estoque
 
 A ausência de tenant_id deve ser uma decisão explícita.
@@ -393,21 +393,21 @@ as relações também devem respeitar o tenant.
 
 Exemplo:
 
-Order
+Pedido
    |
    v
 Cliente
 
 Ao criar um pedido:
 
-order.tenant_id
+pedido.tenant_id
 cliente.tenant_id
 
 devem representar o mesmo tenant.
 
 Não permitir:
 
-Order
+Pedido
 Tenant A
 
 Cliente
@@ -419,7 +419,7 @@ como uma relação válida.
 
 Conceito:
 
-Criar Order para Cliente
+Criar Pedido para Cliente
         |
         v
 Cliente existe?
@@ -470,7 +470,7 @@ Pedidos pertencem ao tenant.
 
 Exemplo:
 
-orders
+pedidos
 
 id
 tenant_id
@@ -483,7 +483,7 @@ deleted_at
 
 Ao criar um pedido:
 
-Order Tenant
+Pedido Tenant
       =
 Cliente Tenant
 
@@ -619,7 +619,7 @@ relacionadas ao tenant.
 
 Exemplo:
 
-OrderService
+PedidoService
     |
     +---- validar cliente
     +---- validar tenant

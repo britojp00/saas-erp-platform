@@ -118,8 +118,7 @@ ErroClienteNaoEncontrado
 ErroClienteDuplicado
 ProductInactiveError
 InsufficientStockError
-OrderNotCancelableError
-OrderAlreadyCancelledError
+ErroEstadoPedidoInvalido
 
 Esses erros normalmente são produzidos pelos services.
 
@@ -164,7 +163,7 @@ Exemplo:
 INSUFFICIENT_STOCK
 CLIENTE_NAO_ENCONTRADO
 CLIENTE_DUPLICADO
-ORDER_NOT_CANCELABLE
+ESTADO_PEDIDO_INVALIDO
 
 O código deve ser independente do texto exibido ao usuário.
 
@@ -272,7 +271,7 @@ Exemplos:
 
 ErroClienteNaoEncontrado
 ErroProdutoNaoEncontrado
-OrderNotFoundError
+ErroPedidoNaoEncontrado
 
 Em recursos multi-tenant, não revelar dados que permitam descobrir a existência de recursos de outro tenant.
 
@@ -286,8 +285,7 @@ Exemplos:
 
 ErroClienteDuplicado
 SkuAlreadyExistsError
-OrderAlreadyCancelledError
-OrderNotCancelableError
+ErroEstadoPedidoInvalido
 
 O código deve representar a condição real do domínio.
 
@@ -426,7 +424,7 @@ Operações com retry devem considerar o impacto da repetição.
 
 Exemplo:
 
-create_order()
+criar_pedido()
 
 Se houver timeout depois que o banco confirmou a operação, repetir indiscriminadamente pode criar duplicidade.
 
@@ -732,7 +730,7 @@ estoque insuficiente
 pedido cancelável
 → cancelamento executado
 pedido não cancelável
-→ OrderNotCancelableError
+→ ErroEstadoPedidoInvalido
 
 Os testes devem validar o comportamento do service.
 
@@ -789,7 +787,7 @@ AppError
 │   ├── ErroProdutoNaoEncontrado
 │   ├── ErroClienteDuplicado
 │   ├── InsufficientStockError
-│   └── OrderNotCancelableError
+│   └── ErroEstadoPedidoInvalido
 │
 ├── AuthenticationError
 │
@@ -814,7 +812,7 @@ Exemplo:
 CLIENTE_NAO_ENCONTRADO
 CLIENTE_DUPLICADO
 INSUFFICIENT_STOCK
-ORDER_NOT_CANCELABLE
+ESTADO_PEDIDO_INVALIDO
 UNAUTHORIZED
 FORBIDDEN
 DATABASE_ERROR
@@ -854,7 +852,7 @@ Erros relevantes da API devem ser documentados no OpenAPI quando isso melhorar o
 
 Exemplo:
 
-POST /orders
+POST /pedidos
 
 pode documentar:
 

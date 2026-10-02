@@ -375,7 +375,7 @@ verificar status do tenant
 
 quando essas verificações fizerem parte do contrato de identidade e contexto.
 
-Não deve implementar regras específicas de clientes, produtos ou orders.
+Não deve implementar regras específicas de clientes, produtos ou pedidos.
 
 22. Permission Dependency
 
@@ -722,7 +722,7 @@ Services não devem depender diretamente de Depends.
 
 Exemplo a evitar:
 
-class OrderService:
+class PedidoService:
 
     def __init__(
         self,

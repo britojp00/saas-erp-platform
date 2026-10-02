@@ -81,7 +81,7 @@ tests/
 │   ├── test_categorias.py
 │   ├── test_produtos.py
 │   ├── test_estoque.py
-│   ├── test_orders.py
+│   ├── test_pedidos.py
 │   ├── test_audit_logs.py
 │   └── test_observability.py
 └── conftest.py
@@ -277,7 +277,7 @@ role
 permissions
 clientes
 produtos
-orders
+pedidos
 
 para todos os testes.
 
@@ -446,7 +446,7 @@ Validar que a exception correta é gerada.
 Exemplo:
 
 with pytest.raises(InsufficientStockError):
-    await service.create_order(...)
+    await service.criar_pedido(...)
 
 Isso protege a regra de domínio.
 
@@ -1201,42 +1201,42 @@ reserva de produto inativo
 
 ReservaEstoque:
 
-order_item_id (nullable, FK para order_items)
-reference (formato "order:{order_id}")
-ondelete="SET NULL" para order_item_id
+pedido_item_id (nullable, FK para pedido_itens)
+reference (formato "pedido:{pedido_id}")
+ondelete="SET NULL" para pedido_item_id
 78. Testes de Pedidos
 
 Pedidos devem testar estados importantes.
 
 Exemplo:
 
-DRAFT
+RASCUNHO
 ↓
-CONFIRMED
+CONFIRMADO
 ↓
-COMPLETED
+CONCLUIDO
 
 e:
 
-CANCELLED
+CANCELADO
 
 Transições válidas:
 
-DRAFT → CONFIRMED
-DRAFT → CANCELLED
-CONFIRMED → COMPLETED
-CONFIRMED → CANCELLED
+RASCUNHO → CONFIRMADO
+RASCUNHO → CANCELADO
+CONFIRMADO → CONCLUIDO
+CONFIRMADO → CANCELADO
 
 Transições inválidas (devem falhar):
 
-DRAFT → COMPLETED
-CONFIRMED → DRAFT
-COMPLETED → qualquer estado (terminal)
-CANCELLED → qualquer estado (terminal)
+RASCUNHO → CONCLUIDO
+CONFIRMADO → RASCUNHO
+CONCLUIDO → qualquer estado (terminal)
+CANCELADO → qualquer estado (terminal)
 
 Também testar:
 
-order_number sequencial por tenant
+numero_pedido sequencial por tenant
 itens do pedido
 reserva de estoque
 confirmação de reserva

@@ -296,7 +296,7 @@ Quando necessário, respostas externas devem ser validadas com schemas específi
 Exemplo conceitual:
 
 ExternalClienteResposta
-ExternalOrderResponse
+ExternalPedidoResposta
 
 Não confiar cegamente em dict arbitrários.
 

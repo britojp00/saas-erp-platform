@@ -150,10 +150,10 @@ produto.excluir
 
 Pedidos:
 
-order.read
-order.create
-order.update
-order.cancel
+pedido.ler
+pedido.criar
+pedido.atualizar
+pedido.cancelar
 7. Nomenclatura
 
 As permissões devem possuir nomes:
@@ -195,8 +195,8 @@ Role Seller
     ↓
 cliente.ler
 cliente.criar
-order.read
-order.create
+pedido.ler
+pedido.criar
 
 O usuário recebe as permissões através das roles.
 
@@ -341,7 +341,7 @@ Uma permissão não substitui uma regra de negócio.
 
 Exemplo:
 
-order.cancel
+pedido.cancelar
 
 permite que o usuário tente cancelar um pedido.
 
@@ -358,7 +358,7 @@ Operation allowed
 
 Usuário possui:
 
-order.cancel
+pedido.cancelar
 
 Isso não significa automaticamente:
 
@@ -475,7 +475,7 @@ Administrator
 ├── produto.criar
 ├── produto.atualizar
 ├── produto.excluir
-└── order.*
+└── pedido.*
 
 Mesmo uma role administrativa deve continuar respeitando o tenant.
 

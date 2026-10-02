@@ -1113,11 +1113,11 @@ Exemplo:
 
 job criado
 ↓
-pedido = pending
+pedido = confirmado
 
 Antes da execução:
 
-pedido = cancelled
+pedido = cancelado
 
 O service deve avaliar o estado atual.
 
@@ -1176,7 +1176,7 @@ Exemplos:
 
 cliente.sync
 product.sync
-order.export
+pedido.export
 estoque.recalcular
 notification.send
 

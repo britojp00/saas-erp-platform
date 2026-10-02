@@ -336,7 +336,7 @@ pages/
 ├── Clientes
 ├── Produtos
 ├── Estoque
-└── Orders
+└── Pedidos
 
 Pages podem coordenar componentes, hooks e services.
 
@@ -434,7 +434,7 @@ Exemplos:
 
 clientes
 produtos
-orders
+pedidos
 estoque
 
 Quando a aplicação crescer, poderá ser considerada uma biblioteca específica para server state.
@@ -704,7 +704,7 @@ Exemplo:
 /clientes
 /produtos
 /estoque
-/orders
+/pedidos
 
 Rotas protegidas devem exigir autenticação.
 
@@ -941,7 +941,7 @@ Login
 Dashboard
 Clientes
 Produtos
-Orders
+Pedidos
 
 Não é necessário dividir componentes pequenos artificialmente.
 
@@ -1177,7 +1177,7 @@ Exemplos:
 calculation
 authorization
 stock rules
-order state
+estado do pedido
 financial rules
 
 O backend deve permanecer a autoridade.

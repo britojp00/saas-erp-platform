@@ -139,10 +139,10 @@ Responsável pelas regras de negócio.
 
 Exemplo:
 
-Create Order
+Create Pedido
      |
      v
-OrderService
+PedidoService
      |
      +---- validar cliente
      |
@@ -185,7 +185,7 @@ Exemplos:
 ClienteRepository
 ProdutoRepository
 EstoqueRepository
-OrderRepository
+PedidoRepository
 
 Responsabilidades:
 
@@ -227,8 +227,8 @@ Cliente
 Produto
 Categoria
 Estoque
-Order
-OrderItem
+Pedido
+PedidoItem
 AuditLog
 
 Models representam entidades persistidas.
@@ -363,16 +363,16 @@ O router não deve implementar toda essa lógica.
 
 Fluxo esperado:
 
-POST /api/v1/orders
+POST /api/v1/pedidos
           |
           v
-     OrderRouter
-          |  require_permissions("order.create")
+     PedidoRouter
+          |  require_permissions("pedido.criar")
           v
-      OrderCreate
+      PedidoCriar
           |
           v
-     OrderService
+     PedidoService
           |
           +---- validar cliente
           |
@@ -380,24 +380,24 @@ POST /api/v1/orders
           |
           +---- calcular valores
           |
-          +---- criar pedido (DRAFT)
+          +---- criar pedido (RASCUNHO)
           |
           +---- criar itens
           |
           +---- reservar estoque
           |
           v
-    OrderRepository
+    PedidoRepository
           |
           v
        PostgreSQL
 
-POST /api/v1/orders/{id}/confirm
+POST /api/v1/pedidos/{id}/confirmar
           |
           v
-     OrderService
+     PedidoService
           |
-          +---- verificar status (DRAFT)
+          +---- verificar status (RASCUNHO)
           |
           +---- confirmar pedido
           |
@@ -406,14 +406,14 @@ POST /api/v1/orders/{id}/confirm
           v
        PostgreSQL
 
-POST /api/v1/orders/{id}/complete
+POST /api/v1/pedidos/{id}/concluir
           |
           v
-     OrderService
+     PedidoService
           |
-          +---- verificar status (CONFIRMED)
+          +---- verificar status (CONFIRMADO)
           |
-          +---- completar pedido
+          +---- concluir pedido
           |
           +---- Baixar estoque
           |
@@ -431,7 +431,7 @@ Tenant
   +---- Users
   +---- Clientes
   +---- Produtos
-  +---- Orders
+  +---- Pedidos
   +---- Estoque
 
 Entidades de negócio pertencentes a um tenant devem possuir
@@ -548,7 +548,7 @@ cliente.ler, cliente.criar, cliente.atualizar, cliente.excluir
 categoria.ler, categoria.criar, categoria.atualizar, categoria.excluir
 produto.ler, produto.criar, produto.atualizar, produto.excluir
 estoque.ler, estoque.atualizar
-order.read, order.create, order.update, order.cancel
+pedido.ler, pedido.criar, pedido.atualizar, pedido.cancelar
 
 Exemplo de uso:
 
@@ -574,9 +574,9 @@ Exemplo:
 
 Criar pedido
      |
-     +---- criar Order
+     +---- criar Pedido
      |
-     +---- criar OrderItems
+     +---- criar PedidoItens
      |
      +---- atualizar Estoque
 
@@ -681,7 +681,7 @@ Exemplo:
 
 /api/v1/clientes
 /api/v1/produtos
-/api/v1/orders
+/api/v1/pedidos
 
 Uma nova versão somente deve ser criada quando existir
 necessidade real de manter contratos incompatíveis.

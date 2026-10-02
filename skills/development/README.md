@@ -118,7 +118,7 @@ Cliente
 Produto
 → seguir padrão quando aplicável
 
-Order
+Pedido
 → seguir padrão quando aplicável
 
 Não criar abordagens diferentes para problemas equivalentes sem justificativa técnica.
@@ -310,7 +310,7 @@ Produto
 ↓
 Estoque
 ↓
-Order
+Pedido
 
 Cada etapa deve ser validada antes de avançar.
 
@@ -367,7 +367,7 @@ Exemplos:
 
 feat: add cliente management
 fix: prevent cross-tenant access
-test: add order service tests
+test: add pedido service tests
 refactor: simplify cliente repository
 docs: update database guidelines
 chore: update dependencies
@@ -1000,7 +1000,7 @@ Preferir:
 
 get_current_user
 create_cliente
-cancel_order
+cancelar_pedido
 create_reserva
 
 Evitar:

@@ -99,7 +99,7 @@ Exemplo:
 {
   "timestamp": "2026-09-17T18:30:00Z",
   "level": "INFO",
-  "event": "order.created",
+  "event": "pedido.criado",
   "request_id": "uuid",
   "tenant_id": "uuid",
   "user_id": "uuid"
@@ -332,8 +332,8 @@ Algumas métricas de negócio podem ser úteis.
 
 Exemplos:
 
-orders_created
-orders_cancelled
+pedidos_created
+pedidos_cancelled
 products_created
 estoque_ajustes
 
@@ -349,7 +349,7 @@ Technical
 → API latency
 
 Business
-→ orders created
+→ pedidos created
 
 Métricas técnicas ajudam a monitorar o sistema.
 
@@ -881,7 +881,7 @@ Technical Log
 Exemplo:
 
 Audit:
-order.cancelled
+pedido.cancelado
 
 Technical Log:
 database.transaction.completed
@@ -1320,8 +1320,8 @@ LOG_JSON=true     # true=JSON, false=Text
 | cliente.nao_encontrado | WARNING | exceptions.py |
 | produto.nao_encontrado | WARNING | exceptions.py |
 | estoque.nao_encontrado | WARNING | exceptions.py |
-| order.not_found | WARNING | exceptions.py |
-| order.invalid_state | WARNING | exceptions.py |
+| pedido.nao_encontrado | WARNING | exceptions.py |
+| pedido.estado_invalido | WARNING | exceptions.py |
 | categoria.nao_encontrada | WARNING | exceptions.py |
 | validation_error | WARNING | exceptions.py |
 | internal_error | ERROR | exceptions.py |

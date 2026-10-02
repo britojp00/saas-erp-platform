@@ -103,7 +103,7 @@ Estrutura conceitual:
 schemas/
 ├── cliente.py
 ├── produto.py
-├── order.py
+├── pedido.py
 └── ...
 
 Separar quando necessário:
@@ -148,7 +148,7 @@ services/
 ├── cliente.py
 ├── produto.py
 ├── estoque.py
-├── order.py
+├── pedido.py
 └── ...
 
 Um service pode:
@@ -163,9 +163,9 @@ coordenar processamento assíncrono.
 
 Exemplo conceitual:
 
-class OrderService:
+class PedidoService:
 
-    async def create_order(...):
+    async def criar_pedido(...):
         ...
 
 O service não deve depender diretamente da camada HTTP.
@@ -182,7 +182,7 @@ repositories/
 ├── cliente.py
 ├── produto.py
 ├── estoque.py
-└── order.py
+└── pedido.py
 
 Um repository pode realizar:
 
@@ -480,7 +480,7 @@ ErroClienteNaoEncontrado
 ProductNotFound
 InsufficientStock
 ErroClienteDuplicado
-OrderAlreadyProcessed
+ErroEstadoPedidoInvalido
 PermissionDenied
 
 Esses erros podem ser convertidos em respostas HTTP por uma camada apropriada.

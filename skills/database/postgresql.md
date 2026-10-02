@@ -45,7 +45,7 @@ PostgreSQL
                 ├── users
                 ├── clientes
                 ├── produtos
-                ├── orders
+                ├── pedidos
                 └── estoque
 
 Não criar schemas PostgreSQL separados por tenant.
@@ -70,8 +70,8 @@ roles
 permissions
 clientes
 produtos
-orders
-order_items
+pedidos
+pedido_itens
 audit_logs
 Colunas
 
@@ -490,7 +490,7 @@ Foreign keys devem possuir constraints explícitas.
 
 Exemplo conceitual:
 
-CONSTRAINT fk_orders_tenant_cliente
+CONSTRAINT fk_pedidos_tenant_cliente
 FOREIGN KEY (cliente_id)
 REFERENCES clientes(id)
 27. Foreign Key e Tenant
@@ -500,7 +500,7 @@ as regras de multi-tenancy.
 
 Exemplo:
 
-orders
+pedidos
     |
     +---- cliente_id
     |
@@ -508,13 +508,13 @@ orders
 
 A aplicação deve garantir que:
 
-Order Tenant
+Pedido Tenant
 =
 Cliente Tenant
 
 A foreign key simples entre:
 
-orders.cliente_id
+pedidos.cliente_id
 → clientes.id
 
 não substitui a validação de contexto de tenant.
@@ -564,15 +564,16 @@ de estados, a integridade deve ser avaliada.
 
 Exemplo:
 
-order.status
+pedidos.status
 
 Poderá utilizar uma constraint apropriada, como:
 
 CHECK (
     status IN (
-        'pending',
-        'confirmed',
-        'cancelled'
+        'RASCUNHO',
+        'CONFIRMADO',
+        'CONCLUIDO',
+        'CANCELADO'
     )
 )
 
