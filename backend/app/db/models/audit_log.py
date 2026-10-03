@@ -5,20 +5,20 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
-from app.db.mixins import BigIntPrimaryKeyMixin, TenantScopedMixin
+from app.db.mixins import BigIntPrimaryKeyMixin, EscopoEmpresaMixin
 
 
 class AuditLog(
     BigIntPrimaryKeyMixin,
-    TenantScopedMixin,
+    EscopoEmpresaMixin,
     Base,
 ):
     __tablename__ = "audit_logs"
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ["tenant_id", "user_id"],
-            ["users.tenant_id", "users.id"],
+            ["empresa_id", "user_id"],
+            ["users.empresa_id", "users.id"],
             ondelete="RESTRICT",
         ),
     )

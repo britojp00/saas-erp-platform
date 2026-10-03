@@ -12,29 +12,30 @@ class RoleRepository:
     async def get_names_by_user(
         self,
         user_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> list[str]:
         stmt = (
             select(distinct(Role.name))
             .join(
                 UserRole,
-                (UserRole.role_id == Role.id) & (UserRole.tenant_id == Role.tenant_id),
+                (UserRole.role_id == Role.id)
+                & (UserRole.empresa_id == Role.empresa_id),
             )
             .where(
                 UserRole.user_id == user_id,
-                UserRole.tenant_id == tenant_id,
+                UserRole.empresa_id == empresa_id,
                 Role.deleted_at.is_(None),
             )
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def list_by_tenant(
+    async def list_by_empresa(
         self,
-        tenant_id: int,
+        empresa_id: int,
     ) -> list[Role]:
         stmt = select(Role).where(
-            Role.tenant_id == tenant_id,
+            Role.empresa_id == empresa_id,
             Role.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)

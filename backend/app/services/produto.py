@@ -21,18 +21,18 @@ class ProdutoService:
 
     async def _validate_categoria(
         self,
-        tenant_id: int,
+        empresa_id: int,
         categoria_id: int | None,
     ) -> None:
         if categoria_id is None:
             return
-        categoria = await self.repo.get_categoria_by_id(categoria_id, tenant_id)
+        categoria = await self.repo.get_categoria_by_id(categoria_id, empresa_id)
         if categoria is None:
             raise ErroProdutoCategoriaInvalida()
 
     async def list(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         page: int,
         page_size: int,
@@ -44,7 +44,7 @@ class ProdutoService:
     ) -> tuple[list[Produto], int]:
         offset = (page - 1) * page_size
         return await self.repo.list(
-            tenant_id,
+            empresa_id,
             offset=offset,
             limit=page_size,
             search=search,
@@ -57,26 +57,26 @@ class ProdutoService:
     async def get_by_id(
         self,
         produto_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> Produto:
-        produto = await self.repo.get_by_id(produto_id, tenant_id)
+        produto = await self.repo.get_by_id(produto_id, empresa_id)
         if produto is None:
             raise ErroProdutoNaoEncontrado()
         return produto
 
     async def create(
         self,
-        tenant_id: int,
+        empresa_id: int,
         data: ProdutoCriarPayload,
         user_id: int | None = None,
     ) -> Produto:
-        await self._validate_categoria(tenant_id, data.categoria_id)
+        await self._validate_categoria(empresa_id, data.categoria_id)
 
-        if await self.repo.exists_by_sku(tenant_id, data.sku.strip()):
+        if await self.repo.exists_by_sku(empresa_id, data.sku.strip()):
             raise ErroProdutoDuplicado()
 
         produto = Produto(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             sku=data.sku.strip(),
             name=data.name.strip(),
             description=data.description,
@@ -92,7 +92,7 @@ class ProdutoService:
             raise ErroProdutoDuplicado()
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="PRODUTO_CRIAR",
             entity_type="produto",
@@ -110,11 +110,11 @@ class ProdutoService:
     async def update(
         self,
         produto_id: int,
-        tenant_id: int,
+        empresa_id: int,
         data: ProdutoAtualizarPayload,
         user_id: int | None = None,
     ) -> Produto:
-        produto = await self.repo.get_by_id(produto_id, tenant_id)
+        produto = await self.repo.get_by_id(produto_id, empresa_id)
         if produto is None:
             raise ErroProdutoNaoEncontrado()
 
@@ -130,13 +130,13 @@ class ProdutoService:
         if "categoria_id" in update_data:
             new_categoria_id = update_data["categoria_id"]
             if new_categoria_id is not None:
-                await self._validate_categoria(tenant_id, new_categoria_id)
+                await self._validate_categoria(empresa_id, new_categoria_id)
             produto.categoria_id = new_categoria_id
 
         if "sku" in update_data:
             new_sku = update_data["sku"].strip()
             if new_sku != produto.sku and await self.repo.exists_by_sku(
-                tenant_id, new_sku, exclude_id=produto.id
+                empresa_id, new_sku, exclude_id=produto.id
             ):
                 raise ErroProdutoDuplicado()
             produto.sku = new_sku
@@ -165,7 +165,7 @@ class ProdutoService:
         }
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="PRODUTO_ATUALIZAR",
             entity_type="produto",
@@ -179,17 +179,17 @@ class ProdutoService:
     async def soft_delete(
         self,
         produto_id: int,
-        tenant_id: int,
+        empresa_id: int,
         user_id: int | None = None,
     ) -> None:
-        produto = await self.repo.get_by_id(produto_id, tenant_id)
+        produto = await self.repo.get_by_id(produto_id, empresa_id)
         if produto is None:
             raise ErroProdutoNaoEncontrado()
 
-        if await self.repo.tem_estoque(tenant_id, produto.id):
+        if await self.repo.tem_estoque(empresa_id, produto.id):
             raise ErroProdutoEmUso()
 
-        if await self.repo.tem_itens_pedido(tenant_id, produto.id):
+        if await self.repo.tem_itens_pedido(empresa_id, produto.id):
             raise ErroProdutoEmUso()
 
         old_values = {
@@ -200,7 +200,7 @@ class ProdutoService:
         await self.repo.soft_delete(produto)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="PRODUTO_EXCLUIR",
             entity_type="produto",

@@ -34,12 +34,12 @@ class DeletedUserError(DomainError):
     """Raised when a soft-deleted user attempts to authenticate."""
 
 
-class TenantNotFoundError(DomainError):
-    """Raised when a tenant is not found."""
+class ErroEmpresaNaoEncontrada(DomainError):
+    """Levantado quando a empresa não é encontrada."""
 
 
-class InactiveTenantError(DomainError):
-    """Raised when a tenant is inactive."""
+class ErroEmpresaInativa(DomainError):
+    """Levantado quando a empresa está inativa."""
 
 
 class ErroClienteNaoEncontrado(DomainError):
@@ -47,7 +47,7 @@ class ErroClienteNaoEncontrado(DomainError):
 
 
 class ErroClienteDuplicado(DomainError):
-    """Levantado quando o documento de um cliente já existe no tenant."""
+    """Levantado quando o documento de um cliente já existe na empresa."""
 
 
 class ErroCategoriaNaoEncontrada(DomainError):
@@ -55,7 +55,7 @@ class ErroCategoriaNaoEncontrada(DomainError):
 
 
 class ErroCategoriaDuplicada(DomainError):
-    """Levantado quando o nome de uma categoria já existe no tenant."""
+    """Levantado quando o nome de uma categoria já existe na empresa."""
 
 
 class ErroCategoriaPossuiFilhos(DomainError):
@@ -83,7 +83,7 @@ class ErroProdutoNaoEncontrado(DomainError):
 
 
 class ErroProdutoDuplicado(DomainError):
-    """Levantado quando o SKU de um produto já existe no tenant."""
+    """Levantado quando o SKU de um produto já existe na empresa."""
 
 
 class ErroProdutoEmUso(DomainError):
@@ -194,17 +194,17 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={"detail": "Usuário não encontrado"},
         )
 
-    @app.exception_handler(TenantNotFoundError)
-    async def tenant_not_found_error_handler(
-        request: Request, exc: TenantNotFoundError
+    @app.exception_handler(ErroEmpresaNaoEncontrada)
+    async def empresa_nao_encontrada_error_handler(
+        request: Request, exc: ErroEmpresaNaoEncontrada
     ) -> JSONResponse:
         logger.warning(
-            "tenant.not_found",
-            extra={"event": "tenant.not_found"},
+            "empresa.nao_encontrada",
+            extra={"event": "empresa.nao_encontrada"},
         )
         return JSONResponse(
             status_code=404,
-            content={"detail": "Tenant não encontrado"},
+            content={"detail": "Empresa não encontrada"},
         )
 
     @app.exception_handler(ErroClienteNaoEncontrado)

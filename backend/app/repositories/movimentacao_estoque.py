@@ -15,14 +15,14 @@ class MovimentacaoEstoqueRepository:
 
     async def list(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         offset: int,
         limit: int,
         produto_id: int | None = None,
     ) -> tuple[list[MovimentacaoEstoque], int]:
         base_stmt = select(MovimentacaoEstoque).where(
-            MovimentacaoEstoque.tenant_id == tenant_id,
+            MovimentacaoEstoque.empresa_id == empresa_id,
         )
         if produto_id is not None:
             base_stmt = base_stmt.where(MovimentacaoEstoque.produto_id == produto_id)
@@ -42,11 +42,11 @@ class MovimentacaoEstoqueRepository:
 
     async def exists_by_idempotency_key(
         self,
-        tenant_id: int,
+        empresa_id: int,
         idempotency_key: str,
     ) -> bool:
         stmt = select(MovimentacaoEstoque).where(
-            MovimentacaoEstoque.tenant_id == tenant_id,
+            MovimentacaoEstoque.empresa_id == empresa_id,
             MovimentacaoEstoque.idempotency_key == idempotency_key,
         )
         result = await self.session.execute(stmt)

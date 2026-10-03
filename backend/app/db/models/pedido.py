@@ -14,8 +14,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import (
     BigIntPrimaryKeyMixin,
+    EscopoEmpresaMixin,
     SoftDeleteMixin,
-    TenantScopedMixin,
     TimestampMixin,
 )
 
@@ -31,26 +31,26 @@ class Pedido(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
-    TenantScopedMixin,
+    EscopoEmpresaMixin,
     Base,
 ):
     __tablename__ = "pedidos"
 
     __table_args__ = (
         UniqueConstraint(
-            "tenant_id",
+            "empresa_id",
             "numero_pedido",
-            name="uq_pedidos_tenant_numero",
+            name="uq_pedidos_empresa_numero",
         ),
         UniqueConstraint(
-            "tenant_id",
+            "empresa_id",
             "id",
-            name="uq_pedidos_tenant_id",
+            name="uq_pedidos_empresa_id",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "cliente_id"],
-            ["clientes.tenant_id", "clientes.id"],
-            name="fk_pedidos_tenant_cliente",
+            ["empresa_id", "cliente_id"],
+            ["clientes.empresa_id", "clientes.id"],
+            name="fk_pedidos_empresa_cliente",
             ondelete="RESTRICT",
         ),
     )

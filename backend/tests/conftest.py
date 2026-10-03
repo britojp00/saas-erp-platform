@@ -17,7 +17,7 @@ from app.core.config import settings
 from app.core.security import create_access_token, get_password_hash
 from app.db.base import Base
 from app.db.database import get_db_session
-from app.db.models.tenant import Tenant
+from app.db.models.empresa import Empresa
 from app.db.models.user import User
 from app.main import app
 
@@ -90,27 +90,27 @@ async def db_session(_ensure_test_db) -> AsyncGenerator[AsyncSession]:
 
 
 @pytest_asyncio.fixture
-async def test_tenant(db_session: AsyncSession) -> Tenant:
-    tenant = Tenant(
-        name="Test Tenant",
-        slug="test-tenant",
+async def test_empresa(db_session: AsyncSession) -> Empresa:
+    empresa = Empresa(
+        name="Empresa Teste",
+        slug="test-empresa",
         is_active=True,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
-    db_session.add(tenant)
+    db_session.add(empresa)
     await db_session.commit()
-    await db_session.refresh(tenant)
-    return tenant
+    await db_session.refresh(empresa)
+    return empresa
 
 
 @pytest_asyncio.fixture
 async def test_user(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> User:
     user = User(
-        tenant_id=test_tenant.id,
+        empresa_id=test_empresa.id,
         email="test@example.com",
         password_hash=get_password_hash("testpassword123"),
         full_name="Test User",
@@ -127,12 +127,12 @@ async def test_user(
 @pytest_asyncio.fixture
 async def authenticated_headers(
     test_user: User,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> dict[str, str]:
     token = create_access_token(
         data={
             "sub": str(test_user.id),
-            "tenant_id": str(test_tenant.id),
+            "empresa_id": str(test_empresa.id),
         }
     )
     return {"Authorization": f"Bearer {token}"}

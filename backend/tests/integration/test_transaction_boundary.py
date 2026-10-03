@@ -17,7 +17,7 @@ from app.core.config import settings
 from app.db.base import Base
 from app.db.database import get_db_session
 from app.db.models.cliente import Cliente
-from app.db.models.tenant import Tenant
+from app.db.models.empresa import Empresa
 
 
 def _test_database_url() -> str:
@@ -79,18 +79,18 @@ async def transaction_boundary(
 
 
 @pytest_asyncio.fixture
-async def tenant_id(transaction_boundary: BoundaryFactories) -> int:
+async def empresa_id(transaction_boundary: BoundaryFactories) -> int:
     async with transaction_boundary.application() as session:
-        tenant = Tenant(
-            name="Boundary Tenant",
-            slug="boundary-tenant",
+        empresa = Empresa(
+            name="Empresa Boundary",
+            slug="boundary-empresa",
             is_active=True,
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
         )
-        session.add(tenant)
+        session.add(empresa)
         await session.commit()
-        return tenant.id
+        return empresa.id
 
 
 @asynccontextmanager
@@ -113,11 +113,11 @@ async def _boundary_session() -> AsyncGenerator[AsyncSession]:
 @pytest.mark.asyncio
 async def test_commit_persists_record_on_normal_exit(
     transaction_boundary: BoundaryFactories,
-    tenant_id: int,
+    empresa_id: int,
 ) -> None:
     async with _boundary_session() as session:
         cliente = Cliente(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             name="Cliente Commit Boundary",
             document="BOUNDARY-COMMIT-001",
         )
@@ -133,18 +133,18 @@ async def test_commit_persists_record_on_normal_exit(
 
     assert persisted is not None
     assert persisted.name == "Cliente Commit Boundary"
-    assert persisted.tenant_id == tenant_id
+    assert persisted.empresa_id == empresa_id
 
 
 @pytest.mark.asyncio
 async def test_rollback_discards_record_after_exception(
     transaction_boundary: BoundaryFactories,
-    tenant_id: int,
+    empresa_id: int,
 ) -> None:
     with pytest.raises(RuntimeError, match="falha após o flush"):
         async with _boundary_session() as session:
             cliente = Cliente(
-                tenant_id=tenant_id,
+                empresa_id=empresa_id,
                 name="Cliente Rollback Boundary",
                 document="BOUNDARY-ROLLBACK-001",
             )
@@ -165,6 +165,6 @@ async def test_rollback_discards_record_after_exception(
     assert persisted is None
 
     async with transaction_boundary.independent() as check_session:
-        tenant = await check_session.get(Tenant, tenant_id)
+        empresa = await check_session.get(Empresa, empresa_id)
 
-    assert tenant is not None
+    assert empresa is not None

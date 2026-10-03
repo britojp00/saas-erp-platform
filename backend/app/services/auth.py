@@ -6,7 +6,7 @@ from app.core.security import (
     verify_password,
 )
 from app.db.models.user import User
-from app.repositories.tenant import TenantRepository
+from app.repositories.empresa import EmpresaRepository
 from app.repositories.user import UserRepository
 from app.schemas.auth import TokenResponse
 from app.services.audit_log import AuditLogService
@@ -16,7 +16,7 @@ class AuthService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.user_repo = UserRepository(session)
-        self.tenant_repo = TenantRepository(session)
+        self.empresa_repo = EmpresaRepository(session)
         self.audit_service = AuditLogService(session)
 
     async def authenticate(
@@ -39,7 +39,7 @@ class AuthService:
         if len(matched_users) != 1:
             if candidates:
                 await self.audit_service.log(
-                    tenant_id=candidates[0].tenant_id,
+                    empresa_id=candidates[0].empresa_id,
                     user_id=candidates[0].id,
                     action="LOGIN_FAILURE",
                     entity_type="user",
@@ -52,7 +52,7 @@ class AuthService:
 
         if not user.is_active:
             await self.audit_service.log(
-                tenant_id=user.tenant_id,
+                empresa_id=user.empresa_id,
                 user_id=user.id,
                 action="LOGIN_FAILURE",
                 entity_type="user",
@@ -63,7 +63,7 @@ class AuthService:
 
         if user.deleted_at is not None:
             await self.audit_service.log(
-                tenant_id=user.tenant_id,
+                empresa_id=user.empresa_id,
                 user_id=user.id,
                 action="LOGIN_FAILURE",
                 entity_type="user",
@@ -72,28 +72,28 @@ class AuthService:
             )
             raise AuthenticationError("Credenciais inválidas")
 
-        tenant = await self.tenant_repo.get_by_id(user.tenant_id)
+        empresa = await self.empresa_repo.get_by_id(user.empresa_id)
 
-        if tenant is None or not tenant.is_active:
+        if empresa is None or not empresa.is_active:
             await self.audit_service.log(
-                tenant_id=user.tenant_id,
+                empresa_id=user.empresa_id,
                 user_id=user.id,
                 action="LOGIN_FAILURE",
                 entity_type="user",
                 entity_id=user.id,
-                description="Inactive tenant",
+                description="Empresa inativa",
             )
             raise AuthenticationError("Credenciais inválidas")
 
         token = create_access_token(
             data={
                 "sub": str(user.id),
-                "tenant_id": str(user.tenant_id),
+                "empresa_id": str(user.empresa_id),
             }
         )
 
         await self.audit_service.log(
-            tenant_id=user.tenant_id,
+            empresa_id=user.empresa_id,
             user_id=user.id,
             action="LOGIN_SUCCESS",
             entity_type="user",
@@ -105,9 +105,9 @@ class AuthService:
     async def get_current_user(
         self,
         user_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> User:
-        user = await self.user_repo.get_by_id_and_tenant(user_id, tenant_id)
+        user = await self.user_repo.get_by_id_and_empresa(user_id, empresa_id)
 
         if user is None:
             raise AuthenticationError("Credenciais inválidas")
@@ -118,9 +118,9 @@ class AuthService:
         if user.deleted_at is not None:
             raise AuthenticationError("Credenciais inválidas")
 
-        tenant = await self.tenant_repo.get_by_id(tenant_id)
+        empresa = await self.empresa_repo.get_by_id(empresa_id)
 
-        if tenant is None or not tenant.is_active:
+        if empresa is None or not empresa.is_active:
             raise AuthenticationError("Credenciais inválidas")
 
         return user

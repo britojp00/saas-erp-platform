@@ -23,7 +23,7 @@ class AuditLogRepository:
 
     async def list(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         offset: int,
         limit: int,
@@ -34,7 +34,7 @@ class AuditLogRepository:
         sort: str = "created_at",
         order: str = "desc",
     ) -> tuple[list[AuditLog], int]:
-        base_stmt = select(AuditLog).where(AuditLog.tenant_id == tenant_id)
+        base_stmt = select(AuditLog).where(AuditLog.empresa_id == empresa_id)
 
         if action:
             base_stmt = base_stmt.where(AuditLog.action == action)

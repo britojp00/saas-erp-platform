@@ -37,16 +37,16 @@ async def get_me(
     db: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> UserResponse:
     auth_service = AuthorizationService(db)
-    roles = await auth_service.get_user_roles(current_user.id, current_user.tenant_id)
+    roles = await auth_service.get_user_roles(current_user.id, current_user.empresa_id)
     permissions = await auth_service.get_user_permissions(
-        current_user.id, current_user.tenant_id
+        current_user.id, current_user.empresa_id
     )
     return UserResponse(
         id=current_user.id,
         email=current_user.email,
         full_name=current_user.full_name,
         is_active=current_user.is_active,
-        tenant_id=current_user.tenant_id,
+        empresa_id=current_user.empresa_id,
         created_at=current_user.created_at,
         roles=roles,
         permissions=sorted(permissions),
@@ -64,5 +64,5 @@ async def list_roles(
     db: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> list[dict[str, str]]:
     role_repo = RoleRepository(db)
-    roles = await role_repo.list_by_tenant(current_user.tenant_id)
+    roles = await role_repo.list_by_empresa(current_user.empresa_id)
     return [{"id": str(r.id), "name": r.name} for r in roles]

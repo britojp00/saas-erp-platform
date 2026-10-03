@@ -7,28 +7,28 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, get_password_hash
 from app.db.models.cliente import Cliente
+from app.db.models.empresa import Empresa
 from app.db.models.permission import Permission
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
-from app.db.models.tenant import Tenant
 from app.db.models.user import User
 from app.db.models.user_role import UserRole
 
 
 async def _create_permission(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
 ) -> Permission:
     stmt = select(Permission).where(
-        Permission.tenant_id == tenant_id,
+        Permission.empresa_id == empresa_id,
         Permission.name == name,
     )
     result = await session.execute(stmt)
     existing = result.scalar_one_or_none()
     if existing:
         return existing
-    perm = Permission(tenant_id=tenant_id, name=name)
+    perm = Permission(empresa_id=empresa_id, name=name)
     session.add(perm)
     await session.flush()
     return perm
@@ -36,32 +36,32 @@ async def _create_permission(
 
 async def _create_role_with_perms(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     perm_names: list[str],
 ) -> Role:
     stmt = select(Role).where(
-        Role.tenant_id == tenant_id,
+        Role.empresa_id == empresa_id,
         Role.name == name,
     )
     result = await session.execute(stmt)
     existing = result.scalar_one_or_none()
     if existing:
         return existing
-    role = Role(tenant_id=tenant_id, name=name)
+    role = Role(empresa_id=empresa_id, name=name)
     session.add(role)
     await session.flush()
     for pname in perm_names:
-        perm = await _create_permission(session, tenant_id, pname)
+        perm = await _create_permission(session, empresa_id, pname)
         stmt_rp = select(RolePermission).where(
-            RolePermission.tenant_id == tenant_id,
+            RolePermission.empresa_id == empresa_id,
             RolePermission.role_id == role.id,
             RolePermission.permission_id == perm.id,
         )
         rp_result = await session.execute(stmt_rp)
         if rp_result.scalar_one_or_none() is None:
             rp = RolePermission(
-                tenant_id=tenant_id,
+                empresa_id=empresa_id,
                 role_id=role.id,
                 permission_id=perm.id,
             )
@@ -72,12 +72,12 @@ async def _create_role_with_perms(
 
 async def _assign_role_to_user(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     user_id: int,
     role_id: int,
 ) -> None:
     stmt = select(UserRole).where(
-        UserRole.tenant_id == tenant_id,
+        UserRole.empresa_id == empresa_id,
         UserRole.user_id == user_id,
         UserRole.role_id == role_id,
     )
@@ -85,7 +85,7 @@ async def _assign_role_to_user(
     if result.scalar_one_or_none():
         return
     ur = UserRole(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         user_id=user_id,
         role_id=role_id,
     )
@@ -95,12 +95,12 @@ async def _assign_role_to_user(
 
 async def _create_cliente_in_db(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     document: str | None = None,
 ) -> Cliente:
     cliente = Cliente(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         name=name,
         document=document,
     )
@@ -112,11 +112,11 @@ async def _create_cliente_in_db(
 @pytest.fixture
 async def all_cliente_perms(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> Role:
     return await _create_role_with_perms(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         "cliente_admin",
         [
             "cliente.ler",
@@ -130,12 +130,12 @@ async def all_cliente_perms(
 @pytest.fixture
 async def admin_user(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
     all_cliente_perms: Role,
 ) -> User:
     await _assign_role_to_user(
-        db_session, test_tenant.id, test_user.id, all_cliente_perms.id
+        db_session, test_empresa.id, test_user.id, all_cliente_perms.id
     )
     await db_session.commit()
     return test_user
@@ -144,38 +144,38 @@ async def admin_user(
 @pytest.fixture
 async def admin_headers(
     admin_user: User,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> dict[str, str]:
     token = create_access_token(
         data={
             "sub": str(admin_user.id),
-            "tenant_id": str(test_tenant.id),
+            "empresa_id": str(test_empresa.id),
         }
     )
     return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
-async def other_tenant(db_session: AsyncSession) -> Tenant:
-    tenant = Tenant(
-        name="Other Tenant",
-        slug="other-cliente-tenant",
+async def other_empresa(db_session: AsyncSession) -> Empresa:
+    empresa = Empresa(
+        name="Outra Empresa",
+        slug="other-cliente-empresa",
         is_active=True,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
-    db_session.add(tenant)
+    db_session.add(empresa)
     await db_session.flush()
-    return tenant
+    return empresa
 
 
 @pytest.fixture
-async def other_tenant_user(
+async def other_empresa_user(
     db_session: AsyncSession,
-    other_tenant: Tenant,
+    other_empresa: Empresa,
 ) -> User:
     user = User(
-        tenant_id=other_tenant.id,
+        empresa_id=other_empresa.id,
         email="other@example.com",
         full_name="Other User",
         is_active=True,
@@ -189,14 +189,14 @@ async def other_tenant_user(
 
 
 @pytest.fixture
-async def other_tenant_headers(
+async def other_empresa_headers(
     db_session: AsyncSession,
-    other_tenant_user: User,
-    other_tenant: Tenant,
+    other_empresa_user: User,
+    other_empresa: Empresa,
 ) -> dict[str, str]:
     role = await _create_role_with_perms(
         db_session,
-        other_tenant.id,
+        other_empresa.id,
         "other_cliente_all",
         [
             "cliente.ler",
@@ -206,13 +206,13 @@ async def other_tenant_headers(
         ],
     )
     await _assign_role_to_user(
-        db_session, other_tenant.id, other_tenant_user.id, role.id
+        db_session, other_empresa.id, other_empresa_user.id, role.id
     )
     await db_session.commit()
     token = create_access_token(
         data={
-            "sub": str(other_tenant_user.id),
-            "tenant_id": str(other_tenant.id),
+            "sub": str(other_empresa_user.id),
+            "empresa_id": str(other_empresa.id),
         }
     )
     return {"Authorization": f"Bearer {token}"}
@@ -257,10 +257,10 @@ async def test_create_cliente_without_permission(
 async def test_create_cliente_duplicate_document(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_cliente_in_db(db_session, test_tenant.id, "Existing", "12345678901")
+    await _create_cliente_in_db(db_session, test_empresa.id, "Existing", "12345678901")
     await db_session.commit()
 
     response = await client.post(
@@ -295,11 +295,11 @@ async def test_list_clientes_empty(
 async def test_list_clientes_with_data(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_cliente_in_db(db_session, test_tenant.id, "Cliente A")
-    await _create_cliente_in_db(db_session, test_tenant.id, "Cliente B")
+    await _create_cliente_in_db(db_session, test_empresa.id, "Cliente A")
+    await _create_cliente_in_db(db_session, test_empresa.id, "Cliente B")
     await db_session.commit()
 
     response = await client.get(
@@ -316,11 +316,11 @@ async def test_list_clientes_with_data(
 async def test_list_clientes_search(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
-    await _create_cliente_in_db(db_session, test_tenant.id, "Maria Santos")
+    await _create_cliente_in_db(db_session, test_empresa.id, "Joao Silva")
+    await _create_cliente_in_db(db_session, test_empresa.id, "Maria Santos")
     await db_session.commit()
 
     response = await client.get(
@@ -338,11 +338,11 @@ async def test_list_clientes_search(
 async def test_list_clientes_pagination(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     for i in range(5):
-        await _create_cliente_in_db(db_session, test_tenant.id, f"Cliente {i}")
+        await _create_cliente_in_db(db_session, test_empresa.id, f"Cliente {i}")
     await db_session.commit()
 
     response = await client.get(
@@ -362,11 +362,11 @@ async def test_list_clientes_pagination(
 async def test_list_clientes_sort(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_cliente_in_db(db_session, test_tenant.id, "Zebra")
-    await _create_cliente_in_db(db_session, test_tenant.id, "Alpha")
+    await _create_cliente_in_db(db_session, test_empresa.id, "Zebra")
+    await _create_cliente_in_db(db_session, test_empresa.id, "Alpha")
     await db_session.commit()
 
     response = await client.get(
@@ -384,12 +384,12 @@ async def test_list_clientes_sort(
 async def test_list_clientes_sort_by_id_desc(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    first = await _create_cliente_in_db(db_session, test_tenant.id, "Primeiro")
-    second = await _create_cliente_in_db(db_session, test_tenant.id, "Segundo")
-    third = await _create_cliente_in_db(db_session, test_tenant.id, "Terceiro")
+    first = await _create_cliente_in_db(db_session, test_empresa.id, "Primeiro")
+    second = await _create_cliente_in_db(db_session, test_empresa.id, "Segundo")
+    third = await _create_cliente_in_db(db_session, test_empresa.id, "Terceiro")
     # created_at invertido em relacao aos ids (id maior = created_at mais
     # antigo): se sort=id caisse no fallback de created_at, a ordem seria
     # a inversa da esperada.
@@ -412,12 +412,12 @@ async def test_list_clientes_sort_by_id_desc(
 async def test_list_clientes_sort_by_id_asc(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    first = await _create_cliente_in_db(db_session, test_tenant.id, "Primeiro")
-    second = await _create_cliente_in_db(db_session, test_tenant.id, "Segundo")
-    third = await _create_cliente_in_db(db_session, test_tenant.id, "Terceiro")
+    first = await _create_cliente_in_db(db_session, test_empresa.id, "Primeiro")
+    second = await _create_cliente_in_db(db_session, test_empresa.id, "Segundo")
+    third = await _create_cliente_in_db(db_session, test_empresa.id, "Terceiro")
     # created_at invertido em relacao aos ids (id maior = created_at mais
     # antigo): se sort=id caisse no fallback de created_at, a ordem seria
     # a inversa da esperada.
@@ -443,10 +443,10 @@ async def test_list_clientes_sort_by_id_asc(
 async def test_get_cliente(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_empresa.id, "Joao Silva")
     await db_session.commit()
 
     response = await client.get(
@@ -472,18 +472,18 @@ async def test_get_cliente_not_found(
 
 
 @pytest.mark.asyncio
-async def test_get_cliente_cross_tenant(
+async def test_get_cliente_cross_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant_headers: dict[str, str],
+    test_empresa: Empresa,
+    other_empresa_headers: dict[str, str],
 ):
-    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "My Cliente")
+    cliente = await _create_cliente_in_db(db_session, test_empresa.id, "My Cliente")
     await db_session.commit()
 
     response = await client.get(
         f"/api/v1/clientes/{cliente.id}",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response.status_code == 404
 
@@ -495,10 +495,10 @@ async def test_get_cliente_cross_tenant(
 async def test_update_cliente(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_empresa.id, "Joao Silva")
     await db_session.commit()
 
     response = await client.patch(
@@ -515,10 +515,10 @@ async def test_update_cliente(
 async def test_update_cliente_without_permission(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     authenticated_headers: dict[str, str],
 ):
-    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_empresa.id, "Joao Silva")
     await db_session.commit()
 
     response = await client.patch(
@@ -543,18 +543,18 @@ async def test_update_cliente_not_found(
 
 
 @pytest.mark.asyncio
-async def test_update_cliente_cross_tenant(
+async def test_update_cliente_cross_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant_headers: dict[str, str],
+    test_empresa: Empresa,
+    other_empresa_headers: dict[str, str],
 ):
-    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "My Cliente")
+    cliente = await _create_cliente_in_db(db_session, test_empresa.id, "My Cliente")
     await db_session.commit()
 
     response = await client.patch(
         f"/api/v1/clientes/{cliente.id}",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
         json={"name": "Hacked"},
     )
     assert response.status_code == 404
@@ -567,10 +567,10 @@ async def test_update_cliente_cross_tenant(
 async def test_delete_cliente(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_empresa.id, "Joao Silva")
     await db_session.commit()
 
     response = await client.delete(
@@ -584,10 +584,10 @@ async def test_delete_cliente(
 async def test_deleted_cliente_not_in_list(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_empresa.id, "Joao Silva")
     await db_session.commit()
 
     await client.delete(
@@ -607,10 +607,10 @@ async def test_deleted_cliente_not_in_list(
 async def test_deleted_cliente_not_found(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_empresa.id, "Joao Silva")
     await db_session.commit()
 
     await client.delete(
@@ -629,10 +629,10 @@ async def test_deleted_cliente_not_found(
 async def test_deleted_cliente_cannot_be_updated(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "Joao Silva")
+    cliente = await _create_cliente_in_db(db_session, test_empresa.id, "Joao Silva")
     await db_session.commit()
 
     await client.delete(
@@ -661,18 +661,18 @@ async def test_delete_cliente_not_found(
 
 
 @pytest.mark.asyncio
-async def test_delete_cliente_cross_tenant(
+async def test_delete_cliente_cross_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant_headers: dict[str, str],
+    test_empresa: Empresa,
+    other_empresa_headers: dict[str, str],
 ):
-    cliente = await _create_cliente_in_db(db_session, test_tenant.id, "My Cliente")
+    cliente = await _create_cliente_in_db(db_session, test_empresa.id, "My Cliente")
     await db_session.commit()
 
     response = await client.delete(
         f"/api/v1/clientes/{cliente.id}",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response.status_code == 404
 
@@ -686,20 +686,20 @@ async def test_unauthenticated_access(client: AsyncClient):
     assert response.status_code == 401
 
 
-# --- TENANT ISOLATION ---
+# --- ISOLAMENTO POR EMPRESA ---
 
 
 @pytest.mark.asyncio
-async def test_clientes_isolated_by_tenant(
+async def test_clientes_isolated_by_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant: Tenant,
+    test_empresa: Empresa,
+    other_empresa: Empresa,
     admin_headers: dict[str, str],
-    other_tenant_headers: dict[str, str],
+    other_empresa_headers: dict[str, str],
 ):
-    await _create_cliente_in_db(db_session, test_tenant.id, "Tenant A Cliente")
-    await _create_cliente_in_db(db_session, other_tenant.id, "Tenant B Cliente")
+    await _create_cliente_in_db(db_session, test_empresa.id, "Empresa A Cliente")
+    await _create_cliente_in_db(db_session, other_empresa.id, "Empresa B Cliente")
     await db_session.commit()
 
     response_a = await client.get(
@@ -707,11 +707,11 @@ async def test_clientes_isolated_by_tenant(
         headers=admin_headers,
     )
     assert response_a.json()["total"] == 1
-    assert response_a.json()["items"][0]["name"] == "Tenant A Cliente"
+    assert response_a.json()["items"][0]["name"] == "Empresa A Cliente"
 
     response_b = await client.get(
         "/api/v1/clientes",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response_b.json()["total"] == 1
-    assert response_b.json()["items"][0]["name"] == "Tenant B Cliente"
+    assert response_b.json()["items"][0]["name"] == "Empresa B Cliente"

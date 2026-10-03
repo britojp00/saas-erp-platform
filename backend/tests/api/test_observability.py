@@ -5,7 +5,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token
-from app.db.models.tenant import Tenant
+from app.db.models.empresa import Empresa
 from app.db.models.user import User
 
 
@@ -166,7 +166,7 @@ async def test_unexpected_error_does_not_expose_traceback(client: AsyncClient):
 async def test_password_not_in_logs(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -182,12 +182,12 @@ async def test_password_not_in_logs(
 @pytest.mark.asyncio
 async def test_jwt_not_in_logs(
     client: AsyncClient,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
     caplog: pytest.LogCaptureFixture,
 ):
     token = create_access_token(
-        data={"sub": str(test_user.id), "tenant_id": str(test_tenant.id)}
+        data={"sub": str(test_user.id), "empresa_id": str(test_empresa.id)}
     )
     with caplog.at_level(logging.INFO):
         await client.get(
@@ -258,7 +258,7 @@ async def test_user_id_appears_when_authenticated(
 
 
 @pytest.mark.asyncio
-async def test_tenant_id_appears_when_authenticated(
+async def test_empresa_id_appears_when_authenticated(
     client: AsyncClient,
     authenticated_headers: dict,
     caplog: pytest.LogCaptureFixture,
@@ -267,18 +267,18 @@ async def test_tenant_id_appears_when_authenticated(
         await client.get("/api/v1/auth/me", headers=authenticated_headers)
     record = _find_record(caplog, "request_completed")
     assert record is not None
-    assert record.tenant_id is not None
+    assert record.empresa_id is not None
 
 
 @pytest.mark.asyncio
 async def test_context_not_leaked_between_requests(
     client: AsyncClient,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
     caplog: pytest.LogCaptureFixture,
 ):
     token = create_access_token(
-        data={"sub": str(test_user.id), "tenant_id": str(test_tenant.id)}
+        data={"sub": str(test_user.id), "empresa_id": str(test_empresa.id)}
     )
     with caplog.at_level(logging.INFO, logger="app.http"):
         await client.get(
@@ -295,4 +295,4 @@ async def test_context_not_leaked_between_requests(
     assert len(health_records) > 0
     last = health_records[-1]
     assert last.user_id is None
-    assert last.tenant_id is None
+    assert last.empresa_id is None

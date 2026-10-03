@@ -24,7 +24,7 @@ class CategoriaService:
 
     async def list(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         page: int,
         page_size: int,
@@ -34,7 +34,7 @@ class CategoriaService:
     ) -> tuple[list[Categoria], int]:
         offset = (page - 1) * page_size
         return await self.repo.list(
-            tenant_id,
+            empresa_id,
             offset=offset,
             limit=page_size,
             search=search,
@@ -45,16 +45,16 @@ class CategoriaService:
     async def get_by_id(
         self,
         categoria_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> Categoria:
-        categoria = await self.repo.get_by_id(categoria_id, tenant_id)
+        categoria = await self.repo.get_by_id(categoria_id, empresa_id)
         if categoria is None:
             raise ErroCategoriaNaoEncontrada()
         return categoria
 
     async def _validate_parent(
         self,
-        tenant_id: int,
+        empresa_id: int,
         parent_id: int | None,
         exclude_id: int | None = None,
     ) -> None:
@@ -64,29 +64,29 @@ class CategoriaService:
         if parent_id == exclude_id:
             raise ErroCategoriaAutorreferencia()
 
-        parent = await self.repo.get_by_id(parent_id, tenant_id)
+        parent = await self.repo.get_by_id(parent_id, empresa_id)
         if parent is None:
             raise ErroCategoriaPaiNaoEncontrada()
 
         if exclude_id is not None:
-            ancestors = await self.repo.get_ancestor_ids(tenant_id, parent_id)
+            ancestors = await self.repo.get_ancestor_ids(empresa_id, parent_id)
             if exclude_id in ancestors:
                 raise ErroCategoriaCicloDetectado()
 
     async def create(
         self,
-        tenant_id: int,
+        empresa_id: int,
         data: CategoriaCriarPayload,
         user_id: int | None = None,
     ) -> Categoria:
         if data.parent_id is not None:
-            await self._validate_parent(tenant_id, data.parent_id)
+            await self._validate_parent(empresa_id, data.parent_id)
 
-        if await self.repo.exists_by_name(tenant_id, data.name.strip()):
+        if await self.repo.exists_by_name(empresa_id, data.name.strip()):
             raise ErroCategoriaDuplicada()
 
         categoria = Categoria(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             name=data.name.strip(),
             description=data.description,
             parent_id=data.parent_id,
@@ -98,7 +98,7 @@ class CategoriaService:
             raise ErroCategoriaDuplicada()
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="CATEGORIA_CRIAR",
             entity_type="categoria",
@@ -115,11 +115,11 @@ class CategoriaService:
     async def update(
         self,
         categoria_id: int,
-        tenant_id: int,
+        empresa_id: int,
         data: CategoriaAtualizarPayload,
         user_id: int | None = None,
     ) -> Categoria:
-        categoria = await self.repo.get_by_id(categoria_id, tenant_id)
+        categoria = await self.repo.get_by_id(categoria_id, empresa_id)
         if categoria is None:
             raise ErroCategoriaNaoEncontrada()
 
@@ -134,14 +134,14 @@ class CategoriaService:
         if "parent_id" in update_data:
             new_parent_id = update_data["parent_id"]
             await self._validate_parent(
-                tenant_id, new_parent_id, exclude_id=categoria.id
+                empresa_id, new_parent_id, exclude_id=categoria.id
             )
             categoria.parent_id = new_parent_id
 
         if "name" in update_data:
             new_name = update_data["name"].strip()
             if new_name != categoria.name and await self.repo.exists_by_name(
-                tenant_id, new_name, exclude_id=categoria.id
+                empresa_id, new_name, exclude_id=categoria.id
             ):
                 raise ErroCategoriaDuplicada()
             categoria.name = new_name
@@ -160,7 +160,7 @@ class CategoriaService:
         }
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="CATEGORIA_ATUALIZAR",
             entity_type="categoria",
@@ -174,17 +174,17 @@ class CategoriaService:
     async def soft_delete(
         self,
         categoria_id: int,
-        tenant_id: int,
+        empresa_id: int,
         user_id: int | None = None,
     ) -> None:
-        categoria = await self.repo.get_by_id(categoria_id, tenant_id)
+        categoria = await self.repo.get_by_id(categoria_id, empresa_id)
         if categoria is None:
             raise ErroCategoriaNaoEncontrada()
 
-        if await self.repo.has_children(tenant_id, categoria.id):
+        if await self.repo.has_children(empresa_id, categoria.id):
             raise ErroCategoriaPossuiFilhos()
 
-        if await self.repo.has_produtos(tenant_id, categoria.id):
+        if await self.repo.has_produtos(empresa_id, categoria.id):
             raise ErroCategoriaPossuiProdutos()
 
         old_values = {
@@ -195,7 +195,7 @@ class CategoriaService:
         await self.repo.soft_delete(categoria)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="CATEGORIA_EXCLUIR",
             entity_type="categoria",

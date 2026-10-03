@@ -9,17 +9,17 @@ from app.db.mixins import (
 )
 
 
-class Tenant(
+class Empresa(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
     Base,
 ):
-    __tablename__ = "tenants"
+    __tablename__ = "empresas"
 
     __table_args__ = (
-        UniqueConstraint("slug", name="tenants_slug_key"),
-        Index("ix_tenants_slug", "slug", unique=True),
+        UniqueConstraint("slug", name="empresas_slug_key"),
+        Index("ix_empresas_slug", "slug", unique=True),
     )
 
     name: Mapped[str] = mapped_column(

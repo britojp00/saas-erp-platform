@@ -39,7 +39,7 @@ async def list_categorias(
     order: str = Query(default="desc"),
 ) -> ListaCategoriasResposta:
     items, total = await service.list(
-        current_user.tenant_id,
+        current_user.empresa_id,
         page=page,
         page_size=page_size,
         search=search,
@@ -66,7 +66,7 @@ async def get_categoria(
     current_user: CurrentUser,
     service: Annotated[CategoriaService, Depends(get_categoria_service)],
 ) -> CategoriaResposta:
-    categoria = await service.get_by_id(categoria_id, current_user.tenant_id)
+    categoria = await service.get_by_id(categoria_id, current_user.empresa_id)
     return CategoriaResposta.model_validate(categoria)
 
 
@@ -84,7 +84,7 @@ async def create_categoria(
     service: Annotated[CategoriaService, Depends(get_categoria_service)],
 ) -> CategoriaResposta:
     categoria = await service.create(
-        current_user.tenant_id, data, user_id=current_user.id
+        current_user.empresa_id, data, user_id=current_user.id
     )
     return CategoriaResposta.model_validate(categoria)
 
@@ -103,7 +103,7 @@ async def update_categoria(
     service: Annotated[CategoriaService, Depends(get_categoria_service)],
 ) -> CategoriaResposta:
     categoria = await service.update(
-        categoria_id, current_user.tenant_id, data, user_id=current_user.id
+        categoria_id, current_user.empresa_id, data, user_id=current_user.id
     )
     return CategoriaResposta.model_validate(categoria)
 
@@ -121,5 +121,5 @@ async def delete_categoria(
     service: Annotated[CategoriaService, Depends(get_categoria_service)],
 ) -> None:
     await service.soft_delete(
-        categoria_id, current_user.tenant_id, user_id=current_user.id
+        categoria_id, current_user.empresa_id, user_id=current_user.id
     )

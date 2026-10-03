@@ -19,7 +19,7 @@ class PedidoRepository:
 
     async def list(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         offset: int,
         limit: int,
@@ -30,7 +30,7 @@ class PedidoRepository:
         cliente_id: int | None = None,
     ) -> tuple[list[Pedido], int]:
         base_stmt = select(Pedido).where(
-            Pedido.tenant_id == tenant_id,
+            Pedido.empresa_id == empresa_id,
             Pedido.deleted_at.is_(None),
         )
         if search:
@@ -61,12 +61,12 @@ class PedidoRepository:
 
     async def get_by_id(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
     ) -> Pedido | None:
         stmt = select(Pedido).where(
             Pedido.id == pedido_id,
-            Pedido.tenant_id == tenant_id,
+            Pedido.empresa_id == empresa_id,
             Pedido.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
@@ -74,14 +74,14 @@ class PedidoRepository:
 
     async def get_for_update(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
     ) -> Pedido | None:
         stmt = (
             select(Pedido)
             .where(
                 Pedido.id == pedido_id,
-                Pedido.tenant_id == tenant_id,
+                Pedido.empresa_id == empresa_id,
                 Pedido.deleted_at.is_(None),
             )
             .with_for_update()
@@ -91,17 +91,17 @@ class PedidoRepository:
 
     async def proximo_numero_pedido(
         self,
-        tenant_id: int,
+        empresa_id: int,
     ) -> int:
         from sqlalchemy import text
 
         await self.session.execute(
-            text("SELECT pg_advisory_xact_lock(hashtext(:tid))"),
-            {"tid": str(tenant_id)},
+            text("SELECT pg_advisory_xact_lock(hashtext(:eid))"),
+            {"eid": str(empresa_id)},
         )
 
         stmt = select(func.max(Pedido.numero_pedido)).where(
-            Pedido.tenant_id == tenant_id,
+            Pedido.empresa_id == empresa_id,
         )
         result = await self.session.execute(stmt)
         max_num = result.scalar_one()

@@ -18,7 +18,7 @@ class ClienteRepository:
 
     async def list(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         offset: int,
         limit: int,
@@ -27,7 +27,7 @@ class ClienteRepository:
         order: str = "desc",
     ) -> tuple[list[Cliente], int]:
         base_stmt = select(Cliente).where(
-            Cliente.tenant_id == tenant_id,
+            Cliente.empresa_id == empresa_id,
             Cliente.deleted_at.is_(None),
         )
         if search:
@@ -52,11 +52,11 @@ class ClienteRepository:
     async def get_by_id(
         self,
         cliente_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> Cliente | None:
         stmt = select(Cliente).where(
             Cliente.id == cliente_id,
-            Cliente.tenant_id == tenant_id,
+            Cliente.empresa_id == empresa_id,
             Cliente.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
@@ -64,12 +64,12 @@ class ClienteRepository:
 
     async def exists_by_document(
         self,
-        tenant_id: int,
+        empresa_id: int,
         document: str,
         exclude_id: int | None = None,
     ) -> bool:
         stmt = select(Cliente).where(
-            Cliente.tenant_id == tenant_id,
+            Cliente.empresa_id == empresa_id,
             Cliente.document == document,
         )
         if exclude_id is not None:

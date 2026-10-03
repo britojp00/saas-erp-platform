@@ -37,34 +37,34 @@ async def get_current_user(
         raise credentials_exception
 
     user_id_str: str | None = payload.get("sub")
-    tenant_id_str: str | None = payload.get("tenant_id")
+    empresa_id_str: str | None = payload.get("empresa_id")
 
-    if user_id_str is None or tenant_id_str is None:
+    if user_id_str is None or empresa_id_str is None:
         raise credentials_exception
 
     try:
         user_id = int(user_id_str)
-        tenant_id = int(tenant_id_str)
+        empresa_id = int(empresa_id_str)
     except ValueError:
         raise credentials_exception
 
     service = AuthService(db)
     try:
-        user = await service.get_current_user(user_id, tenant_id)
+        user = await service.get_current_user(user_id, empresa_id)
     except AuthenticationError:
         raise credentials_exception
 
     return user
 
 
-async def get_current_tenant(
+async def get_current_empresa(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> int:
-    return current_user.tenant_id
+    return current_user.empresa_id
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
-CurrentTenant = Annotated[int, Depends(get_current_tenant)]
+CurrentEmpresa = Annotated[int, Depends(get_current_empresa)]
 
 
 def require_permissions(
@@ -76,7 +76,7 @@ def require_permissions(
     ) -> User:
         service = AuthorizationService(db)
         user_permissions = await service.get_user_permissions(
-            current_user.id, current_user.tenant_id
+            current_user.id, current_user.empresa_id
         )
         missing = set(required) - user_permissions
         if missing:

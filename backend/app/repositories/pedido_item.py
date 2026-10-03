@@ -10,13 +10,13 @@ class PedidoItemRepository:
 
     async def listar_por_pedido(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
     ) -> list[PedidoItem]:
         stmt = (
             select(PedidoItem)
             .where(
-                PedidoItem.tenant_id == tenant_id,
+                PedidoItem.empresa_id == empresa_id,
                 PedidoItem.pedido_id == pedido_id,
             )
             .order_by(PedidoItem.id.asc())
@@ -26,25 +26,25 @@ class PedidoItemRepository:
 
     async def get_by_id(
         self,
-        tenant_id: int,
+        empresa_id: int,
         item_id: int,
     ) -> PedidoItem | None:
         stmt = select(PedidoItem).where(
             PedidoItem.id == item_id,
-            PedidoItem.tenant_id == tenant_id,
+            PedidoItem.empresa_id == empresa_id,
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def obter_por_id_e_pedido(
         self,
-        tenant_id: int,
+        empresa_id: int,
         item_id: int,
         pedido_id: int,
     ) -> PedidoItem | None:
         stmt = select(PedidoItem).where(
             PedidoItem.id == item_id,
-            PedidoItem.tenant_id == tenant_id,
+            PedidoItem.empresa_id == empresa_id,
             PedidoItem.pedido_id == pedido_id,
         )
         result = await self.session.execute(stmt)
@@ -52,13 +52,13 @@ class PedidoItemRepository:
 
     async def existe_produto_no_pedido(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
         produto_id: int,
         exclude_item_id: int | None = None,
     ) -> bool:
         stmt = select(PedidoItem).where(
-            PedidoItem.tenant_id == tenant_id,
+            PedidoItem.empresa_id == empresa_id,
             PedidoItem.pedido_id == pedido_id,
             PedidoItem.produto_id == produto_id,
         )
@@ -69,14 +69,14 @@ class PedidoItemRepository:
 
     async def contar_por_pedido(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
     ) -> int:
         stmt = (
             select(func.count())
             .select_from(PedidoItem)
             .where(
-                PedidoItem.tenant_id == tenant_id,
+                PedidoItem.empresa_id == empresa_id,
                 PedidoItem.pedido_id == pedido_id,
             )
         )

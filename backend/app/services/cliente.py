@@ -16,7 +16,7 @@ class ClienteService:
 
     async def list(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         page: int,
         page_size: int,
@@ -26,7 +26,7 @@ class ClienteService:
     ) -> tuple[list[Cliente], int]:
         offset = (page - 1) * page_size
         return await self.repo.list(
-            tenant_id,
+            empresa_id,
             offset=offset,
             limit=page_size,
             search=search,
@@ -37,26 +37,26 @@ class ClienteService:
     async def get_by_id(
         self,
         cliente_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> Cliente:
-        cliente = await self.repo.get_by_id(cliente_id, tenant_id)
+        cliente = await self.repo.get_by_id(cliente_id, empresa_id)
         if cliente is None:
             raise ErroClienteNaoEncontrado()
         return cliente
 
     async def create(
         self,
-        tenant_id: int,
+        empresa_id: int,
         data: ClienteCriarPayload,
         user_id: int | None = None,
     ) -> Cliente:
         if data.document:
-            exists = await self.repo.exists_by_document(tenant_id, data.document)
+            exists = await self.repo.exists_by_document(empresa_id, data.document)
             if exists:
                 raise ErroClienteDuplicado()
 
         cliente = Cliente(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             name=data.name.strip(),
             document=data.document,
             email=data.email,
@@ -70,7 +70,7 @@ class ClienteService:
             raise ErroClienteDuplicado()
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="CLIENTE_CRIAR",
             entity_type="cliente",
@@ -88,11 +88,11 @@ class ClienteService:
     async def update(
         self,
         cliente_id: int,
-        tenant_id: int,
+        empresa_id: int,
         data: ClienteAtualizarPayload,
         user_id: int | None = None,
     ) -> Cliente:
-        cliente = await self.repo.get_by_id(cliente_id, tenant_id)
+        cliente = await self.repo.get_by_id(cliente_id, empresa_id)
         if cliente is None:
             raise ErroClienteNaoEncontrado()
 
@@ -111,7 +111,7 @@ class ClienteService:
             new_document = update_data["document"]
             if new_document is not None and new_document != cliente.document:
                 exists = await self.repo.exists_by_document(
-                    tenant_id, new_document, exclude_id=cliente.id
+                    empresa_id, new_document, exclude_id=cliente.id
                 )
                 if exists:
                     raise ErroClienteDuplicado()
@@ -136,7 +136,7 @@ class ClienteService:
         }
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="CLIENTE_ATUALIZAR",
             entity_type="cliente",
@@ -150,10 +150,10 @@ class ClienteService:
     async def soft_delete(
         self,
         cliente_id: int,
-        tenant_id: int,
+        empresa_id: int,
         user_id: int | None = None,
     ) -> None:
-        cliente = await self.repo.get_by_id(cliente_id, tenant_id)
+        cliente = await self.repo.get_by_id(cliente_id, empresa_id)
         if cliente is None:
             raise ErroClienteNaoEncontrado()
 
@@ -165,7 +165,7 @@ class ClienteService:
         await self.repo.soft_delete(cliente)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="CLIENTE_EXCLUIR",
             entity_type="cliente",

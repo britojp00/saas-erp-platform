@@ -22,7 +22,7 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     is_active: bool
-    tenant_id: int
+    empresa_id: int
     created_at: datetime
     roles: list[str]
     permissions: list[str]

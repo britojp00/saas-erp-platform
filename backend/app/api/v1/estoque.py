@@ -42,7 +42,7 @@ async def list_estoque(
     produto_id: int | None = Query(default=None),
 ) -> ListaEstoquesResposta:
     items, total = await service.list_saldos(
-        current_user.tenant_id,
+        current_user.empresa_id,
         page=page,
         page_size=page_size,
         produto_id=produto_id,
@@ -67,7 +67,7 @@ async def get_estoque(
     current_user: CurrentUser,
     service: Annotated[EstoqueService, Depends(get_estoque_service)],
 ) -> EstoqueResposta:
-    estoque = await service.get_saldo(current_user.tenant_id, produto_id)
+    estoque = await service.get_saldo(current_user.empresa_id, produto_id)
     return EstoqueResposta.model_validate(estoque)
 
 
@@ -86,7 +86,7 @@ async def list_movimentacoes(
     produto_id: int | None = Query(default=None),
 ) -> ListaMovimentacoesResposta:
     items, total = await service.list_movimentacoes(
-        current_user.tenant_id,
+        current_user.empresa_id,
         page=page,
         page_size=page_size,
         produto_id=produto_id,
@@ -114,7 +114,7 @@ async def list_reservas(
     produto_id: int | None = Query(default=None),
 ) -> ListaReservasResposta:
     items, total = await service.list_reservas(
-        current_user.tenant_id,
+        current_user.empresa_id,
         page=page,
         page_size=page_size,
         produto_id=produto_id,
@@ -141,7 +141,7 @@ async def create_movimentacao(
     service: Annotated[EstoqueService, Depends(get_estoque_service)],
 ) -> MovimentacaoResposta:
     movimentacao = await service.create_movimentacao(
-        current_user.tenant_id, data, user_id=current_user.id
+        current_user.empresa_id, data, user_id=current_user.id
     )
     return MovimentacaoResposta.model_validate(movimentacao)
 
@@ -160,7 +160,7 @@ async def create_reserva(
     service: Annotated[EstoqueService, Depends(get_estoque_service)],
 ) -> ReservaResposta:
     reserva = await service.create_reserva(
-        current_user.tenant_id, data, user_id=current_user.id
+        current_user.empresa_id, data, user_id=current_user.id
     )
     return ReservaResposta.model_validate(reserva)
 
@@ -178,7 +178,7 @@ async def confirm_reserva(
     service: Annotated[EstoqueService, Depends(get_estoque_service)],
 ) -> ConfirmarReservaResposta:
     reserva = await service.confirm_reserva(
-        current_user.tenant_id, reserva_id, user_id=current_user.id
+        current_user.empresa_id, reserva_id, user_id=current_user.id
     )
     return ConfirmarReservaResposta.model_validate(reserva)
 
@@ -196,7 +196,7 @@ async def release_reserva(
     service: Annotated[EstoqueService, Depends(get_estoque_service)],
 ) -> ConfirmarReservaResposta:
     reserva = await service.release_reserva(
-        current_user.tenant_id, reserva_id, user_id=current_user.id
+        current_user.empresa_id, reserva_id, user_id=current_user.id
     )
     return ConfirmarReservaResposta.model_validate(reserva)
 
@@ -214,6 +214,6 @@ async def cancel_reserva(
     service: Annotated[EstoqueService, Depends(get_estoque_service)],
 ) -> ConfirmarReservaResposta:
     reserva = await service.cancel_reserva(
-        current_user.tenant_id, reserva_id, user_id=current_user.id
+        current_user.empresa_id, reserva_id, user_id=current_user.id
     )
     return ConfirmarReservaResposta.model_validate(reserva)

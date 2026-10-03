@@ -58,7 +58,7 @@ class ProdutoResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
-    tenant_id: int
+    empresa_id: int
     sku: str
     name: str
     description: str | None

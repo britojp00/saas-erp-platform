@@ -13,22 +13,22 @@ class AuthorizationService:
     async def get_user_permissions(
         self,
         user_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> set[str]:
-        return await self.permission_repo.get_names_by_user(user_id, tenant_id)
+        return await self.permission_repo.get_names_by_user(user_id, empresa_id)
 
     async def get_user_roles(
         self,
         user_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> list[str]:
-        return await self.role_repo.get_names_by_user(user_id, tenant_id)
+        return await self.role_repo.get_names_by_user(user_id, empresa_id)
 
     async def has_all_permissions(
         self,
         user_id: int,
-        tenant_id: int,
+        empresa_id: int,
         required: set[str],
     ) -> bool:
-        permissions = await self.get_user_permissions(user_id, tenant_id)
+        permissions = await self.get_user_permissions(user_id, empresa_id)
         return required.issubset(permissions)

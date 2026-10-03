@@ -7,28 +7,28 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, get_password_hash
 from app.db.models.audit_log import AuditLog
+from app.db.models.empresa import Empresa
 from app.db.models.permission import Permission
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
-from app.db.models.tenant import Tenant
 from app.db.models.user import User
 from app.db.models.user_role import UserRole
 
 
 async def _create_permission(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
 ) -> Permission:
     stmt = select(Permission).where(
-        Permission.tenant_id == tenant_id,
+        Permission.empresa_id == empresa_id,
         Permission.name == name,
     )
     result = await session.execute(stmt)
     existing = result.scalar_one_or_none()
     if existing:
         return existing
-    perm = Permission(tenant_id=tenant_id, name=name)
+    perm = Permission(empresa_id=empresa_id, name=name)
     session.add(perm)
     await session.flush()
     return perm
@@ -36,32 +36,32 @@ async def _create_permission(
 
 async def _create_role_with_perms(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     perm_names: list[str],
 ) -> Role:
     stmt = select(Role).where(
-        Role.tenant_id == tenant_id,
+        Role.empresa_id == empresa_id,
         Role.name == name,
     )
     result = await session.execute(stmt)
     existing = result.scalar_one_or_none()
     if existing:
         return existing
-    role = Role(tenant_id=tenant_id, name=name)
+    role = Role(empresa_id=empresa_id, name=name)
     session.add(role)
     await session.flush()
     for pname in perm_names:
-        perm = await _create_permission(session, tenant_id, pname)
+        perm = await _create_permission(session, empresa_id, pname)
         stmt_rp = select(RolePermission).where(
-            RolePermission.tenant_id == tenant_id,
+            RolePermission.empresa_id == empresa_id,
             RolePermission.role_id == role.id,
             RolePermission.permission_id == perm.id,
         )
         rp_result = await session.execute(stmt_rp)
         if rp_result.scalar_one_or_none() is None:
             rp = RolePermission(
-                tenant_id=tenant_id,
+                empresa_id=empresa_id,
                 role_id=role.id,
                 permission_id=perm.id,
             )
@@ -72,12 +72,12 @@ async def _create_role_with_perms(
 
 async def _assign_role_to_user(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     user_id: int,
     role_id: int,
 ) -> None:
     stmt = select(UserRole).where(
-        UserRole.tenant_id == tenant_id,
+        UserRole.empresa_id == empresa_id,
         UserRole.user_id == user_id,
         UserRole.role_id == role_id,
     )
@@ -85,7 +85,7 @@ async def _assign_role_to_user(
     if result.scalar_one_or_none():
         return
     ur = UserRole(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         user_id=user_id,
         role_id=role_id,
     )
@@ -119,11 +119,11 @@ ALL_AUDIT_PERMS = [
 @pytest.fixture
 async def all_perms_role(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> Role:
     return await _create_role_with_perms(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         "audit_admin",
         ALL_AUDIT_PERMS,
     )
@@ -132,12 +132,12 @@ async def all_perms_role(
 @pytest.fixture
 async def admin_user(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
     all_perms_role: Role,
 ) -> User:
     await _assign_role_to_user(
-        db_session, test_tenant.id, test_user.id, all_perms_role.id
+        db_session, test_empresa.id, test_user.id, all_perms_role.id
     )
     await db_session.commit()
     return test_user
@@ -146,38 +146,38 @@ async def admin_user(
 @pytest.fixture
 async def admin_headers(
     admin_user: User,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> dict[str, str]:
     token = create_access_token(
         data={
             "sub": str(admin_user.id),
-            "tenant_id": str(test_tenant.id),
+            "empresa_id": str(test_empresa.id),
         }
     )
     return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
-async def other_tenant(db_session: AsyncSession) -> Tenant:
-    tenant = Tenant(
-        name="Other Tenant",
-        slug="other-audit-tenant",
+async def other_empresa(db_session: AsyncSession) -> Empresa:
+    empresa = Empresa(
+        name="Outra Empresa",
+        slug="other-audit-empresa",
         is_active=True,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
-    db_session.add(tenant)
+    db_session.add(empresa)
     await db_session.flush()
-    return tenant
+    return empresa
 
 
 @pytest.fixture
-async def other_tenant_user(
+async def other_empresa_user(
     db_session: AsyncSession,
-    other_tenant: Tenant,
+    other_empresa: Empresa,
 ) -> User:
     user = User(
-        tenant_id=other_tenant.id,
+        empresa_id=other_empresa.id,
         email="other-audit@example.com",
         full_name="Other Audit User",
         is_active=True,
@@ -191,25 +191,25 @@ async def other_tenant_user(
 
 
 @pytest.fixture
-async def other_tenant_headers(
-    other_tenant_user: User,
-    other_tenant: Tenant,
+async def other_empresa_headers(
+    other_empresa_user: User,
+    other_empresa: Empresa,
     db_session: AsyncSession,
 ) -> dict[str, str]:
     role = await _create_role_with_perms(
         db_session,
-        other_tenant.id,
+        other_empresa.id,
         "other_audit_all",
         ALL_AUDIT_PERMS,
     )
     await _assign_role_to_user(
-        db_session, other_tenant.id, other_tenant_user.id, role.id
+        db_session, other_empresa.id, other_empresa_user.id, role.id
     )
     await db_session.commit()
     token = create_access_token(
         data={
-            "sub": str(other_tenant_user.id),
-            "tenant_id": str(other_tenant.id),
+            "sub": str(other_empresa_user.id),
+            "empresa_id": str(other_empresa.id),
         }
     )
     return {"Authorization": f"Bearer {token}"}
@@ -263,7 +263,7 @@ async def test_cliente_create_generates_audit(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     response = await client.post(
         "/api/v1/clientes",
@@ -274,7 +274,7 @@ async def test_cliente_create_generates_audit(
     cliente_id = response.json()["id"]
 
     stmt = select(AuditLog).where(
-        AuditLog.tenant_id == test_tenant.id,
+        AuditLog.empresa_id == test_empresa.id,
         AuditLog.action == "CLIENTE_CRIAR",
         AuditLog.entity_id == cliente_id,
     )
@@ -291,7 +291,7 @@ async def test_cliente_update_generates_audit(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     create_resp = await client.post(
         "/api/v1/clientes",
@@ -308,7 +308,7 @@ async def test_cliente_update_generates_audit(
     assert response.status_code == 200
 
     stmt = select(AuditLog).where(
-        AuditLog.tenant_id == test_tenant.id,
+        AuditLog.empresa_id == test_empresa.id,
         AuditLog.action == "CLIENTE_ATUALIZAR",
         AuditLog.entity_id == cliente_id,
     )
@@ -325,7 +325,7 @@ async def test_cliente_delete_generates_audit(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     create_resp = await client.post(
         "/api/v1/clientes",
@@ -341,7 +341,7 @@ async def test_cliente_delete_generates_audit(
     assert response.status_code == 204
 
     stmt = select(AuditLog).where(
-        AuditLog.tenant_id == test_tenant.id,
+        AuditLog.empresa_id == test_empresa.id,
         AuditLog.action == "CLIENTE_EXCLUIR",
         AuditLog.entity_id == cliente_id,
     )
@@ -360,7 +360,7 @@ async def test_categoria_create_generates_audit(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     response = await client.post(
         "/api/v1/categorias",
@@ -371,7 +371,7 @@ async def test_categoria_create_generates_audit(
     categoria_id = response.json()["id"]
 
     stmt = select(AuditLog).where(
-        AuditLog.tenant_id == test_tenant.id,
+        AuditLog.empresa_id == test_empresa.id,
         AuditLog.action == "CATEGORIA_CRIAR",
         AuditLog.entity_id == categoria_id,
     )
@@ -389,7 +389,7 @@ async def test_produto_create_generates_audit(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     response = await client.post(
         "/api/v1/produtos",
@@ -404,7 +404,7 @@ async def test_produto_create_generates_audit(
     produto_id = response.json()["id"]
 
     stmt = select(AuditLog).where(
-        AuditLog.tenant_id == test_tenant.id,
+        AuditLog.empresa_id == test_empresa.id,
         AuditLog.action == "PRODUTO_CRIAR",
         AuditLog.entity_id == produto_id,
     )
@@ -424,7 +424,7 @@ async def test_audit_log_has_correct_user_id(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
 ):
     await client.post(
@@ -434,7 +434,7 @@ async def test_audit_log_has_correct_user_id(
     )
 
     stmt = select(AuditLog).where(
-        AuditLog.tenant_id == test_tenant.id,
+        AuditLog.empresa_id == test_empresa.id,
         AuditLog.action == "CLIENTE_CRIAR",
     )
     result = await db_session.execute(stmt)
@@ -444,16 +444,16 @@ async def test_audit_log_has_correct_user_id(
 
 
 @pytest.mark.asyncio
-async def test_audit_log_has_correct_tenant_id(
+async def test_audit_log_has_correct_empresa_id(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     await client.post(
         "/api/v1/clientes",
         headers=admin_headers,
-        json={"name": "Tenant Check"},
+        json={"name": "Empresa Check"},
     )
 
     stmt = select(AuditLog).where(
@@ -462,7 +462,7 @@ async def test_audit_log_has_correct_tenant_id(
     result = await db_session.execute(stmt)
     audit = result.scalar_one_or_none()
     assert audit is not None
-    assert audit.tenant_id == test_tenant.id
+    assert audit.empresa_id == test_empresa.id
 
 
 # --- SECURITY ---
@@ -473,7 +473,7 @@ async def test_password_not_in_audit_log(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     await client.post(
         "/api/v1/clientes",
@@ -482,7 +482,7 @@ async def test_password_not_in_audit_log(
     )
 
     stmt = select(AuditLog).where(
-        AuditLog.tenant_id == test_tenant.id,
+        AuditLog.empresa_id == test_empresa.id,
     )
     result = await db_session.execute(stmt)
     audits = list(result.scalars().all())
@@ -499,17 +499,17 @@ async def test_password_not_in_audit_log(
 
 
 @pytest.mark.asyncio
-async def test_tenant_isolation(
+async def test_empresa_isolation(
     client: AsyncClient,
     admin_headers: dict[str, str],
-    other_tenant_headers: dict[str, str],
+    other_empresa_headers: dict[str, str],
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     await client.post(
         "/api/v1/clientes",
         headers=admin_headers,
-        json={"name": "Tenant A Cliente"},
+        json={"name": "Empresa A Cliente"},
     )
 
     response = await client.get(
@@ -522,7 +522,7 @@ async def test_tenant_isolation(
 
     other_response = await client.get(
         "/api/v1/audit-logs",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert other_response.status_code == 200
     other_data = other_response.json()
@@ -581,7 +581,7 @@ async def test_list_with_action_filter(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     await client.post(
         "/api/v1/clientes",
@@ -645,10 +645,10 @@ async def test_failed_operation_no_audit_log(
     client: AsyncClient,
     admin_headers: dict[str, str],
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     count_before = 0
-    stmt = select(AuditLog).where(AuditLog.tenant_id == test_tenant.id)
+    stmt = select(AuditLog).where(AuditLog.empresa_id == test_empresa.id)
     result = await db_session.execute(stmt)
     count_before = len(list(result.scalars().all()))
 
@@ -659,7 +659,7 @@ async def test_failed_operation_no_audit_log(
     )
     assert response.status_code == 422
 
-    stmt_after = select(AuditLog).where(AuditLog.tenant_id == test_tenant.id)
+    stmt_after = select(AuditLog).where(AuditLog.empresa_id == test_empresa.id)
     result_after = await db_session.execute(stmt_after)
     count_after = len(list(result_after.scalars().all()))
 
@@ -673,7 +673,7 @@ async def test_failed_operation_no_audit_log(
 async def test_login_success_generates_audit(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
 ):
     response = await client.post(
@@ -683,7 +683,7 @@ async def test_login_success_generates_audit(
     assert response.status_code == 200
 
     stmt = select(AuditLog).where(
-        AuditLog.tenant_id == test_tenant.id,
+        AuditLog.empresa_id == test_empresa.id,
         AuditLog.action == "LOGIN_SUCCESS",
     )
     result = await db_session.execute(stmt)
@@ -696,7 +696,7 @@ async def test_login_success_generates_audit(
 async def test_login_failure_wrong_password_generates_audit(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
 ):
     response = await client.post(
@@ -706,7 +706,7 @@ async def test_login_failure_wrong_password_generates_audit(
     assert response.status_code == 401
 
     stmt = select(AuditLog).where(
-        AuditLog.tenant_id == test_tenant.id,
+        AuditLog.empresa_id == test_empresa.id,
         AuditLog.action == "LOGIN_FAILURE",
     )
     result = await db_session.execute(stmt)

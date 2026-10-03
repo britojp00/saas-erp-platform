@@ -12,7 +12,7 @@ class AuditLogService:
     async def log(
         self,
         *,
-        tenant_id: int,
+        empresa_id: int,
         action: str,
         entity_type: str,
         entity_id: int | None = None,
@@ -22,7 +22,7 @@ class AuditLogService:
         new_values: dict | None = None,
     ) -> AuditLog:
         audit_log = AuditLog(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action=action,
             entity_type=entity_type,
@@ -35,7 +35,7 @@ class AuditLogService:
 
     async def list(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         page: int,
         page_size: int,
@@ -48,7 +48,7 @@ class AuditLogService:
     ) -> tuple[list[AuditLog], int]:
         offset = (page - 1) * page_size
         return await self.repo.list(
-            tenant_id,
+            empresa_id,
             offset=offset,
             limit=page_size,
             action=action,
