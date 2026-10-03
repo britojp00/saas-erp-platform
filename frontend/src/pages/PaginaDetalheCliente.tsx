@@ -21,7 +21,7 @@ export default function PaginaDetalheCliente() {
           {cliente !== null && (
             <Link
               className="button-link"
-              to={`/clientes/${cliente.id}/edit`}
+              to={`/clientes/${cliente.id}/editar`}
             >
               Editar
             </Link>

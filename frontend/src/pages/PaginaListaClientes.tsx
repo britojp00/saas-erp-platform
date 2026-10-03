@@ -26,7 +26,7 @@ export default function PaginaListaClientes() {
           <h1>Clientes</h1>
           <p className="muted">Gestão de clientes da empresa autenticada.</p>
         </div>
-        <Link className="button-link" to="/clientes/new">
+        <Link className="button-link" to="/clientes/criar">
           Novo cliente
         </Link>
       </header>

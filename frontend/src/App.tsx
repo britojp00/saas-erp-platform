@@ -20,9 +20,9 @@ export default function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/clientes" element={<PaginaListaClientes />} />
-          <Route path="/clientes/new" element={<PaginaCriarCliente />} />
+          <Route path="/clientes/criar" element={<PaginaCriarCliente />} />
           <Route path="/clientes/:id" element={<PaginaDetalheCliente />} />
-          <Route path="/clientes/:id/edit" element={<PaginaEditarCliente />} />
+          <Route path="/clientes/:id/editar" element={<PaginaEditarCliente />} />
           <Route path="/produtos" element={<PaginaListaProdutos />} />
           <Route path="/estoque" element={<PaginaEstoque />} />
           <Route path="/pedidos" element={<PaginaPedidos />} />

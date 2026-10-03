@@ -13,8 +13,8 @@ export default function RecentActivity({
   onRetry,
 }: RecentActivityProps) {
   return (
-    <section className="panel" aria-labelledby="recent-activity-title">
-      <h2 id="recent-activity-title">Atividade recente</h2>
+    <section className="panel" aria-labelledby="atividade-recente-title">
+      <h2 id="atividade-recente-title">Atividade recente</h2>
       {state.status === 'loading' && (
         <SectionLoading label="Carregando atividades..." />
       )}
