@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, get_password_hash
@@ -325,6 +326,7 @@ async def test_create_categoria_duplicate_name(
         json={"name": "Electronics"},
     )
     assert response.status_code == 409
+    assert response.json()["detail"] == "Já existe uma categoria com este nome"
 
 
 @pytest.mark.asyncio
@@ -1158,3 +1160,152 @@ async def test_same_name_different_empresas(
         json={"name": "Electronics"},
     )
     assert response_b.status_code == 409
+
+
+# --- UNICIDADE COM SOFT DELETE ---
+
+
+@pytest.mark.asyncio
+async def test_create_categoria_reuses_name_after_delete(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    test_empresa: Empresa,
+    admin_headers: dict[str, str],
+):
+    response = await client.post(
+        "/api/v1/categorias",
+        headers=admin_headers,
+        json={"name": "Geladeira"},
+    )
+    assert response.status_code == 201
+    categoria_id = response.json()["id"]
+
+    delete = await client.delete(
+        f"/api/v1/categorias/{categoria_id}",
+        headers=admin_headers,
+    )
+    assert delete.status_code == 204
+
+    retry = await client.post(
+        "/api/v1/categorias",
+        headers=admin_headers,
+        json={"name": "Geladeira"},
+    )
+    assert retry.status_code == 201
+    assert retry.json()["name"] == "Geladeira"
+
+
+@pytest.mark.asyncio
+async def test_update_categoria_reuses_name_of_deleted(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    test_empresa: Empresa,
+    admin_headers: dict[str, str],
+):
+    deleted = await client.post(
+        "/api/v1/categorias",
+        headers=admin_headers,
+        json={"name": "Electronics"},
+    )
+    assert deleted.status_code == 201
+    await client.delete(
+        f"/api/v1/categorias/{deleted.json()['id']}",
+        headers=admin_headers,
+    )
+
+    active = await client.post(
+        "/api/v1/categorias",
+        headers=admin_headers,
+        json={"name": "Clothing"},
+    )
+    assert active.status_code == 201
+
+    response = await client.patch(
+        f"/api/v1/categorias/{active.json()['id']}",
+        headers=admin_headers,
+        json={"name": "Electronics"},
+    )
+    assert response.status_code == 200
+    assert response.json()["name"] == "Electronics"
+
+
+@pytest.mark.asyncio
+async def test_create_categoria_duplicate_active_with_deleted_twin(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    test_empresa: Empresa,
+    admin_headers: dict[str, str],
+):
+    first = await client.post(
+        "/api/v1/categorias",
+        headers=admin_headers,
+        json={"name": "Geladeira"},
+    )
+    assert first.status_code == 201
+    await client.delete(
+        f"/api/v1/categorias/{first.json()['id']}",
+        headers=admin_headers,
+    )
+
+    active = await client.post(
+        "/api/v1/categorias",
+        headers=admin_headers,
+        json={"name": "Geladeira"},
+    )
+    assert active.status_code == 201
+    active_id = active.json()["id"]
+
+    duplicate = await client.post(
+        "/api/v1/categorias",
+        headers=admin_headers,
+        json={"name": "Geladeira"},
+    )
+    assert duplicate.status_code == 409
+    assert duplicate.json()["detail"] == "Já existe uma categoria com este nome"
+
+    still_active = await client.get(
+        f"/api/v1/categorias/{active_id}",
+        headers=admin_headers,
+    )
+    assert still_active.status_code == 200
+
+    listing = await client.get(
+        "/api/v1/categorias",
+        headers=admin_headers,
+    )
+    assert listing.json()["total"] == 1
+    assert listing.json()["items"][0]["id"] == active_id
+
+
+@pytest.mark.asyncio
+async def test_db_unique_index_blocks_only_active_duplicates(
+    db_session: AsyncSession,
+    test_empresa: Empresa,
+):
+    empresa_id = test_empresa.id
+
+    await _create_categoria_in_db(db_session, empresa_id, "Active Dup")
+    await db_session.commit()
+
+    with pytest.raises(IntegrityError):
+        await _create_categoria_in_db(db_session, empresa_id, "Active Dup")
+    await db_session.rollback()
+
+    active = await _create_categoria_in_db(db_session, empresa_id, "Twin Dup")
+    deleted = Categoria(
+        empresa_id=empresa_id,
+        name="Twin Dup",
+        deleted_at=datetime.now(UTC),
+    )
+    db_session.add(deleted)
+    await db_session.commit()
+
+    result = await db_session.execute(
+        select(Categoria).where(
+            Categoria.empresa_id == empresa_id,
+            Categoria.name == "Twin Dup",
+            Categoria.deleted_at.is_(None),
+        )
+    )
+    actives = list(result.scalars().all())
+    assert [c.id for c in actives] == [active.id]

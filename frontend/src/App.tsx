@@ -4,6 +4,9 @@ import PaginaCriarCliente from './pages/PaginaCriarCliente'
 import PaginaDetalheCliente from './pages/PaginaDetalheCliente'
 import PaginaEditarCliente from './pages/PaginaEditarCliente'
 import PaginaListaClientes from './pages/PaginaListaClientes'
+import PaginaCriarCategoria from './pages/PaginaCriarCategoria'
+import PaginaEditarCategoria from './pages/PaginaEditarCategoria'
+import PaginaListaCategorias from './pages/PaginaListaCategorias'
 import DashboardPage from './pages/DashboardPage'
 import PaginaEstoque from './pages/PaginaEstoque'
 import LoginPage from './pages/LoginPage'
@@ -23,6 +26,15 @@ export default function App() {
           <Route path="/clientes/criar" element={<PaginaCriarCliente />} />
           <Route path="/clientes/:id" element={<PaginaDetalheCliente />} />
           <Route path="/clientes/:id/editar" element={<PaginaEditarCliente />} />
+          <Route path="/categorias" element={<PaginaListaCategorias />} />
+          <Route
+            path="/categorias/criar"
+            element={<PaginaCriarCategoria />}
+          />
+          <Route
+            path="/categorias/:id/editar"
+            element={<PaginaEditarCategoria />}
+          />
           <Route path="/produtos" element={<PaginaListaProdutos />} />
           <Route path="/estoque" element={<PaginaEstoque />} />
           <Route path="/pedidos" element={<PaginaPedidos />} />

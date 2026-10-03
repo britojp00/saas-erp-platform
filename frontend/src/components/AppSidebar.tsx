@@ -1,14 +1,22 @@
+import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
+import { IconFolder } from '@tabler/icons-react'
 import { useAuth } from '../contexts/AuthContext'
 
 interface NavItem {
   to: string
   label: string
+  icon?: ReactNode
 }
 
 const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/clientes', label: 'Clientes' },
+  {
+    to: '/categorias',
+    label: 'Categorias',
+    icon: <IconFolder size={16} aria-hidden="true" />,
+  },
   { to: '/produtos', label: 'Produtos' },
   { to: '/estoque', label: 'Estoque' },
   { to: '/pedidos', label: 'Pedidos' },
@@ -51,6 +59,11 @@ export default function AppSidebar({ open, onClose }: AppSidebarProps) {
                       : 'sidebar__link'
                   }
                 >
+                  {item.icon !== undefined && (
+                    <span className="sidebar__icon" aria-hidden="true">
+                      {item.icon}
+                    </span>
+                  )}
                   {item.label}
                 </NavLink>
               </li>

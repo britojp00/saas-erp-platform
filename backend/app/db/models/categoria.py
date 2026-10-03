@@ -1,4 +1,12 @@
-from sqlalchemy import BigInteger, ForeignKeyConstraint, String, Text, UniqueConstraint
+from sqlalchemy import (
+    BigInteger,
+    ForeignKeyConstraint,
+    Index,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -20,10 +28,12 @@ class Categoria(
     __tablename__ = "categorias"
 
     __table_args__ = (
-        UniqueConstraint(
+        Index(
+            "uq_categorias_empresa_name_ativo",
             "empresa_id",
             "name",
-            name="uq_categorias_empresa_name",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
         ),
         UniqueConstraint(
             "empresa_id",
