@@ -36,7 +36,7 @@ Exemplo:
 
 schemas/
 ├── auth.py
-├── tenant.py
+├── empresa.py
 ├── user.py
 ├── cliente.py
 ├── produto.py
@@ -111,7 +111,7 @@ class ClienteCriarPayload(BaseModel):
 Não incluir normalmente campos controlados pelo backend:
 
 id
-tenant_id
+empresa_id
 created_at
 updated_at
 deleted_at
@@ -442,7 +442,7 @@ Schemas devem rejeitar ou ignorar campos que o cliente não deve controlar, conf
 
 Exemplo:
 
-tenant_id
+empresa_id
 user_id
 role
 permissions
@@ -798,15 +798,15 @@ Exemplo:
 
 {
   "name": "Cliente",
-  "tenant_id": "tenant-de-outro-contexto",
+  "empresa_id": "empresa-de-outro-contexto",
   "role": "Administrator"
 }
 
 O backend não deve utilizar esses campos para conceder acesso.
 
-51. Schemas e Tenant
+51. Schemas e Empresa
 
-Normalmente tenant_id não precisa fazer parte dos schemas públicos de criação de entidades quando ele é determinado pelo contexto autenticado.
+Normalmente empresa_id não precisa fazer parte dos schemas públicos de criação de entidades quando ele é determinado pelo contexto autenticado.
 
 Exemplo:
 
@@ -820,7 +820,7 @@ Request:
 
 O backend determina:
 
-tenant_id
+empresa_id
 
 através do contexto autenticado.
 
@@ -955,7 +955,7 @@ Antes de finalizar um schema:
  Validações estruturais estão no schema;
  Regras de negócio estão fora do schema;
  Campos internos não são expostos;
- tenant_id não pode ser utilizado indevidamente;
+ empresa_id não pode ser utilizado indevidamente;
  user_id não pode ser utilizado indevidamente;
  Create e Update foram separados quando necessário;
  Response não reproduz automaticamente o model;

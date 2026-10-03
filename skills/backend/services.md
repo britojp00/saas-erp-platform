@@ -313,38 +313,38 @@ Outro consumidor
 
 A regra de negócio pertence ao backend.
 
-16. Tenant Context
+16. Contexto de Empresa
 
-Services que trabalham com entidades multi-tenant devem receber ou resolver o contexto do tenant de forma confiável.
+Services que trabalham com entidades multi-tenant devem receber ou resolver o contexto da empresa de forma confiável.
 
 Conceito:
 
 Authenticated User
        ↓
-Tenant Context
+Contexto de Empresa
        ↓
 Service
        ↓
 Repository
 
-Não utilizar um tenant_id arbitrário enviado pelo cliente como fonte de autorização.
+Não utilizar um empresa_id arbitrário enviado pelo cliente como fonte de autorização.
 
-17. Tenant Isolation
+17. Empresa Isolation
 
 Antes de manipular um recurso:
 
 recurso existe?
-recurso pertence ao tenant?
+recurso pertence à empresa?
 recurso está disponível?
 
 Exemplo conceitual:
 
 cliente = await repository.get_by_id(
     cliente_id,
-    tenant_id=current_tenant.id,
+    empresa_id=current_empresa.id,
 )
 
-O service não deve ignorar o escopo do tenant.
+O service não deve ignorar o escopo da empresa.
 
 18. Authorization
 
@@ -362,7 +362,7 @@ qualquer pedido pode ser cancelado
 O service ainda pode verificar:
 
 pedido existe
-pedido pertence ao tenant
+pedido pertence à empresa
 pedido está em estado cancelável
 19. Transactions
 
@@ -609,7 +609,7 @@ produto existe
 produto está ativo
 quantidade válida
 estoque disponível
-tenant correto
+empresa correta
 
 A proteção contra condições de corrida deve ocorrer na camada apropriada.
 
@@ -699,7 +699,7 @@ cliente.criar
 Quando apropriado:
 
 request_id
-tenant_id
+empresa_id
 user_id
 entity_id
 
@@ -738,7 +738,7 @@ Mas o cache não deve alterar incorretamente a regra de negócio.
 
 Considerar:
 
-tenant_id
+empresa_id
 invalidação
 TTL
 consistência
@@ -750,8 +750,8 @@ Evitar:
 
 buscar cliente
 buscar cliente novamente
-buscar tenant
-buscar tenant novamente
+buscar empresa
+buscar empresa novamente
 buscar produto individualmente várias vezes
 
 quando os dados puderem ser obtidos de forma adequada.
@@ -863,7 +863,7 @@ O service deve evitar deixar o domínio em estados impossíveis.
 
 Exemplos:
 
-pedido sem tenant
+pedido sem empresa
 item sem pedido
 estoque negativo
 pedido cancelado ainda processando como ativo
@@ -881,7 +881,7 @@ Services nunca devem assumir que dados vindos do router já estão autorizados.
 
 Devem existir verificações apropriadas para:
 
-tenant
+empresa
 ownership
 estado
 permissão
@@ -913,7 +913,7 @@ Antes de finalizar um service:
  Regra de negócio está no local apropriado;
  Router permanece simples;
  Acesso ao banco está no repository;
- Tenant isolation foi considerado;
+ Empresa isolation foi considerado;
  Autorização foi considerada;
  Transações estão corretas;
  Erros de domínio são específicos;

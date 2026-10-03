@@ -80,7 +80,7 @@ backend/
 │   │   └── audit_log.py
 │   ├── repositories/
 │   │   ├── user.py
-│   │   ├── tenant.py
+│   │   ├── empresa.py
 │   │   ├── cliente.py
 │   │   ├── categoria.py
 │   │   ├── produto.py
@@ -214,7 +214,7 @@ Contém os modelos ORM utilizados pelo SQLAlchemy.
 
 Arquivos:
 
-tenant.py
+empresa.py
 user.py
 user_role.py
 role.py
@@ -276,7 +276,7 @@ Contém a camada responsável pela persistência.
 Exemplos:
 
 user.py
-tenant.py
+empresa.py
 cliente.py
 categoria.py
 produto.py

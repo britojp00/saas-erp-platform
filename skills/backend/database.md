@@ -18,7 +18,7 @@ skills/backend/architecture.md
 A camada de banco deve garantir:
 
 Consistência
-Isolamento entre tenants
+Isolamento entre empresas
 Integridade
 Testabilidade
 Performance
@@ -125,7 +125,7 @@ backend/app/models/
 Exemplo:
 
 models/
-├── tenant.py
+├── empresa.py
 ├── user.py
 ├── cliente.py
 ├── produto.py
@@ -160,7 +160,7 @@ snake_case
 
 Exemplo:
 
-tenant_id
+empresa_id
 created_at
 updated_at
 deleted_at
@@ -187,43 +187,43 @@ Relacionamentos entre entidades devem utilizar foreign keys reais.
 
 Exemplo:
 
-clientes.tenant_id
+clientes.empresa_id
     ↓
-tenants.id
+empresas.id
 
 Evitar armazenar relacionamentos somente como texto ou JSON.
 
 Foreign keys permitem que o banco também participe da proteção da integridade dos dados.
 
-10. Tenant ID
+10. Empresa ID
 
-Entidades pertencentes a um tenant devem possuir:
+Entidades pertencentes a uma empresa devem possuir:
 
-tenant_id
+empresa_id
 
 Exemplo:
 
 clientes
 ├── id
-├── tenant_id
+├── empresa_id
 ├── name
 └── ...
 
 A coluna deve possuir foreign key para:
 
-tenants.id
+empresas.id
 
 quando aplicável.
 
 11. Queries Multi-tenant
 
-Repositories que acessam entidades de tenant devem aplicar o contexto do tenant.
+Repositories que acessam entidades de empresa devem aplicar o contexto da empresa.
 
 Exemplo conceitual:
 
 select(Cliente).where(
     Cliente.id == cliente_id,
-    Cliente.tenant_id == tenant_id,
+    Cliente.empresa_id == empresa_id,
     Cliente.deleted_at.is_(None),
 )
 
@@ -239,13 +239,13 @@ select(Cliente).where(
     Cliente.id == cliente_id
 )
 
-quando o contexto do tenant for obrigatório.
+quando o contexto da empresa for obrigatório.
 
 Preferir:
 
 select(Cliente).where(
     Cliente.id == cliente_id,
-    Cliente.tenant_id == tenant_id,
+    Cliente.empresa_id == empresa_id,
 )
 
 Essa regra deve ser aplicada a:
@@ -274,7 +274,7 @@ Consultas normais devem considerar somente registros ativos.
 Exemplo conceitual:
 
 stmt = select(Cliente).where(
-    Cliente.tenant_id == tenant_id,
+    Cliente.empresa_id == empresa_id,
     Cliente.deleted_at.is_(None),
 )
 
@@ -284,7 +284,7 @@ Evitar que algumas operações ignorem deleted_at enquanto outras o aplicam sem 
 
 15. UPDATE Multi-tenant
 
-Atualizações devem considerar o tenant.
+Atualizações devem considerar a empresa.
 
 Evitar:
 
@@ -296,7 +296,7 @@ Preferir:
 
 update(Cliente).where(
     Cliente.id == cliente_id,
-    Cliente.tenant_id == tenant_id,
+    Cliente.empresa_id == empresa_id,
     Cliente.deleted_at.is_(None),
 )
 
@@ -371,7 +371,7 @@ Relacionamentos devem utilizar os mecanismos de relacionamento do SQLAlchemy qua
 
 Exemplo conceitual:
 
-tenant = relationship("Tenant")
+empresa = relationship("Empresa")
 
 Relacionamentos devem refletir as foreign keys existentes no banco.
 
@@ -416,12 +416,12 @@ Exemplo:
 external_id
 source_system
 
-Quando necessário, uma constraint de unicidade deve considerar o tenant e o sistema de origem.
+Quando necessário, uma constraint de unicidade deve considerar a empresa e o sistema de origem.
 
 Exemplo conceitual:
 
 UNIQUE (
-    tenant_id,
+    empresa_id,
     source_system,
     external_id
 )
@@ -449,11 +449,11 @@ Exemplo global:
 
 email
 
-Exemplo por tenant:
+Exemplo por empresa:
 
-tenant_id + sku
+empresa_id + sku
 
-Não assumir que um campo é globalmente único quando o domínio permitir valores iguais em tenants diferentes.
+Não assumir que um campo é globalmente único quando o domínio permitir valores iguais em empresas diferentes.
 
 26. Índices
 
@@ -461,7 +461,7 @@ Não assumir que um campo é globalmente único quando o domínio permitir valor
 
 Considerar especialmente consultas por:
 
-tenant_id
+empresa_id
 foreign keys
 campos de busca frequente
 campos utilizados em ordenação
@@ -471,11 +471,11 @@ Em sistemas multi-tenant, índices compostos podem ser necessários.
 
 Exemplo:
 
-(tenant_id, created_at)
+(empresa_id, created_at)
 
 ou:
 
-(tenant_id, sku)
+(empresa_id, sku)
 
 A criação de índices deve considerar o padrão de consulta, não apenas adicionar índices indiscriminadamente.
 
@@ -486,7 +486,7 @@ A criação de índices deve considerar o padrão de consulta, não apenas adici
 Exemplo conceitual:
 
 CREATE INDEX ...
-ON clientes (tenant_id, email)
+ON clientes (empresa_id, email)
 WHERE deleted_at IS NULL;
 
 Isso pode ser útil quando as consultas operam principalmente sobre registros ativos.
@@ -692,13 +692,13 @@ ORDER BY created_at DESC, id DESC
 
 Isso ajuda a evitar resultados instáveis entre páginas.
 
-40. Queries e tenant
+40. Queries e empresa
 
-Nenhuma otimização pode remover o isolamento por tenant.
+Nenhuma otimização pode remover o isolamento por empresa.
 
 Mesmo quando uma consulta estiver otimizada, ela precisa respeitar:
 
-tenant_id
+empresa_id
 
 quando a entidade for multi-tenant.
 
@@ -795,17 +795,17 @@ Funcionalidades multi-tenant devem possuir testes explícitos.
 
 Exemplo:
 
-Tenant A
+Empresa A
  └── Cliente A
 
-Tenant B
+Empresa B
  └── Cliente B
 
 Teste:
 
-Tenant A → Cliente A
+Empresa A → Cliente A
 ✓ permitido
-Tenant A → Cliente B
+Empresa A → Cliente B
 ✗ bloqueado
 
 Esse tipo de teste é obrigatório para operações relevantes de dados multi-tenant.
@@ -842,7 +842,7 @@ Evitar adicionar índices ou joins complexos sem evidência de necessidade.
 
 Nunca confiar no cliente para definir:
 
-tenant_id
+empresa_id
 user_id
 created_at
 updated_at
@@ -862,13 +862,13 @@ Antes de finalizar uma alteração relacionada ao banco:
 
  O model está correto;
  Foreign keys estão definidas;
- tenant_id foi considerado;
+ empresa_id foi considerado;
  Soft delete foi considerado;
  Timestamps estão corretos;
  Money utiliza NUMERIC;
  Constraints foram avaliadas;
  Índices foram avaliados;
- Queries filtram pelo tenant quando necessário;
+ Queries filtram pela empresa quando necessário;
  Paginação ocorre no banco;
  Ordenação é estável;
  Transações estão corretas;
@@ -876,7 +876,7 @@ Antes de finalizar uma alteração relacionada ao banco:
  Migration foi criada quando necessária;
  Migration foi revisada;
  Testes foram atualizados;
- Isolamento entre tenants foi testado.
+ Isolamento entre empresas foi testado.
 51. Regra principal
 
 O banco deve ser tratado como parte da arquitetura da aplicação, e não apenas como um local para armazenar dados.

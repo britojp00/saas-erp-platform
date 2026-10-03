@@ -114,7 +114,7 @@ Restrições
 Exemplo:
 
 Problema:
-clientes de outro tenant podem aparecer na listagem.
+clientes de outra empresa podem aparecer na listagem.
 
 Arquivo:
 backend/app/repositories/cliente.py
@@ -123,10 +123,10 @@ Método:
 list()
 
 Comportamento atual:
-consulta sem filtro de tenant.
+consulta sem filtro de empresa.
 
 Comportamento esperado:
-retornar somente clientes do tenant autenticado.
+retornar somente clientes da empresa autenticado.
 
 Restrições:
 manter arquitetura existente e adicionar testes.
@@ -250,7 +250,7 @@ Verificar:
 
 model
 migration
-tenant_id
+empresa_id
 constraints
 indexes
 soft delete
@@ -264,7 +264,7 @@ Quando uma tarefa envolver:
 
 authentication
 authorization
-tenant
+empresa
 permissions
 tokens
 secrets
@@ -279,10 +279,10 @@ A IA não deve remover proteções apenas para fazer a funcionalidade funcionar.
 
 16. Multi-tenancy
 
-Qualquer operação que trabalhe com dados de tenant deve considerar:
+Qualquer operação que trabalhe com dados de empresa deve considerar:
 
-tenant context
-tenant_id
+contexto de empresa
+empresa_id
 ownership
 authorization
 cache
@@ -333,7 +333,7 @@ response
 status codes
 authentication
 authorization
-tenant
+empresa
 OpenAPI
 tests
 
@@ -527,7 +527,7 @@ utilizar logging estruturado
 Considerar:
 
 request_id
-tenant_id
+empresa_id
 user_id
 event
 
@@ -682,7 +682,7 @@ Exemplos:
 
 desabilitar autenticação
 ignorar permission
-ignorar tenant
+ignorar empresa
 aceitar qualquer token
 47. API Contract
 
@@ -696,7 +696,7 @@ verificar Integration Hub quando existir
 
 Ao criar ou alterar jobs:
 
-tenant
+empresa
 idempotência
 retry
 timeout
@@ -719,7 +719,7 @@ idempotency
 payload
 response
 logging
-tenant
+empresa
 
 devem ser avaliados.
 

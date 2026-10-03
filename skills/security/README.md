@@ -39,7 +39,7 @@ Secure by Default
 Defense in Depth
 Fail Secure
 Explicit Authorization
-Tenant Isolation
+Empresa Isolation
 Secret Management
 Input Validation
 
@@ -61,7 +61,7 @@ sem permission
     ↓
 negado
 
-tenant incorreto
+empresa incorreta
     ↓
 negado
 
@@ -111,7 +111,7 @@ A aplicação deve verificar:
 
 User
 ↓
-Tenant
+Empresa
 ↓
 Role
 ↓
@@ -123,31 +123,31 @@ Business Rule
 
 A autorização deve permanecer no backend.
 
-6. Tenant Isolation
+6. Empresa Isolation
 
-O isolamento entre tenants é um requisito crítico.
+O isolamento entre empresas é um requisito crítico.
 
 Uma requisição de:
 
-Tenant A
+Empresa A
 
 não pode acessar dados de:
 
-Tenant B
+Empresa B
 
 somente porque possui um ID válido.
 
 Todas as operações multi-tenant devem considerar o contexto autorizado.
 
-7. Tenant ID
+7. Empresa ID
 
 Não confiar em:
 
-tenant_id enviado pelo frontend
+empresa_id enviado pelo frontend
 
 como mecanismo de autorização.
 
-O tenant deve ser derivado de um contexto confiável.
+A empresa deve ser derivada de um contexto confiável.
 
 Exemplo conceitual:
 
@@ -155,20 +155,20 @@ JWT
 ↓
 User
 ↓
-Tenant
+Empresa
 ↓
 Database Query
-8. Cross-tenant Access
+8. Cross-empresa Access
 
-Tentativas de acesso cross-tenant devem ser bloqueadas.
+Tentativas de acesso cross-empresa devem ser bloqueadas.
 
 Exemplo:
 
 User A
-Tenant A
+Empresa A
     ↓
 Cliente B
-Tenant B
+Empresa B
 
 Resultado:
 
@@ -182,11 +182,11 @@ Alguns recursos podem exigir:
 
 Permission
 +
-Tenant
+Empresa
 +
 Owner
 
-Não assumir que possuir uma permission global dentro do tenant concede acesso irrestrito a todos os recursos quando o domínio possuir regras de propriedade.
+Não assumir que possuir uma permission global dentro da empresa concede acesso irrestrito a todos os recursos quando o domínio possuir regras de propriedade.
 
 10. Input Validation
 
@@ -257,7 +257,7 @@ Não permitir que o cliente atualize campos arbitrários da entidade.
 
 Campos controlados pelo backend incluem, conforme o domínio:
 
-tenant_id
+empresa_id
 user_id
 created_at
 updated_at
@@ -526,7 +526,7 @@ Audit logs devem registrar ações relevantes sem armazenar secrets.
 Exemplo:
 
 user_id
-tenant_id
+empresa_id
 action
 entity
 entity_id
@@ -777,7 +777,7 @@ Não expor ao cliente informações adicionais sobre:
 roles
 permissions internas
 estrutura administrativa
-outros tenants
+outros empresas
 
 sem necessidade.
 
@@ -789,34 +789,34 @@ Evitar:
 
 cliente:123
 
-quando IDs puderem existir em diferentes tenants.
+quando IDs puderem existir em diferentes empresas.
 
 Preferir chaves que incluam o contexto necessário:
 
-tenant:{tenant_id}:cliente:{cliente_id}
+empresa:{empresa_id}:cliente:{cliente_id}
 59. Multi-tenant Jobs
 
 Jobs devem respeitar:
 
-tenant_id
+empresa_id
 
 e não permitir processamento cruzado.
 
-O worker deve utilizar queries tenant-aware.
+O worker deve utilizar queries com escopo de empresa.
 
 60. Multi-tenant Integrations
 
-Configurações de integração devem permanecer vinculadas ao tenant correto.
+Configurações de integração devem permanecer vinculadas à empresa correta.
 
 Exemplo:
 
-Tenant A
+Empresa A
 → External Account A
 
-Tenant B
+Empresa B
 → External Account B
 
-Nunca misturar credenciais ou dados de tenants diferentes.
+Nunca misturar credenciais ou dados de empresas diferentes.
 
 61. Background Jobs Security
 
@@ -826,7 +826,7 @@ Validar:
 
 job type
 payload
-tenant
+empresa
 entity
 state
 
@@ -877,7 +877,7 @@ Authentication
     ↓
 Authorization
     ↓
-Tenant Isolation
+Empresa Isolation
     ↓
 Business Rules
     ↓
@@ -925,7 +925,7 @@ Considerar:
 
 authentication
 authorization
-tenant isolation
+empresa isolation
 secrets
 database
 dependencies
@@ -934,7 +934,7 @@ external integrations
 
 Testar explicitamente:
 
-cross-tenant access
+cross-empresa access
 privilege escalation
 invalid token
 expired token
@@ -968,7 +968,7 @@ A IA não deve:
 inventar credentials
 expor secrets
 desabilitar autenticação
-remover tenant filters
+remover empresa filters
 ignorar authorization
 
 somente para fazer uma implementação funcionar.
@@ -981,7 +981,7 @@ Verificar especialmente:
 
 authentication
 authorization
-tenant isolation
+empresa isolation
 SQL queries
 input validation
 secrets
@@ -1041,7 +1041,7 @@ Quando aplicável:
 
 actor_type = ai
 actor_id
-tenant_id
+empresa_id
 action
 entity
 timestamp
@@ -1143,7 +1143,7 @@ Decisões de segurança importantes devem ser documentadas.
 Exemplos:
 
 authentication strategy
-tenant model
+empresa model
 token strategy
 secret management
 external integration authentication
@@ -1155,7 +1155,7 @@ Evitar depender somente de conhecimento implícito no código.
 Antes de concluir uma funcionalidade sensível, verificar:
 
 Quem pode acessar?
-Qual tenant?
+Qual empresa?
 Qual recurso?
 Qual permission?
 Quais dados são expostos?
@@ -1168,7 +1168,7 @@ Antes de finalizar uma funcionalidade:
  Entrada externa foi validada;
  Authentication foi considerada;
  Authorization foi considerada;
- Tenant isolation foi considerada;
+ Empresa isolation foi considerada;
  Resource ownership foi considerado quando necessário;
  Secrets não estão no código;
  Secrets não aparecem nos logs;
@@ -1177,8 +1177,8 @@ Antes de finalizar uma funcionalidade:
  Dynamic filters/sorting são controlados;
  Mass assignment foi evitado;
  Dados sensíveis não são expostos;
- Cache respeita tenant;
- Jobs respeitam tenant;
+ Cache respeita empresa;
+ Jobs respeitam empresa;
  Integrações validam entrada externa;
  Webhooks possuem validação quando aplicável;
  Rate limiting foi considerado;
@@ -1199,7 +1199,7 @@ Authentication
       ↓
 Authorization
       ↓
-Tenant Isolation
+Empresa Isolation
       ↓
 Business Rules
       ↓

@@ -9,7 +9,7 @@ O isolamento entre tenants é um requisito obrigatório
 do sistema.
 
 Nenhum usuário, processo ou endpoint deve conseguir acessar,
-alterar ou remover dados pertencentes a outro tenant sem uma
+alterar ou remover dados pertencentes a outra empresa sem uma
 regra explícita que permita essa operação.
 
 ---
@@ -25,7 +25,7 @@ PostgreSQL
           |
           └── Schema compartilhado
                 |
-                ├── tenants
+                ├── empresas
                 ├── users
                 ├── clientes
                 ├── produtos
@@ -34,7 +34,7 @@ PostgreSQL
 
 O isolamento lógico será realizado através do campo:
 
-tenant_id
+empresa_id
 
 nas entidades que pertencem a uma empresa.
 
@@ -55,15 +55,15 @@ Empresa 123
 
 Cada tenant possui seu próprio contexto de dados.
 
-3. Entidade Tenant
+3. Entidade Empresa
 
 A entidade principal é:
 
-tenants
+empresas
 
 Estrutura conceitual:
 
-tenants
+empresas
 
 id
 name
@@ -72,23 +72,23 @@ created_at
 updated_at
 deleted_at
 
-A tabela tenants é a raiz do isolamento entre empresas.
+A tabela empresas é a raiz do isolamento entre empresas.
 
-A tabela tenants não possui tenant_id.
+A tabela empresas não possui empresa_id.
 
-4. Relacionamento com Tenant
+4. Relacionamento com Empresa
 
 Toda entidade de negócio que pertence a uma empresa
 deve possuir:
 
-tenant_id
+empresa_id
 
 Exemplo:
 
 clientes
 
 id
-tenant_id
+empresa_id
 name
 email
 created_at
@@ -97,7 +97,7 @@ deleted_at
 produtos
 
 id
-tenant_id
+empresa_id
 sku
 name
 price
@@ -107,16 +107,16 @@ deleted_at
 pedidos
 
 id
-tenant_id
+empresa_id
 cliente_id
 status
 total_amount
 created_at
 updated_at
 deleted_at
-5. Entidades que não possuem tenant_id
+5. Entidades que não possuem empresa_id
 
-Nem toda entidade precisa possuir tenant_id.
+Nem toda entidade precisa possuir empresa_id.
 
 A decisão deve considerar a propriedade dos dados.
 
@@ -127,16 +127,16 @@ permissions
 porque uma permission pode representar uma definição
 da própria plataforma.
 
-Exemplos que normalmente pertencem a um tenant:
+Exemplos que normalmente pertencem a uma empresa:
 
 clientes
 produtos
 pedidos
 estoque
 
-A ausência de tenant_id deve ser uma decisão explícita.
+A ausência de empresa_id deve ser uma decisão explícita.
 
-Não adicionar tenant_id automaticamente a toda tabela.
+Não adicionar empresa_id automaticamente a toda tabela.
 
 6. Regra de propriedade
 
@@ -148,42 +148,42 @@ A informação pertence:
     |
     +---- à plataforma?
     |
-    +---- a um tenant?
+    +---- a uma empresa?
     |
-    +---- a uma relação entre tenants?
+    +---- a uma relação entre empresas?
 
-Se os dados pertencem a um tenant, utilizar:
+Se os dados pertencem a uma empresa, utilizar:
 
-tenant_id
+empresa_id
 7. Foreign Key
 
 O campo:
 
-tenant_id
+empresa_id
 
 deve possuir relacionamento com:
 
-tenants.id
+empresas.id
 
 quando aplicável.
 
 Conceito:
 
-clientes.tenant_id
+clientes.empresa_id
         |
         v
-   tenants.id
+   empresas.id
 
 Isso garante a integridade do relacionamento no banco.
 
-8. Contexto do Tenant
+8. Contexto de Empresa
 
-O tenant atual deve ser determinado a partir de
+A empresa atual deve ser determinada a partir de
 uma fonte confiável da aplicação.
 
 O sistema não deve confiar exclusivamente em:
 
-tenant_id
+empresa_id
 
 enviado pelo cliente.
 
@@ -192,19 +192,19 @@ Exemplo incorreto:
 POST /api/v1/clientes
 
 {
-    "tenant_id": "tenant-da-empresa-B",
+    "empresa_id": "empresa-B",
     "name": "João"
 }
 
 e a aplicação aceitar esse valor como fonte de autorização.
 
-O tenant deve ser obtido do contexto autenticado
-e validado pela aplicação.
+A empresa deve ser obtida do contexto autenticado
+e validada pela aplicação.
 
-9. Autenticação e Tenant
+9. Autenticação e Empresa
 
 O usuário autenticado deve possuir uma associação
-com o tenant correspondente.
+com a empresa correspondente.
 
 Conceito:
 
@@ -221,16 +221,16 @@ Tenant:
 Empresa ABC
 
 Quando João realizar uma operação, a aplicação deve conhecer
-o contexto do tenant associado à sua sessão/autenticação.
+o contexto da empresa associada à sua sessão/autenticação.
 
-10. Usuário e Tenant
+10. Usuário e Empresa
 
 A estrutura inicial prevista será:
 
 users
 
 id
-tenant_id
+empresa_id
 name
 email
 password_hash
@@ -238,7 +238,7 @@ created_at
 updated_at
 deleted_at
 
-Um usuário de negócio pertence a um tenant.
+Um usuário de negócio pertence a uma empresa.
 
 O modelo final de associação pode evoluir caso o sistema
 precise suportar usuários pertencentes a múltiplos tenants.
@@ -251,26 +251,26 @@ Uma operação de leitura deve considerar:
 
 recurso
 +
-tenant atual
+empresa atual
 
 Exemplo conceitual:
 
 SELECT *
 FROM clientes
 WHERE id = :cliente_id
-  AND tenant_id = :tenant_id
+  AND empresa_id = :empresa_id
   AND deleted_at IS NULL
 
 A aplicação não deve buscar somente:
 
 WHERE id = :cliente_id
 
-quando o recurso pertence a um tenant.
+quando o recurso pertence a uma empresa.
 
 12. Listagens
 
 Toda listagem de uma entidade multi-tenant deve
-considerar o tenant atual.
+considerar a empresa atual.
 
 Exemplo:
 
@@ -278,17 +278,17 @@ GET /api/v1/clientes
 
 deve resultar conceitualmente em:
 
-Tenant atual
+Empresa atual
     |
     v
-clientes daquele tenant
+clientes daquela empresa
 
 e não:
 
 todos os clientes da plataforma
 13. Busca por ID
 
-Uma busca por ID deve respeitar o tenant.
+Uma busca por ID deve respeitar a empresa.
 
 Exemplo:
 
@@ -298,27 +298,27 @@ A aplicação deve validar:
 
 cliente.id
 +
-cliente.tenant_id
+cliente.empresa_id
 
-O fato de o usuário conhecer o ID de outro tenant
+O fato de o usuário conhecer o ID de outra empresa
 não deve conceder acesso ao registro.
 
 14. Atualização
 
-Atualizações devem validar o tenant do registro.
+Atualizações devem validar a empresa do registro.
 
 Exemplo:
 
 PUT /api/v1/produtos/{id}
 
 A operação deve localizar o produto dentro do contexto
-do tenant atual.
+da empresa atual.
 
 Conceito:
 
 produto.id
 +
-produto.tenant_id
+produto.empresa_id
 
 Não realizar alteração somente utilizando o ID quando
 a entidade for multi-tenant.
@@ -339,7 +339,7 @@ Registro excluído:
 
 deleted_at = data da exclusão
 
-A exclusão lógica também deve respeitar o tenant atual.
+A exclusão lógica também deve respeitar a empresa atual.
 
 16. Consultas de registros ativos
 
@@ -349,11 +349,11 @@ deleted_at IS NULL
 
 além do:
 
-tenant_id = tenant atual
+empresa_id = empresa atual
 
 Conceito:
 
-WHERE tenant_id = :tenant_id
+WHERE empresa_id = :empresa_id
   AND deleted_at IS NULL
 17. Registros excluídos
 
@@ -367,11 +367,11 @@ registros com:
 deleted_at IS NOT NULL
 18. Criação de registros
 
-Ao criar uma entidade pertencente a um tenant,
-o tenant_id deve ser derivado do contexto autenticado
+Ao criar uma entidade pertencente a uma empresa,
+o empresa_id deve ser derivado do contexto autenticado
 da operação.
 
-Não confiar no tenant_id fornecido pelo cliente
+Não confiar no empresa_id fornecido pelo cliente
 quando ele representar autorização.
 
 Exemplo:
@@ -379,17 +379,17 @@ Exemplo:
 Usuário autenticado
         |
         v
-Tenant = A
+Empresa = A
         |
         v
 POST /clientes
         |
         v
-cliente.tenant_id = A
+cliente.empresa_id = A
 19. Relações entre entidades multi-tenant
 
 Ao trabalhar com duas ou mais entidades multi-tenant,
-as relações também devem respeitar o tenant.
+as relações também devem respeitar a empresa.
 
 Exemplo:
 
@@ -400,10 +400,10 @@ Cliente
 
 Ao criar um pedido:
 
-pedido.tenant_id
-cliente.tenant_id
+pedido.empresa_id
+cliente.empresa_id
 
-devem representar o mesmo tenant.
+devem representar a mesma empresa.
 
 Não permitir:
 
@@ -425,7 +425,7 @@ Criar Pedido para Cliente
 Cliente existe?
         |
         v
-Cliente pertence ao tenant atual?
+Cliente pertence à empresa atual?
         |
         +---- NÃO → rejeitar
         |
@@ -437,14 +437,14 @@ Também é necessário validar sua propriedade.
 
 21. Produtos e estoque
 
-Produtos e estoques são dados pertencentes ao tenant.
+Produtos e estoques são dados pertencentes à empresa.
 
 Exemplo:
 
 produtos
 
 id
-tenant_id
+empresa_id
 sku
 name
 price
@@ -454,7 +454,7 @@ deleted_at
 estoque
 
 id
-tenant_id
+empresa_id
 produto_id
 quantity
 created_at
@@ -462,18 +462,18 @@ updated_at
 deleted_at
 
 O produto relacionado ao estoque deve pertencer
-ao mesmo tenant.
+à mesma empresa.
 
 22. Pedidos
 
-Pedidos pertencem ao tenant.
+Pedidos pertencem à empresa.
 
 Exemplo:
 
 pedidos
 
 id
-tenant_id
+empresa_id
 cliente_id
 status
 total_amount
@@ -483,29 +483,29 @@ deleted_at
 
 Ao criar um pedido:
 
-Pedido Tenant
+Empresa do pedido
       =
-Cliente Tenant
+Empresa do cliente
 
 Os itens do pedido também devem pertencer ao contexto
 do pedido.
 
-23. Unique por Tenant
+23. Unicidade por Empresa
 
-Regras de unicidade devem considerar o escopo do tenant
+Regras de unicidade devem considerar o escopo da empresa
 quando o dado não precisa ser globalmente único.
 
 Exemplo:
 
 produtos
 
-tenant_id
+empresa_id
 sku
 
 A regra pode ser:
 
 UNIQUE (
-    tenant_id,
+    empresa_id,
     sku
 )
 
@@ -558,7 +558,7 @@ Não assumir automaticamente uma estratégia.
 
 Consultas multi-tenant frequentemente utilizam:
 
-tenant_id
+empresa_id
 
 como filtro.
 
@@ -568,24 +568,24 @@ os padrões reais de consulta.
 Exemplo conceitual:
 
 INDEX (
-    tenant_id,
+    empresa_id,
     created_at
 )
 
 ou:
 
 INDEX (
-    tenant_id,
+    empresa_id,
     status
 )
 
 A definição final deve considerar as consultas reais
 da aplicação.
 
-26. Tenant e índices
+26. Empresa e índices
 
 Não criar índices somente porque uma tabela possui
-tenant_id.
+empresa_id.
 
 Avaliar:
 
@@ -600,13 +600,13 @@ O objetivo é atender os padrões reais de acesso.
 27. Repositories
 
 Repositories devem receber ou utilizar o contexto
-de tenant de forma consistente.
+de empresa de forma consistente.
 
 Uma operação como:
 
 get_cliente(cliente_id)
 
-não deve ignorar o tenant quando estiver sendo utilizada
+não deve ignorar a empresa quando estiver sendo utilizada
 para dados multi-tenant.
 
 O padrão concreto será definido na skill de backend
@@ -615,14 +615,14 @@ e aplicado de maneira consistente.
 28. Services
 
 Services são responsáveis por aplicar regras de negócio
-relacionadas ao tenant.
+relacionadas à empresa.
 
 Exemplo:
 
 PedidoService
     |
     +---- validar cliente
-    +---- validar tenant
+    +---- validar empresa
     +---- validar estoque
     +---- criar pedido
 
@@ -631,7 +631,7 @@ o isolamento entre tenants.
 
 29. Routers
 
-Routers não devem confiar em um tenant enviado
+Routers não devem confiar em uma empresa enviada
 diretamente pelo cliente.
 
 O router deve utilizar as dependências e serviços
@@ -717,63 +717,63 @@ operação bloqueada
 
 O deleted_at do Cliente B não deve ser alterado.
 
-34. Background Jobs e Tenant
+34. Background Jobs e Empresa
 
 Processos executados em background também devem conhecer
-o contexto do tenant quando trabalharem com dados
+o contexto da empresa quando trabalharem com dados
 multi-tenant.
 
 Exemplo:
 
 Queue Message
     |
-    +---- tenant_id
+    +---- empresa_id
     |
     +---- entity_id
     |
     +---- operation
 
 Um worker não deve executar uma operação de negócio
-sem conhecer o contexto do tenant quando ele for necessário.
+sem conhecer o contexto da empresa quando ele for necessário.
 
-35. Cache e Tenant
+35. Cache e Empresa
 
 Dados armazenados em cache também devem respeitar
 o isolamento entre tenants.
 
 Chaves de cache relacionadas a dados de negócio devem
-considerar o tenant quando necessário.
+considerar a empresa quando necessário.
 
 Exemplo:
 
-tenant:{tenant_id}:produtos:{produto_id}
+empresa:{empresa_id}:produtos:{produto_id}
 
 Evitar chaves genéricas que possam causar colisão
 ou exposição de dados entre tenants.
 
-36. Logs e Tenant
+36. Logs e Empresa
 
 Logs de operações multi-tenant devem permitir
-identificar o contexto do tenant quando aplicável.
+identificar o contexto da empresa quando aplicável.
 
 Exemplo:
 
 {
   "event": "cliente_created",
-  "tenant_id": "...",
+  "empresa_id": "...",
   "user_id": "...",
   "request_id": "..."
 }
 
 Não registrar informações sensíveis desnecessariamente.
 
-37. APIs públicas e Tenant
+37. APIs públicas e Empresa
 
 Endpoints públicos ou de integração devem possuir
-uma estratégia explícita para determinar o tenant.
+uma estratégia explícita para determinar a empresa.
 
-Não assumir que o primeiro tenant encontrado no banco
-é o tenant da requisição.
+Não assumir que a primeira empresa encontrada no banco
+é a empresa da requisição.
 
 O contexto deve ser estabelecido através de um mecanismo
 de autenticação ou identificação confiável.
@@ -782,7 +782,7 @@ de autenticação ou identificação confiável.
 
 O futuro integration-hub consumirá a API do ERP.
 
-As integrações deverão possuir contexto de tenant
+As integrações deverão possuir contexto de empresa
 quando representarem operações de uma empresa específica.
 
 Exemplo conceitual:
@@ -802,12 +802,12 @@ destinada ao Tenant A manipule dados do Tenant B.
 
 Ao criar uma nova tabela, responder:
 
-1. Essa entidade pertence a um tenant?
-2. Se sim, possui tenant_id?
-3. tenant_id possui foreign key?
-4. As consultas considerarão o tenant?
-5. Os relacionamentos respeitam o tenant?
-6. A unicidade é global ou por tenant?
+1. Essa entidade pertence a uma empresa?
+2. Se sim, possui empresa_id?
+3. empresa_id possui foreign key?
+4. As consultas considerarão a empresa?
+5. Os relacionamentos respeitam a empresa?
+6. A unicidade é global ou por empresa?
 7. Os índices consideram os padrões de consulta?
 8. O soft delete está sendo considerado?
 9. Existem testes de isolamento?
@@ -815,25 +815,25 @@ Ao criar uma nova tabela, responder:
 
 Ao criar um endpoint que trabalha com dados de negócio:
 
-1. Identificar o tenant atual.
+1. Identificar a empresa atual.
 2. Validar autenticação.
 3. Validar autorização.
-4. Consultar dados dentro do tenant.
+4. Consultar dados dentro da empresa.
 5. Validar relacionamentos.
-6. Garantir que atualizações respeitem o tenant.
-7. Garantir que exclusões respeitem o tenant.
+6. Garantir que atualizações respeitem a empresa.
+7. Garantir que exclusões respeitem a empresa.
 8. Criar testes de isolamento.
 41. Regra para novas queries
 
 Antes de criar uma query sobre entidade multi-tenant,
 verificar se ela precisa considerar:
 
-tenant_id
+empresa_id
 deleted_at
 
 Exemplo:
 
-tenant_id = tenant atual
+empresa_id = empresa atual
 AND
 deleted_at IS NULL
 
@@ -848,17 +848,17 @@ Exemplo:
 
 /cliente/{id}
 
-deve considerar o contexto do tenant quando o recurso
+deve considerar o contexto da empresa quando o recurso
 for multi-tenant.
 
 43. Regra para dados administrativos
 
 Dados administrativos da plataforma podem possuir
-escopo diferente dos dados do tenant.
+escopo diferente dos dados da empresa.
 
 Exemplos:
 
-tenants
+empresas
 permissions
 
 A estratégia de acesso deve ser definida explicitamente.
@@ -895,13 +895,13 @@ Request
 Authenticated User
    |
    v
-Tenant Context
+Contexto de Empresa
    |
    v
 Business Operation
    |
    v
-Tenant-aware Query
+Query com escopo de empresa
    |
    v
 Database

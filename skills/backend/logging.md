@@ -10,7 +10,7 @@ Os logs devem permitir investigar:
 O que aconteceu?
 Quando aconteceu?
 Em qual requisição?
-Em qual tenant?
+Em qual empresa?
 Qual usuário estava envolvido?
 Qual componente executou a operação?
 Houve erro?
@@ -72,7 +72,7 @@ Conceito:
   "level": "INFO",
   "event": "cliente.criar",
   "request_id": "uuid",
-  "tenant_id": 10,
+  "empresa_id": 10,
   "user_id": 32
 }
 
@@ -86,7 +86,7 @@ timestamp
 level
 event
 request_id
-tenant_id
+empresa_id
 user_id
 service
 environment
@@ -252,11 +252,11 @@ Não aceitar qualquer valor sem limites.
 
 Evitar permitir valores gigantes ou formatos que possam poluir os logs.
 
-12. Tenant ID
+12. Empresa ID
 
 Em operações multi-tenant, incluir:
 
-tenant_id
+empresa_id
 
 nos logs relevantes.
 
@@ -264,11 +264,11 @@ Exemplo:
 
 {
   "event": "cliente.criar",
-  "tenant_id": "uuid",
+  "empresa_id": "uuid",
   "user_id": "uuid"
 }
 
-Isso facilita investigações específicas de um tenant.
+Isso facilita investigações específicas de uma empresa.
 
 13. User ID
 
@@ -457,7 +457,7 @@ Exemplo conceitual:
   "level": "ERROR",
   "event": "pedido.criacao_falhou",
   "request_id": "uuid",
-  "tenant_id": "uuid",
+  "empresa_id": "uuid",
   "user_id": "uuid",
   "error_type": "DatabaseError"
 }
@@ -514,7 +514,7 @@ Registrar:
 
 request_id
 user_id quando disponível
-tenant_id quando disponível
+empresa_id quando disponível
 event
 timestamp
 
@@ -535,7 +535,7 @@ Campos possíveis:
 
 request_id
 user_id
-tenant_id
+empresa_id
 permission
 resource
 action
@@ -552,13 +552,13 @@ required_permission=cliente.excluir
 
 Não registrar listas desnecessariamente grandes de permissions se somente uma for relevante.
 
-30. Tenant Isolation
+30. Empresa Isolation
 
-Tentativas de acesso fora do tenant podem ser relevantes para investigação.
+Tentativas de acesso fora da empresa podem ser relevantes para investigação.
 
 Exemplo:
 
-tenant.access.denied
+empresa.access.denied
 
 Entretanto, não transformar cada 404 ou acesso não encontrado em evento de segurança sem analisar o contexto.
 
@@ -609,7 +609,7 @@ external_request.retry
 Campos possíveis:
 
 request_id
-tenant_id
+empresa_id
 integration
 operation
 status
@@ -658,7 +658,7 @@ method
 path
 status_code
 duration_ms
-tenant_id
+empresa_id
 user_id
 
 Exemplo:
@@ -737,7 +737,7 @@ job.retry
 Campos possíveis:
 
 job_id
-tenant_id
+empresa_id
 actor_user_id
 request_id
 operation
@@ -780,7 +780,7 @@ Campos de correlação podem incluir:
 request_id
 job_id
 integration_id
-tenant_id
+empresa_id
 
 Isso será importante para diagnosticar retries e falhas de sincronização.
 
@@ -819,12 +819,12 @@ Preferir:
 {
   "event": "pedido.criado",
   "pedido_id": "uuid",
-  "tenant_id": "uuid"
+  "empresa_id": "uuid"
 }
 
 em vez de:
 
-"Pedido 123 criado pelo tenant abc com usuário xyz"
+"Pedido 123 criado pela empresa abc com usuário xyz"
 
 Campos estruturados são mais fáceis de:
 
@@ -839,7 +839,7 @@ Não construir mensagens complexas concatenando grandes quantidades de dados.
 Evitar:
 
 logger.info(
-    f"Pedido {pedido_id} criado pelo usuário {user_id} no tenant {tenant_id}"
+    f"Pedido {pedido_id} criado pelo usuário {user_id} na empresa {empresa_id}"
 )
 
 Preferir logging estruturado quando a biblioteca utilizada permitir:
@@ -849,7 +849,7 @@ logger.info(
     extra={
         "pedido_id": str(pedido_id),
         "user_id": str(user_id),
-        "tenant_id": str(tenant_id),
+        "empresa_id": str(empresa_id),
     },
 )
 
@@ -862,7 +862,7 @@ Os mesmos conceitos devem utilizar os mesmos nomes.
 Exemplo:
 
 request_id
-tenant_id
+empresa_id
 user_id
 job_id
 duration_ms
@@ -941,7 +941,7 @@ Quando relevante, testar:
 event
 level
 request_id
-tenant_id
+empresa_id
 error_code
 
 Não testar conteúdo exato de mensagens quando isso criar acoplamento desnecessário.
@@ -1115,7 +1115,7 @@ Antes de finalizar uma alteração de logging:
  Evento possui nome consistente;
  Level está adequado;
  request_id foi considerado;
- tenant_id foi considerado;
+ empresa_id foi considerado;
  user_id foi considerado;
  job_id foi considerado quando necessário;
  Dados sensíveis não são registrados;
@@ -1141,7 +1141,7 @@ event
     +
 request_id
     +
-tenant_id
+empresa_id
     +
 user_id
     +
@@ -1157,7 +1157,7 @@ O backend possui logging estruturado implementado com:
 
 ```text
 app/core/logging.py       — JSONFormatter, TextFormatter, setup_logging()
-app/core/request_context.py — contextvars para request_id, user_id, tenant_id
+app/core/request_context.py — contextvars para request_id, user_id, empresa_id
 app/api/middleware.py      — HTTPLoggingMiddleware
 app/core/exceptions.py    — logging nos exception handlers
 app/main.py               — integração no startup
@@ -1193,7 +1193,7 @@ Cada log JSON contém:
   "logger": "app.http",
   "message": "request_completed",
   "request_id": "uuid",
-  "tenant_id": 1,
+  "empresa_id": 1,
   "user_id": 1,
   "event": "request_completed",
   "method": "GET",
@@ -1203,7 +1203,7 @@ Cada log JSON contém:
 }
 ```
 
-Campos condicionais: request_id, tenant_id, user_id, exception, event, method, path, status_code, duration_ms.
+Campos condicionais: request_id, empresa_id, user_id, exception, event, method, path, status_code, duration_ms.
 
 71. Request Context
 
@@ -1213,7 +1213,7 @@ Utiliza contextvars para transportar contexto por request:
 from app.core.request_context import get_request_context
 
 ctx = get_request_context()
-# ctx.request_id, ctx.user_id, ctx.tenant_id
+# ctx.request_id, ctx.user_id, ctx.empresa_id
 ```
 
 Vantagem: sem estado global mutável, thread-safe, suporte nativo a async.
@@ -1224,7 +1224,7 @@ HTTPLoggingMiddleware (BaseHTTPMiddleware):
 
 Gera UUID v4 para X-Request-ID quando ausente/inválido (>128 chars)
 Preserva X-Request-ID válido do cliente
-Decodifica JWT para extrair user_id/tenant_id (para logging apenas)
+Decodifica JWT para extrair user_id/empresa_id (para logging apenas)
 Mede duration_ms com time.perf_counter()
 Emite request_completed com level baseado no status:
 2xx/3xx → INFO

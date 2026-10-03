@@ -361,7 +361,7 @@ source_system
 
 Possível estrutura:
 
-tenant_id
+empresa_id
 source_system
 external_id
 
@@ -841,7 +841,7 @@ integration.webhook.received
 Campos possíveis:
 
 request_id
-tenant_id
+empresa_id
 integration
 operation
 status
@@ -891,7 +891,7 @@ Integrações devem permitir identificar:
 
 qual sistema
 qual operação
-qual tenant
+qual empresa
 qual request
 qual job
 qual tentativa
@@ -974,11 +974,11 @@ external_id
 
 A estrutura deve seguir o caso de uso.
 
-59. Per Tenant Configuration
+59. Per Empresa Configuration
 
-Quando cada tenant possuir configurações próprias de integração:
+Quando cada empresa possuir configurações próprias de integração:
 
-Tenant
+Empresa
  ↓
 Integration Configuration
  ↓
@@ -996,13 +996,13 @@ A modelagem deve evitar exposição dessas credenciais na API.
 
 60. Multi-tenancy
 
-Toda integração que trabalha com dados de tenant deve considerar:
+Toda integração que trabalha com dados de empresa deve considerar:
 
-tenant_id
+empresa_id
 external_id
 source_system
 
-Uma operação de Tenant A nunca deve processar automaticamente dados de Tenant B.
+Uma operação de Empresa A nunca deve processar automaticamente dados de Empresa B.
 
 61. Background Jobs
 
@@ -1217,20 +1217,20 @@ Testar que:
 
 credenciais não aparecem em responses
 credenciais não aparecem nos logs
-tenant A não acessa configuração de tenant B
+empresa A não acessa configuração de empresa B
 
 quando aplicável.
 
 76. Testes Multi-tenant
 
-Para integrações configuradas por tenant:
+Para integrações configuradas por empresa:
 
-Tenant A
+Empresa A
 → External Account A
 
 e:
 
-Tenant B
+Empresa B
 → External Account B
 
 O sistema não deve misturar os contextos.

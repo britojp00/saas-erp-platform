@@ -72,7 +72,7 @@ aplicar filtros;
 realizar paginação;
 carregar relacionamentos;
 executar consultas específicas de persistência;
-preservar o escopo do tenant.
+preservar o escopo da empresa.
 4. O que não pertence ao Repository
 
 Evitar colocar no repository:
@@ -149,20 +149,20 @@ query = f"SELECT * FROM clientes WHERE name = '{name}'"
 
 Preferir os mecanismos parametrizados do SQLAlchemy.
 
-9. Tenant Context
+9. Contexto de Empresa
 
-Repositories de entidades multi-tenant devem considerar explicitamente o tenant_id.
+Repositories de entidades multi-tenant devem considerar explicitamente o empresa_id.
 
 Exemplo:
 
 stmt = select(Cliente).where(
     Cliente.id == cliente_id,
-    Cliente.tenant_id == tenant_id,
+    Cliente.empresa_id == empresa_id,
 )
 
 O repository não deve permitir consultas fora do escopo definido.
 
-10. Tenant como requisito
+10. Empresa como requisito
 
 Para entidades multi-tenant, operações como:
 
@@ -171,7 +171,7 @@ list
 update
 delete
 
-devem considerar o tenant quando o domínio exigir.
+devem considerar a empresa quando o domínio exigir.
 
 Evitar métodos que permitam consultar uma entidade multi-tenant sem qualquer possibilidade de restrição de contexto.
 
@@ -182,14 +182,14 @@ Evitar:
 async def get_by_id(self, cliente_id):
     ...
 
-para entidades cujo acesso obrigatoriamente dependa de tenant, se isso permitir esquecer o isolamento.
+para entidades cujo acesso obrigatoriamente dependa de empresa, se isso permitir esquecer o isolamento.
 
 Preferir um contrato que torne o contexto explícito:
 
 async def get_by_id(
     self,
     cliente_id,
-    tenant_id,
+    empresa_id,
 ):
     ...
 12. Not Found
@@ -204,7 +204,7 @@ Exemplo:
 
 cliente = await repository.get_by_id(
     cliente_id,
-    tenant_id,
+    empresa_id,
 )
 
 if cliente is None:
@@ -222,7 +222,7 @@ Exemplo:
 
 async def list(
     self,
-    tenant_id,
+    empresa_id,
     *,
     offset: int,
     limit: int,
@@ -240,7 +240,7 @@ Filtros devem ser aplicados no banco.
 Exemplo conceitual:
 
 stmt = select(Cliente).where(
-    Cliente.tenant_id == tenant_id,
+    Cliente.empresa_id == empresa_id,
     Cliente.deleted_at.is_(None),
 )
 
@@ -315,7 +315,7 @@ nas consultas normais de entidades de negócio.
 Exemplo:
 
 stmt = select(Cliente).where(
-    Cliente.tenant_id == tenant_id,
+    Cliente.empresa_id == empresa_id,
     Cliente.deleted_at.is_(None),
 )
 
@@ -379,7 +379,7 @@ Não chamar flush() sem necessidade.
 
 Atualizações devem respeitar:
 
-tenant_id
+empresa_id
 deleted_at
 identificador
 
@@ -393,7 +393,7 @@ stmt = (
     update(Cliente)
     .where(
         Cliente.id == cliente_id,
-        Cliente.tenant_id == tenant_id,
+        Cliente.empresa_id == empresa_id,
         Cliente.deleted_at.is_(None),
     )
     .values(...)
@@ -504,7 +504,7 @@ count(...)
 
 Ambas devem respeitar:
 
-tenant_id
+empresa_id
 deleted_at
 filtros
 31. Bulk Operations
@@ -542,7 +542,7 @@ Exemplo conceitual:
 
 select(Product).where(
     Product.id == product_id,
-    Product.tenant_id == tenant_id,
+    Product.empresa_id == empresa_id,
 ).with_for_update()
 
 Utilizar locking somente quando necessário.
@@ -611,10 +611,10 @@ A necessidade de índices deve surgir dos padrões reais de consulta.
 
 Exemplos:
 
-tenant_id + created_at
-tenant_id + sku
-tenant_id + status
-tenant_id + external_id
+empresa_id + created_at
+empresa_id + sku
+empresa_id + status
+empresa_id + external_id
 
 A decisão deve ser tomada em conjunto com a modelagem e as migrations.
 
@@ -631,7 +631,7 @@ find_by_source_and_external_id
 Exemplo:
 
 await repository.get_by_external_id(
-    tenant_id=tenant_id,
+    empresa_id=empresa_id,
     source_system="integration_x",
     external_id=external_id,
 )
@@ -720,7 +720,7 @@ Não retornar HTTPException diretamente do repository.
 Repositories podem possuir testes específicos para:
 
 filtros
-tenant isolation
+empresa isolation
 soft delete
 paginação
 ordenação
@@ -748,12 +748,12 @@ Mocks não substituem completamente esses testes.
 
 Toda entidade multi-tenant relevante deve testar:
 
-Tenant A → registros A
-Tenant B → registros B
+Empresa A → registros A
+Empresa B → registros B
 
 E verificar:
 
-Tenant A → registros B
+Empresa A → registros B
 ✗
 
 Esse teste deve existir também para:
@@ -792,7 +792,7 @@ Também verificar que:
 
 page N
 
-não contém registros pertencentes a outro contexto de tenant.
+não contém registros pertencentes a outro contexto de empresa.
 
 50. Testes de Constraints
 
@@ -877,7 +877,7 @@ Repositories devem assumir que os argumentos podem estar incorretos.
 
 Não confiar em:
 
-tenant_id
+empresa_id
 user_id
 entity_id
 
@@ -948,7 +948,7 @@ Ao criar um novo repository:
 
 1. Identificar entidade
 2. Identificar consultas necessárias
-3. Definir escopo de tenant
+3. Definir escopo de empresa
 4. Definir comportamento de soft delete
 5. Definir filtros
 6. Definir ordenação
@@ -970,7 +970,7 @@ Antes de finalizar um repository:
  Utiliza a session centralizada;
  Operações são assíncronas quando apropriado;
  Queries utilizam SQLAlchemy;
- Tenant isolation foi aplicado;
+ Empresa isolation foi aplicado;
  Soft delete foi considerado;
  Paginação ocorre no banco;
  Ordenação é controlada;

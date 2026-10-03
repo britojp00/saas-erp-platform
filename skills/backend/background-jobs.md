@@ -34,7 +34,7 @@ Confiáveis
 Idempotentes quando necessário
 Rastreáveis
 Reprocessáveis
-Isolados por tenant
+Isolados por empresa
 Observáveis
 
 Um job não deve depender de uma requisição HTTP permanecer aberta.
@@ -164,7 +164,7 @@ Exemplo:
 
 {
   "job_id": "uuid",
-  "tenant_id": "uuid",
+  "empresa_id": "uuid",
   "entity_id": "uuid",
   "operation": "sync_cliente"
 }
@@ -209,11 +209,11 @@ worker
 
 Isso facilita rastrear uma operação do início ao fim.
 
-12. Tenant ID
+12. Empresa ID
 
-Jobs que trabalham com dados de tenant devem carregar:
+Jobs que trabalham com dados de empresa devem carregar:
 
-tenant_id
+empresa_id
 
 de forma explícita.
 
@@ -221,23 +221,23 @@ Exemplo:
 
 {
   "job_id": "uuid",
-  "tenant_id": "uuid",
+  "empresa_id": "uuid",
   "entity_id": "uuid"
 }
 
 O worker deve utilizar esse contexto nas operações de persistência.
 
-13. Tenant Isolation
+13. Empresa Isolation
 
 Nunca assumir que:
 
-tenant_id
+empresa_id
 
 presente no payload é suficiente para autorização.
 
 O job deve ser criado por uma operação autorizada e seu contexto deve ser respeitado pelo worker.
 
-Consultas e alterações continuam obrigadas a utilizar o escopo de tenant.
+Consultas e alterações continuam obrigadas a utilizar o escopo de empresa.
 
 14. Actor User
 
@@ -248,7 +248,7 @@ actor_user_id
 Exemplo:
 
 {
-  "tenant_id": "uuid",
+  "empresa_id": "uuid",
   "actor_user_id": "uuid",
   "entity_id": "uuid"
 }
@@ -585,7 +585,7 @@ job_id
 error_code
 error_type
 attempt
-tenant_id
+empresa_id
 timestamp
 
 Não armazenar secrets ou tokens.
@@ -639,7 +639,7 @@ O reprocessamento deve considerar:
 idempotência
 estado atual
 dados alterados
-tenant
+empresa
 causa original da falha
 
 Não simplesmente executar novamente um job antigo sem verificar o contexto atual.
@@ -672,25 +672,25 @@ semanalmente
 
 O mecanismo de scheduling deve ser escolhido conforme as necessidades reais.
 
-41. Scheduled Jobs e Tenant
+41. Scheduled Jobs e Empresa
 
-Jobs agendados que percorrem tenants devem sempre respeitar isolamento.
+Jobs agendados que percorrem empresas devem sempre respeitar isolamento.
 
 Fluxo:
 
 Scheduler
  ↓
-Tenant A
+Empresa A
  ↓
 Job A
 
 Scheduler
  ↓
-Tenant B
+Empresa B
  ↓
 Job B
 
-Evitar consultas globais que misturem dados de diferentes tenants sem necessidade.
+Evitar consultas globais que misturem dados de diferentes empresas sem necessidade.
 
 42. Batch Processing
 
@@ -777,7 +777,7 @@ Campos relevantes:
 
 job_id
 request_id
-tenant_id
+empresa_id
 actor_user_id
 attempt
 duration_ms
@@ -813,7 +813,7 @@ A auditoria deve registrar a ação de negócio, não cada etapa técnica do wor
 Jobs devem permitir identificar:
 
 qual job
-qual tenant
+qual empresa
 quem iniciou
 quando começou
 quando terminou
@@ -941,7 +941,7 @@ quando o caso de uso exigir idempotência.
 
 Validar:
 
-Tenant A
+Empresa A
 ↓
 Job A
 ↓
@@ -1075,13 +1075,13 @@ Timeout deve resultar em tratamento conhecido e possível retry quando apropriad
 
 67. Jobs Exclusivos
 
-Algumas tarefas podem exigir que apenas uma execução esteja ativa por tenant ou recurso.
+Algumas tarefas podem exigir que apenas uma execução esteja ativa por empresa ou recurso.
 
 Exemplo:
 
 sync_products
 
-pode não poder executar simultaneamente duas vezes para o mesmo tenant.
+pode não poder executar simultaneamente duas vezes para o mesma empresa.
 
 Quando necessário, utilizar mecanismos de:
 
@@ -1128,7 +1128,7 @@ Jobs podem ser executados muito depois da criação.
 Por isso, sempre que necessário:
 
 revalidar recurso
-revalidar tenant
+revalidar empresa
 revalidar estado
 revalidar permissões relacionadas
 
@@ -1140,7 +1140,7 @@ Um job nunca deve permitir que seu payload seja utilizado para elevar privilégi
 
 Evitar permitir que o payload determine arbitrariamente:
 
-tenant_id
+empresa_id
 actor_user_id
 permissions
 roles
@@ -1294,7 +1294,7 @@ Antes de finalizar um background job:
  O tipo de job é claro;
  O payload possui somente dados necessários;
  job_id existe quando necessário;
- tenant_id foi considerado;
+ empresa_id foi considerado;
  actor_user_id foi considerado quando necessário;
  Idempotência foi avaliada;
  Retry foi avaliado;
@@ -1309,7 +1309,7 @@ Antes de finalizar um background job:
  Logs possuem correlação;
  Secrets não aparecem nos logs;
  Testes de sucesso e falha existem;
- Testes de tenant existem;
+ Testes de empresa existem;
  Testes de idempotência existem quando necessários;
  Reprocessamento foi considerado;
  Não existe complexidade desnecessária.

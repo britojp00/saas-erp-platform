@@ -237,18 +237,18 @@ dados de negócio, verificar a skill de multi-tenancy.
 
 Regra geral:
 
-Tenant A
+Empresa A
    ↓
-somente dados do Tenant A
+somente dados da Empresa A
 
-Tenant B
+Empresa B
    ↓
-somente dados do Tenant B
+somente dados da Empresa B
 
 A IA nunca deve assumir que um identificador fornecido pelo
 cliente é suficiente para autorizar acesso a um recurso.
 
-O contexto do tenant deve ser respeitado nas operações
+O contexto da empresa deve ser respeitado nas operações
 correspondentes.
 
 13. Segurança
@@ -287,7 +287,7 @@ Logs devem ser úteis para investigação.
 Quando aplicável, utilizar:
 
 request_id
-tenant_id
+empresa_id
 user_id
 event
 timestamp

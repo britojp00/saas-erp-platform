@@ -86,7 +86,7 @@ Exemplos:
 
 Database Session
 Authenticated User
-Current Tenant
+CurrentEmpresa
 Authorization
 Request Context
 
@@ -300,7 +300,7 @@ O sistema não deve deixar registros parcialmente persistidos.
 
 11. Multi-tenancy
 
-Toda operação que manipula dados pertencentes a um tenant deve utilizar o contexto do tenant autenticado.
+Toda operação que manipula dados pertencentes a uma empresa deve utilizar o contexto da empresa autenticado.
 
 Fluxo conceitual:
 
@@ -308,17 +308,17 @@ JWT
  ↓
 Authenticated User
  ↓
-Tenant Context
+Contexto de Empresa
  ↓
 Service
  ↓
 Repository
  ↓
-tenant_id filter
+empresa_id filter
 
 Nunca confiar diretamente em:
 
-tenant_id enviado pelo frontend
+empresa_id enviado pelo frontend
 
 como fonte de autorização.
 
@@ -326,12 +326,12 @@ Exemplo conceitual:
 
 await repository.get_by_id(
     entity_id=cliente_id,
-    tenant_id=current_tenant.id,
+    empresa_id=current_empresa.id,
 )
 
-A filtragem pelo tenant deve fazer parte do padrão das operações multi-tenant.
+A filtragem pela empresa deve fazer parte do padrão das operações multi-tenant.
 
-12. Isolamento entre tenants
+12. Isolamento entre empresas
 
 Uma consulta como:
 
@@ -341,12 +341,12 @@ WHERE id = :cliente_id;
 
 pode ser insuficiente em um sistema multi-tenant.
 
-Quando a entidade pertence a um tenant, a consulta deve considerar o contexto:
+Quando a entidade pertence a uma empresa, a consulta deve considerar o contexto:
 
 SELECT *
 FROM clientes
 WHERE id = :cliente_id
-  AND tenant_id = :tenant_id;
+  AND empresa_id = :empresa_id;
 
 O mesmo princípio vale para:
 
@@ -398,7 +398,7 @@ Depois de identificar o usuário, o backend ainda deve verificar:
 
 User
  ↓
-Tenant
+Empresa
  ↓
 Role
  ↓
@@ -434,7 +434,7 @@ Durante uma requisição autenticada, o backend poderá possuir um contexto seme
 
 request_id
 user_id
-tenant_id
+empresa_id
 roles
 permissions
 
@@ -560,9 +560,9 @@ cliente:123
 
 quando 123 puder existir em diferentes contextos.
 
-Preferir uma estrutura que isole o tenant, por exemplo:
+Preferir uma estrutura que isole a empresa, por exemplo:
 
-tenant:{tenant_id}:cliente:{cliente_id}
+empresa:{empresa_id}:cliente:{cliente_id}
 
 A estratégia final deve considerar a natureza do dado.
 
@@ -570,10 +570,10 @@ A estratégia final deve considerar a natureza do dado.
 
 Jobs devem carregar o contexto mínimo necessário para executar corretamente.
 
-Quando uma tarefa depender de tenant:
+Quando uma tarefa depender de empresa:
 
 job
- ├── tenant_id
+ ├── empresa_id
  ├── entity_id
  └── operation
 
@@ -654,7 +654,7 @@ Cancelamento de pedido
 
 O registro de auditoria deve considerar pelo menos:
 
-tenant_id
+empresa_id
 user_id
 action
 entity
@@ -670,13 +670,13 @@ O backend deve permitir identificar:
 quem
 fez o quê
 quando
-em qual tenant
+em qual empresa
 em qual requisição
 
 Quando aplicável, correlacionar:
 
 request_id
-tenant_id
+empresa_id
 user_id
 event
 
@@ -745,7 +745,7 @@ Novas funcionalidades devem partir do princípio:
 não autenticado
     → sem acesso
 
-tenant diferente
+empresa diferente
     → sem acesso
 
 sem permissão

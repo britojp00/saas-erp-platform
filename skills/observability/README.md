@@ -20,7 +20,7 @@ O objetivo é permitir responder:
 O sistema está funcionando?
 O que está acontecendo?
 Onde ocorreu a falha?
-Qual tenant foi afetado?
+Qual empresa foi afetado?
 Qual usuário iniciou a operação?
 Qual componente apresentou problema?
 Qual foi o impacto?
@@ -101,7 +101,7 @@ Exemplo:
   "level": "INFO",
   "event": "pedido.criado",
   "request_id": "uuid",
-  "tenant_id": "uuid",
+  "empresa_id": "uuid",
   "user_id": "uuid"
 }
 
@@ -237,26 +237,26 @@ Preferir dimensões estáveis, como:
 route
 method
 status_code
-13. Tenant Metrics
+13. Empresa Metrics
 
-Métricas agregadas por tenant devem ser avaliadas com cuidado.
+Métricas agregadas por empresa devem ser avaliadas com cuidado.
 
 Não adicionar:
 
-tenant_id
+empresa_id
 
 como label de toda métrica indiscriminadamente.
 
-Isso pode gerar cardinalidade excessiva em ambientes com muitos tenants.
+Isso pode gerar cardinalidade excessiva em ambientes com muitos empresas.
 
-Quando uma análise por tenant for necessária, considerar:
+Quando uma análise por empresa for necessária, considerar:
 
 logs
 audit
 analytics
 queries específicas
 
-em vez de transformar todo tenant em label de métricas.
+em vez de transformar toda empresa em label de métricas.
 
 14. Database Metrics
 
@@ -494,7 +494,7 @@ Usuário alterou preço do produto.
 
 Um audit log pode possuir:
 
-tenant_id
+empresa_id
 user_id
 action
 entity
@@ -541,11 +541,11 @@ actor_id
 
 A estrutura final deve permanecer simples.
 
-31. Audit Tenant
+31. Audit Empresa
 
 Toda ação de negócio multi-tenant deve possuir:
 
-tenant_id
+empresa_id
 
 quando aplicável.
 
@@ -917,7 +917,7 @@ Exemplos perigosos:
 
 request_id
 user_id
-tenant_id
+empresa_id
 entity_id
 external_id
 
@@ -1169,14 +1169,14 @@ technical logs
 infrastructure metrics
 traces
 audit administration
-77. Tenant Visibility
+77. Empresa Visibility
 
-Quando a aplicação oferecer observabilidade específica para tenants, garantir:
+Quando a aplicação oferecer observabilidade específica para empresas, garantir:
 
-Tenant A
-→ somente dados autorizados de Tenant A
+Empresa A
+→ somente dados autorizados de Empresa A
 
-Nunca expor informações operacionais de outro tenant.
+Nunca expor informações operacionais de outra empresa.
 
 78. Administrative Observability
 
@@ -1246,7 +1246,7 @@ Antes de finalizar uma alteração relacionada à observabilidade:
  O evento é realmente útil;
  Log possui estrutura adequada;
  request_id foi considerado;
- tenant_id foi considerado quando apropriado;
+ empresa_id foi considerado quando apropriado;
  user_id foi considerado quando apropriado;
  Metrics foram consideradas;
  Cardinalidade foi avaliada;
@@ -1287,7 +1287,7 @@ A visão ideal é:
                 │ Audit / Data │
                 └──────────────┘
 
-O sistema deve fornecer contexto suficiente para diagnosticar problemas técnicos e acompanhar ações de negócio, mantendo segurança, privacidade e isolamento entre tenants.
+O sistema deve fornecer contexto suficiente para diagnosticar problemas técnicos e acompanhar ações de negócio, mantendo segurança, privacidade e isolamento entre empresas.
 
 ## Implementação Atual
 
@@ -1295,7 +1295,7 @@ O sistema deve fornecer contexto suficiente para diagnosticar problemas técnico
 
 ```text
 app/core/logging.py         — Formatters JSON/Text + setup_logging()
-app/core/request_context.py — Contextvars (request_id, user_id, tenant_id)
+app/core/request_context.py — Contextvars (request_id, user_id, empresa_id)
 app/api/middleware.py        — HTTPLoggingMiddleware
 app/core/exceptions.py      — Exception handlers com logging
 app/main.py                 — Integração (startup/shutdown)
@@ -1357,4 +1357,4 @@ Logs escritos em stdout (JSON format) são automaticamente capturados por:
 - HTTP logging (method, path, status_code, duration_ms, request_id)
 - Error handling (404 com request_id, sem traceback)
 - Security (password, JWT, Authorization header, secrets, request body)
-- Context (user_id autenticado, tenant_id autenticado, isolamento)
+- Context (user_id autenticado, empresa_id autenticado, isolamento)

@@ -103,15 +103,15 @@ Toda alteração estrutural deve possuir migration correspondente.
 
 multi-tenancy.md
 
-Define como o isolamento de dados entre tenants será
+Define como o isolamento de dados entre empresas será
 implementado no banco e na aplicação.
 
 Esta será uma skill crítica do projeto.
 
 Ela deverá definir:
 
-quais entidades possuem tenant;
-uso de tenant_id;
+quais entidades possuem empresa;
+uso de empresa_id;
 isolamento;
 consultas;
 relacionamentos;
@@ -153,11 +153,11 @@ no banco for apropriada.
 O projeto utiliza arquitetura multi-tenant.
 
 Dados pertencentes a uma empresa devem ser associados
-ao tenant correspondente quando aplicável.
+à empresa correspondente quando aplicável.
 
 Conceito:
 
-Tenant
+Empresa
    |
    +---- Users
    +---- Clientes
@@ -165,12 +165,12 @@ Tenant
    +---- Pedidos
    +---- Estoque
 
-Entidades de negócio que pertencem a um tenant devem seguir
+Entidades de negócio que pertencem a uma empresa devem seguir
 as regras definidas em:
 
 skills/database/multi-tenancy.md
 
-O isolamento entre tenants é requisito obrigatório.
+O isolamento entre empresas é requisito obrigatório.
 
 7. SQLAlchemy
 
@@ -237,7 +237,7 @@ desempenho;
 índices;
 relacionamentos;
 integridade;
-contexto do tenant;
+contexto da empresa;
 necessidade de paginação;
 quantidade de dados retornados.
 
@@ -323,15 +323,15 @@ API Tests
 Multi-Tenant Tests
 
 Alterações de multi-tenancy devem possuir testes que
-demonstrem o isolamento entre tenants.
+demonstrem o isolamento entre empresas.
 
 Exemplo:
 
-Tenant A
+Empresa A
    |
    +---- acessa próprios dados
    |
-   +---- não acessa dados do Tenant B
+   +---- não acessa dados da Empresa B
 16. Ambiente
 
 O PostgreSQL não deve ser tratado como uma instalação manual
@@ -381,7 +381,7 @@ Qual entidade ela representa?
 
 Quem é o proprietário dos dados?
 
-Ela pertence a um tenant?
+Ela pertence a uma empresa?
 
 Quais relacionamentos possui?
 

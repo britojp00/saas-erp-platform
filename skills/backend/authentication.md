@@ -17,7 +17,7 @@ A autenticação deve garantir que o backend consiga responder de forma confiáv
 
 Quem é o usuário?
 Qual identidade está autenticada?
-A qual tenant essa identidade pertence?
+A qual empresa essa identidade pertence?
 O token ainda é válido?
 
 Autenticação não substitui autorização.
@@ -30,7 +30,7 @@ Authentication
     ↓
 Identity
     ↓
-Tenant Context
+Contexto de Empresa
     ↓
 Authorization
 Authentication
@@ -41,7 +41,7 @@ Identity
 
 Representa o usuário autenticado no sistema.
 
-Tenant Context
+Contexto de Empresa
 
 Determina o contexto multi-tenant em que a operação será executada.
 
@@ -58,7 +58,7 @@ User
 O usuário poderá possuir informações como:
 
 id
-tenant_id
+empresa_id
 name
 email
 password_hash
@@ -171,7 +171,7 @@ Verificar senha
         ↓
 Verificar status
         ↓
-Obter tenant
+Obter empresa
         ↓
 Emitir token
 
@@ -237,7 +237,7 @@ O JWT deve carregar somente as informações necessárias para identificar e pro
 Exemplos possíveis:
 
 sub
-tenant_id
+empresa_id
 iat
 exp
 
@@ -257,9 +257,9 @@ O backend deve possuir uma convenção única para esse campo.
 
 Não utilizar significados diferentes de sub em diferentes endpoints.
 
-16. Tenant no JWT
+16. Empresa no JWT
 
-O JWT poderá carregar informações necessárias para identificar o contexto do tenant, conforme a estratégia de autenticação implementada.
+O JWT poderá carregar informações necessárias para identificar o contexto da empresa, conforme a estratégia de autenticação implementada.
 
 Entretanto:
 
@@ -267,9 +267,9 @@ JWT
 ≠
 autorização automática
 
-O backend deve validar se a identidade autenticada possui acesso válido ao tenant.
+O backend deve validar se a identidade autenticada possui acesso válido à empresa.
 
-Não confiar cegamente em um tenant_id fornecido no payload.
+Não confiar cegamente em um empresa_id fornecido no payload.
 
 17. Token validation
 
@@ -341,17 +341,17 @@ Sempre que necessário, verificar se o usuário ainda existe e está ativo.
 
 Não assumir que um token válido significa que o usuário continua habilitado.
 
-21. Tenant Context
+21. Contexto de Empresa
 
 Depois de identificar o usuário:
 
 User
  ↓
-Tenant
+Empresa
  ↓
-Tenant Context
+Contexto de Empresa
 
-O contexto do tenant deve ser resolvido de forma confiável.
+O contexto da empresa deve ser resolvido de forma confiável.
 
 Esse contexto será utilizado posteriormente por:
 
@@ -361,37 +361,37 @@ authorization
 logs
 audit
 background jobs
-22. Relação User → Tenant
+22. Relação User → Empresa
 
-Na primeira versão do sistema, a estrutura pode considerar um usuário associado a um tenant.
+Na primeira versão do sistema, a estrutura pode considerar um usuário associado a uma empresa.
 
 Conceito:
 
-Tenant
+Empresa
   └── Users
 
-Caso o domínio evolua para usuários pertencentes a múltiplos tenants, essa estrutura deverá ser revisada para utilizar uma relação própria de associação.
+Caso o domínio evolua para usuários pertencentes a múltiplas empresas, essa estrutura deverá ser revisada para utilizar uma relação própria de associação.
 
 Não implementar multi-tenant membership complexo antes de existir necessidade real.
 
-23. Conta pertencente a tenant
+23. Conta pertencente a empresa
 
 Um usuário não deve conseguir autenticar ou operar dados fora do contexto permitido pela sua associação.
 
 Exemplo:
 
-Tenant A
+Empresa A
  └── User A
 
-Tenant B
+Empresa B
  └── User B
 
 User A:
 
-→ Tenant A
-→ dados de Tenant A
+→ Empresa A
+→ dados de Empresa A
 
-Não deve possuir acesso aos dados de Tenant B.
+Não deve possuir acesso aos dados de Empresa B.
 
 24. Autenticação ≠ Autorização
 
@@ -505,7 +505,7 @@ Esse controle deve considerar adequadamente:
 
 IP
 identidade informada
-tenant
+empresa
 
 conforme a estratégia escolhida.
 
@@ -536,7 +536,7 @@ Quando apropriado, registrar:
 
 request_id
 user_id
-tenant_id
+empresa_id
 event
 timestamp
 
@@ -643,8 +643,8 @@ token ausente
 
 Também testar:
 
-tenant correto
-tenant incorreto
+empresa correta
+empresa incorreta
 usuário excluído logicamente
 
 quando esses cenários fizerem parte da implementação.
@@ -653,20 +653,20 @@ quando esses cenários fizerem parte da implementação.
 
 Exemplo:
 
-Tenant A
+Empresa A
  └── User A
 
-Tenant B
+Empresa B
  └── User B
 
 Validar:
 
-User A → Tenant A
+User A → Empresa A
 ✓
-User A → Tenant B
+User A → Empresa B
 ✗
 
-O teste deve garantir que autenticação e contexto de tenant permanecem corretamente vinculados.
+O teste deve garantir que autenticação e contexto de empresa permanecem corretamente vinculados.
 
 42. Testes de autorização
 
@@ -707,7 +707,7 @@ Entretanto, otimizações não devem comprometer:
 segurança
 revogação
 status da conta
-tenant isolation
+empresa isolation
 
 Qualquer cache relacionado à identidade deve possuir invalidação adequada.
 
@@ -743,7 +743,7 @@ O fluxo completo deve ser:
                     └──────┬───────┘
                            ↓
                     ┌──────────────┐
-                    │    Tenant    │
+                    │    Empresa    │
                     └──────┬───────┘
                            ↓
                     ┌──────────────┐
@@ -761,7 +761,7 @@ O fluxo completo deve ser:
                     └──────┬───────┘
                            ↓
                     ┌──────────────┐
-                    │ Tenant       │
+                    │ Empresa       │
                     │ Context      │
                     └──────┬───────┘
                            ↓
@@ -782,7 +782,7 @@ Ao implementar autenticação:
 6. JWT generation
 7. Authentication dependency
 8. Current user
-9. Tenant context
+9. Contexto de empresa
 10. Authorization
 11. Tests
 12. Documentation
@@ -803,8 +803,8 @@ Antes de finalizar uma alteração de autenticação:
  Usuário sem permissão retorna 403;
  Usuário inativo não autentica;
  Usuário excluído logicamente não autentica;
- Tenant é obtido de contexto confiável;
- Dados de outro tenant não podem ser acessados;
+ Empresa é obtido de contexto confiável;
+ Dados de outra empresa não podem ser acessados;
  Secrets não aparecem nos logs;
  JWT completo não aparece nos logs;
  Testes de autenticação existem;
@@ -819,7 +819,7 @@ Autenticar
     ↓
 Identificar
     ↓
-Contextualizar tenant
+Contextualizar empresa
     ↓
 Autorizar
     ↓
