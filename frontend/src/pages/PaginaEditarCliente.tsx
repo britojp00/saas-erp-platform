@@ -29,11 +29,11 @@ export default function PaginaEditarCliente() {
 
   async function submit(values: ClienteAtualizarPayload): Promise<void> {
     await api.patch<Cliente>(`/api/v1/clientes/${id}`, values)
-    navigate(`/clientes/${id}`, { replace: true })
+    navigate('/clientes', { replace: true })
   }
 
   function cancel(): void {
-    navigate(`/clientes/${id}`)
+    navigate('/clientes', { replace: true })
   }
 
   return (
@@ -43,7 +43,7 @@ export default function PaginaEditarCliente() {
           <h1>Editar cliente</h1>
           <p className="muted">Cliente #{id}</p>
         </div>
-        <Link to={`/clientes/${id}`}>← Voltar</Link>
+        <Link to="/clientes" replace>← Voltar</Link>
       </header>
 
       {notFound ? (

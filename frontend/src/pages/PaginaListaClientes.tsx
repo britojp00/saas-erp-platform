@@ -10,6 +10,8 @@ export default function PaginaListaClientes() {
     data,
     loading,
     error,
+    deletingId,
+    feedback,
     search,
     sort,
     order,
@@ -17,6 +19,8 @@ export default function PaginaListaClientes() {
     setSearch,
     toggleSort,
     retry,
+    remove,
+    dismissFeedback,
   } = useClientes()
 
   return (
@@ -40,16 +44,32 @@ export default function PaginaListaClientes() {
         )}
       </div>
 
+      {feedback !== null &&
+        (feedback.tone === 'sucesso' ? (
+          <p className="section-state" role="status">
+            {feedback.text}
+          </p>
+        ) : (
+          <div className="section-error" role="alert">
+            <p>{feedback.text}</p>
+            <button type="button" onClick={dismissFeedback}>
+              Fechar
+            </button>
+          </div>
+        ))}
+
       {error !== null ? (
         <SectionError message={error} onRetry={retry} />
       ) : data === null ? (
         <SectionLoading label="Carregando clientes..." />
       ) : data.items.length === 0 ? (
-        <p className="empty-state">
-          {search !== ''
-            ? `Nenhum resultado para '${search}'`
-            : 'Nenhum cliente cadastrado'}
-        </p>
+        loading ? null : (
+          <p className="empty-state">
+            {search !== ''
+              ? `Nenhum resultado para '${search}'`
+              : 'Nenhum cliente cadastrado'}
+          </p>
+        )
       ) : (
         <>
           <ListaClientes
@@ -57,6 +77,8 @@ export default function PaginaListaClientes() {
             sort={sort}
             order={order}
             onSort={toggleSort}
+            deletingId={deletingId}
+            onRemove={remove}
           />
           <Pagination
             page={data.page}
