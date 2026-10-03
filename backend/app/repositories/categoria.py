@@ -71,6 +71,7 @@ class CategoriaRepository:
         stmt = select(Categoria).where(
             Categoria.empresa_id == empresa_id,
             Categoria.name == name,
+            Categoria.deleted_at.is_(None),
         )
         if exclude_id is not None:
             stmt = stmt.where(Categoria.id != exclude_id)
