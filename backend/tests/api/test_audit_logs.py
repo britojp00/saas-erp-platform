@@ -684,7 +684,7 @@ async def test_login_success_generates_audit(
 
     stmt = select(AuditLog).where(
         AuditLog.empresa_id == test_empresa.id,
-        AuditLog.action == "LOGIN_SUCCESS",
+        AuditLog.action == "LOGIN_SUCESSO",
     )
     result = await db_session.execute(stmt)
     audit = result.scalar_one_or_none()
@@ -707,10 +707,10 @@ async def test_login_failure_wrong_password_generates_audit(
 
     stmt = select(AuditLog).where(
         AuditLog.empresa_id == test_empresa.id,
-        AuditLog.action == "LOGIN_FAILURE",
+        AuditLog.action == "LOGIN_FALHA",
     )
     result = await db_session.execute(stmt)
     audit = result.scalar_one_or_none()
     assert audit is not None
     assert audit.user_id == test_user.id
-    assert audit.description == "Invalid password"
+    assert audit.description == "Senha inválida"

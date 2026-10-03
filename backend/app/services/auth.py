@@ -41,10 +41,10 @@ class AuthService:
                 await self.audit_service.log(
                     empresa_id=candidates[0].empresa_id,
                     user_id=candidates[0].id,
-                    action="LOGIN_FAILURE",
+                    action="LOGIN_FALHA",
                     entity_type="user",
                     entity_id=candidates[0].id,
-                    description="Invalid password",
+                    description="Senha inválida",
                 )
             raise AuthenticationError("Credenciais inválidas")
 
@@ -54,10 +54,10 @@ class AuthService:
             await self.audit_service.log(
                 empresa_id=user.empresa_id,
                 user_id=user.id,
-                action="LOGIN_FAILURE",
+                action="LOGIN_FALHA",
                 entity_type="user",
                 entity_id=user.id,
-                description="Inactive user",
+                description="Usuário inativo",
             )
             raise AuthenticationError("Credenciais inválidas")
 
@@ -65,10 +65,10 @@ class AuthService:
             await self.audit_service.log(
                 empresa_id=user.empresa_id,
                 user_id=user.id,
-                action="LOGIN_FAILURE",
+                action="LOGIN_FALHA",
                 entity_type="user",
                 entity_id=user.id,
-                description="Deleted user",
+                description="Usuário excluído",
             )
             raise AuthenticationError("Credenciais inválidas")
 
@@ -78,7 +78,7 @@ class AuthService:
             await self.audit_service.log(
                 empresa_id=user.empresa_id,
                 user_id=user.id,
-                action="LOGIN_FAILURE",
+                action="LOGIN_FALHA",
                 entity_type="user",
                 entity_id=user.id,
                 description="Empresa inativa",
@@ -95,7 +95,7 @@ class AuthService:
         await self.audit_service.log(
             empresa_id=user.empresa_id,
             user_id=user.id,
-            action="LOGIN_SUCCESS",
+            action="LOGIN_SUCESSO",
             entity_type="user",
             entity_id=user.id,
         )

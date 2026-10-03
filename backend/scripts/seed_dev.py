@@ -63,7 +63,16 @@ ALL_PERMISSIONS = [
 
 MANAGER_EXCLUDED = {"user.delete", "role.delete", "permission.read"}
 
-READ_PERMISSIONS = {p for p in ALL_PERMISSIONS if p.endswith((".read", ".ler"))}
+READ_PERMISSIONS = {
+    "cliente.ler",
+    "produto.ler",
+    "categoria.ler",
+    "pedido.ler",
+    "estoque.ler",
+    "user.read",
+    "role.read",
+    "permission.read",
+}
 
 
 async def _get_or_create_permission(
