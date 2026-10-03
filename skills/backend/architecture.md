@@ -477,8 +477,8 @@ Regras de negócio que falham devem possuir representação consistente.
 Exemplos:
 
 ErroClienteNaoEncontrado
-ProductNotFound
-InsufficientStock
+ErroProdutoNaoEncontrado
+ErroEstoqueInsuficiente
 ErroClienteDuplicado
 ErroEstadoPedidoInvalido
 PermissionDenied

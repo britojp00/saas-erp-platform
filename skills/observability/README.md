@@ -332,9 +332,9 @@ Algumas métricas de negócio podem ser úteis.
 
 Exemplos:
 
-pedidos_created
-pedidos_cancelled
-products_created
+pedidos_criados
+pedidos_cancelados
+produtos_criados
 estoque_ajustes
 
 Essas métricas devem ser escolhidas conforme os requisitos do sistema.
@@ -518,7 +518,7 @@ database.query.completed
 
 Enquanto:
 
-product.price_changed
+produto.preco_alterado
 
 pode ser auditável.
 

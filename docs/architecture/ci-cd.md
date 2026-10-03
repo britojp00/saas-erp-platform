@@ -127,7 +127,7 @@ Etapas do CI (ordem preservada):
 6. Ruff format check
 7. Alembic upgrade head
 8. Alembic check
-9. Pytest (269 testes)
+9. Pytest (273 testes)
 10. Docker build
 
 Todas as etapas devem passar para que o pipeline seja considerado válido.
@@ -404,7 +404,7 @@ Job: ci
   ├── Ruff format check
   ├── Alembic upgrade head
   ├── Alembic check
-  ├── Pytest (269 testes)
+  ├── Pytest (273 testes)
   └── Docker build
        |
        | (todos passaram)

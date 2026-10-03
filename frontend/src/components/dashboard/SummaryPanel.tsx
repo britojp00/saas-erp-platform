@@ -98,8 +98,8 @@ export default function SummaryPanel({ state, onRetry }: SummaryPanelProps) {
           </ul>
         </section>
 
-        <section className="panel" aria-labelledby="stock-title">
-          <h2 id="stock-title">Estoque</h2>
+        <section className="panel" aria-labelledby="estoque-title">
+          <h2 id="estoque-title">Estoque</h2>
           <dl className="metric-list">
             <dt>Registros</dt>
             <dd>{formatNumber(estoque.total)}</dd>

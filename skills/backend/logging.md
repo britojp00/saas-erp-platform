@@ -807,7 +807,7 @@ database.update.completed
 
 Auditoria:
 
-User 123 alterou preço do Product 456.
+Usuário 123 alterou o preço do Produto 456.
 
 A auditoria deve possuir estrutura própria e seguir as regras de:
 

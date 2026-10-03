@@ -759,7 +759,7 @@ identificar o contexto da empresa quando aplicável.
 Exemplo:
 
 {
-  "event": "cliente_created",
+  "event": "cliente.criado",
   "empresa_id": "...",
   "user_id": "...",
   "request_id": "..."
