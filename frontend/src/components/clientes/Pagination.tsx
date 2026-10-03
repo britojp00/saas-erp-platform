@@ -1,3 +1,4 @@
+import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
 import { formatNumber } from '../../utils/format'
 
 interface PaginationProps {
@@ -29,6 +30,7 @@ export default function Pagination({
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
         >
+          <IconChevronLeft size={16} aria-hidden="true" />
           Anterior
         </button>
         <button
@@ -37,6 +39,7 @@ export default function Pagination({
           disabled={page >= totalPages}
         >
           Próxima
+          <IconChevronRight size={16} aria-hidden="true" />
         </button>
       </div>
     </nav>

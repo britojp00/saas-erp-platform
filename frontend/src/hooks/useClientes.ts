@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError, api } from '../services/api'
 import type {
+  Cliente,
   ListaClientesResposta,
   CampoOrdenacaoCliente,
   SortOrder,
@@ -10,9 +11,21 @@ const INITIAL_PAGE_SIZE = 20
 const DEFAULT_SORT: CampoOrdenacaoCliente = 'id'
 const DEFAULT_ORDER: SortOrder = 'desc'
 
+export interface FeedbackClientes {
+  tone: 'sucesso' | 'erro'
+  text: string
+}
+
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) return error.message
   return 'Não foi possível carregar os dados da API.'
+}
+
+function deleteErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    return `Não foi possível excluir o cliente: ${error.message}`
+  }
+  return 'Não foi possível excluir o cliente. Tente novamente.'
 }
 
 export function useClientes() {
@@ -24,8 +37,11 @@ export function useClientes() {
   const [data, setData] = useState<ListaClientesResposta | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [feedback, setFeedback] = useState<FeedbackClientes | null>(null)
 
   const sequence = useRef(0)
+  const deletingRef = useRef(false)
 
   const load = useCallback(async () => {
     const current = ++sequence.current
@@ -61,16 +77,19 @@ export function useClientes() {
   }, [load])
 
   const setPage = useCallback((next: number) => {
+    setFeedback(null)
     setPageState(next)
   }, [])
 
   const setSearch = useCallback((term: string) => {
+    setFeedback(null)
     setSearchState(term)
     setPageState(1)
   }, [])
 
   const toggleSort = useCallback(
     (field: CampoOrdenacaoCliente) => {
+      setFeedback(null)
       setPageState(1)
       if (field === sort) {
         setOrderState((current) => (current === 'asc' ? 'desc' : 'asc'))
@@ -82,6 +101,52 @@ export function useClientes() {
     [sort],
   )
 
+  const remove = useCallback(
+    async (cliente: Cliente) => {
+      if (deletingRef.current || data === null) return
+
+      deletingRef.current = true
+      setDeletingId(cliente.id)
+      setFeedback(null)
+
+      try {
+        await api.delete(`/api/v1/clientes/${cliente.id}`)
+
+        setData((current) => {
+          if (current === null) return current
+          if (!current.items.some((item) => item.id === cliente.id)) {
+            return current
+          }
+          return {
+            ...current,
+            items: current.items.filter((item) => item.id !== cliente.id),
+            total: Math.max(0, current.total - 1),
+          }
+        })
+
+        const eraUnicoDaPagina = data.items.length === 1
+        if (eraUnicoDaPagina && page > 1) {
+          setPageState(page - 1)
+        }
+
+        setFeedback({
+          tone: 'sucesso',
+          text: `Cliente "${cliente.name}" excluído com sucesso.`,
+        })
+      } catch (err) {
+        setFeedback({ tone: 'erro', text: deleteErrorMessage(err) })
+      } finally {
+        deletingRef.current = false
+        setDeletingId(null)
+      }
+    },
+    [data, page],
+  )
+
+  const dismissFeedback = useCallback(() => {
+    setFeedback(null)
+  }, [])
+
   const retry = useCallback(() => {
     void load()
   }, [load])
@@ -90,6 +155,8 @@ export function useClientes() {
     data,
     loading,
     error,
+    deletingId,
+    feedback,
     page,
     search,
     sort,
@@ -98,5 +165,7 @@ export function useClientes() {
     setSearch,
     toggleSort,
     retry,
+    remove,
+    dismissFeedback,
   }
 }
