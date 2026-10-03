@@ -11,7 +11,7 @@ export default function DashboardPage() {
   const contextLabel =
     user === null
       ? 'Visão geral da operação'
-      : `Tenant ${user.tenant_id}${
+      : `Empresa ${user.empresa_id}${
           user.roles.length > 0 ? ` · ${user.roles.join(', ')}` : ''
         }`
 

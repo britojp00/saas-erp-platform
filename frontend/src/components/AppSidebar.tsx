@@ -61,7 +61,7 @@ export default function AppSidebar({ open, onClose }: AppSidebarProps) {
         {user !== null && (
           <div className="sidebar__user">
             <span className="sidebar__user-name">{user.full_name}</span>
-            <span className="sidebar__user-meta">Tenant {user.tenant_id}</span>
+            <span className="sidebar__user-meta">Empresa {user.empresa_id}</span>
           </div>
         )}
       </aside>
