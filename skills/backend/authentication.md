@@ -526,10 +526,10 @@ Detalhes internos podem ser utilizados nos logs sem serem expostos ao usuário.
 
 Eventos relevantes podem ser registrados:
 
-login_success
-login_failed
-user_disabled
-token_invalid
+LOGIN_SUCESSO
+LOGIN_FALHA
+usuario_desativado
+token_invalido
 logout
 
 Quando apropriado, registrar:

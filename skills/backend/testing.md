@@ -41,7 +41,7 @@ independentes;
 claros;
 focados em comportamento.
 
-Resultado atual: **269 passed**
+Resultado atual: **273 passed**
 
 Evitar testes criados somente para aumentar cobertura numérica.
 
@@ -445,7 +445,7 @@ Validar que a exception correta é gerada.
 
 Exemplo:
 
-with pytest.raises(InsufficientStockError):
+with pytest.raises(ErroEstoqueInsuficiente):
     await service.criar_pedido(...)
 
 Isso protege a regra de domínio.
@@ -456,7 +456,7 @@ Além do service, validar a tradução para HTTP.
 
 Exemplo:
 
-InsufficientStockError
+ErroEstoqueInsuficiente
 → 409
 ErroClienteNaoEncontrado
 → 404

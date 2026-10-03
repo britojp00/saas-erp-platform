@@ -351,7 +351,7 @@ Estoque (9 endpoints: movimentacoes, reservas, confirmar, liberar, cancelar);
 Pedidos (10 endpoints: CRUD, itens, confirmar, cancelar, concluir);
 Audit Logs (1 endpoint: list);
 Seed de desenvolvimento;
-269 testes passando;
+273 testes passando;
 39 API endpoints;
 Logging estruturado (JSON/text, request_id, empresa_id, user_id);
 Observabilidade (HTTP middleware, request context);

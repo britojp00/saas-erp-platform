@@ -175,8 +175,8 @@ produto inativo não pode ser vendido
 
 Exemplo conceitual:
 
-if product.deleted_at is not None:
-    raise ProductInactiveError()
+if produto.deleted_at is not None:
+    raise ErroPedidoProdutoInativo()
 
 Essas regras não devem ficar escondidas no router.
 
@@ -409,9 +409,9 @@ Falhas esperadas do domínio devem ser representadas de forma explícita.
 Exemplos:
 
 ErroClienteNaoEncontrado
-ProductNotFound
-InsufficientStock
-ProductInactive
+ErroProdutoNaoEncontrado
+ErroEstoqueInsuficiente
+ErroProdutoEmUso
 ErroPedidoNaoEncontrado
 ErroEstadoPedidoInvalido
 ErroClienteDuplicado
@@ -428,7 +428,7 @@ raise Exception("erro")
 
 Preferir uma exceção específica:
 
-raise InsufficientStockError()
+raise ErroEstoqueInsuficiente()
 
 A camada HTTP poderá transformar essa exceção em um status adequado.
 
@@ -547,7 +547,7 @@ estoque suficiente
 criar_pedido()
     ↓
 estoque insuficiente
-→ InsufficientStockError
+→ ErroEstoqueInsuficiente
 
 O foco deve estar na regra de negócio.
 

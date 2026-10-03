@@ -116,8 +116,8 @@ Exemplos:
 
 ErroClienteNaoEncontrado
 ErroClienteDuplicado
-ProductInactiveError
-InsufficientStockError
+ErroProdutoEmUso
+ErroEstoqueInsuficiente
 ErroEstadoPedidoInvalido
 
 Esses erros normalmente são produzidos pelos services.
@@ -128,7 +128,7 @@ Exceções de negócio devem possuir nomes claros.
 
 Preferir:
 
-class InsufficientStockError(Exception):
+class ErroEstoqueInsuficiente(Exception):
     ...
 
 em vez de:
@@ -149,23 +149,24 @@ class DomainError(Exception):
 
 Depois:
 
-class InsufficientStockError(DomainError):
+class ErroEstoqueInsuficiente(DomainError):
     ...
 
 Isso permite tratamento agrupado sem perder a especificidade do erro.
 
 9. Código do erro
 
-Erros expostos pela API devem possuir códigos estáveis quando necessário.
+O contrato atual da API não possui um campo de código de erro.
 
-Exemplo:
+A identificação do erro acontece pelo nome da exceção, no código
+e nos testes, por exemplo:
 
-INSUFFICIENT_STOCK
-CLIENTE_NAO_ENCONTRADO
-CLIENTE_DUPLICADO
-ESTADO_PEDIDO_INVALIDO
+ErroEstoqueInsuficiente
+ErroClienteNaoEncontrado
+ErroClienteDuplicado
+ErroEstadoPedidoInvalido
 
-O código deve ser independente do texto exibido ao usuário.
+A resposta enviada ao cliente contém somente a mensagem.
 
 10. Message
 
@@ -187,16 +188,15 @@ secrets
 
 O formato da resposta de erro deve permanecer consistente.
 
-Exemplo conceitual:
+Exemplo:
 
 {
-  "detail": {
-    "code": "INSUFFICIENT_STOCK",
-    "message": "Estoque insuficiente para o produto informado."
-  }
+  "detail": "Estoque insuficiente para o produto informado."
 }
 
-O formato definitivo deve ser centralizado antes da expansão da API.
+Esse é o contrato atual: detail recebe a mensagem exibida ao usuário.
+
+Não adicionar campos extras sem uma decisão explícita de contrato.
 
 12. Domain Error → HTTP
 
@@ -249,7 +249,7 @@ Isso evita repetir a mesma conversão em todos os endpoints.
 
 Um handler pode mapear tipos conhecidos:
 
-InsufficientStockError
+ErroEstoqueInsuficiente
     ↓
 409 Conflict
 ErroClienteNaoEncontrado
@@ -509,8 +509,8 @@ Quando for útil, uma exception de domínio pode carregar dados estruturados.
 
 Exemplo conceitual:
 
-class InsufficientStockError(DomainError):
-    def __init__(self, product_id, available, requested):
+class ErroEstoqueInsuficiente(DomainError):
+    def __init__(self, produto_id, disponivel, solicitado):
         ...
 
 Esses dados podem ser usados para:
@@ -558,8 +558,8 @@ Services devem lançar exceções específicas para condições esperadas.
 
 Exemplo:
 
-if product.deleted_at is not None:
-    raise ProductInactiveError()
+if produto.deleted_at is not None:
+    raise ErroPedidoProdutoInativo()
 
 Evitar:
 
@@ -718,7 +718,7 @@ Testar:
 
 tipo correto
 status HTTP correto
-error code correto
+exceção correta
 message apropriada
 não exposição de detalhes internos
 46. Testes de domínio
@@ -726,7 +726,7 @@ não exposição de detalhes internos
 Exemplo:
 
 estoque insuficiente
-→ InsufficientStockError
+→ ErroEstoqueInsuficiente
 pedido cancelável
 → cancelamento executado
 pedido não cancelável
@@ -786,7 +786,7 @@ AppError
 │   ├── ErroClienteNaoEncontrado
 │   ├── ErroProdutoNaoEncontrado
 │   ├── ErroClienteDuplicado
-│   ├── InsufficientStockError
+│   ├── ErroEstoqueInsuficiente
 │   └── ErroEstadoPedidoInvalido
 │
 ├── AuthenticationError
@@ -803,22 +803,22 @@ A hierarquia final deve ser mantida simples.
 
 Não criar dezenas de abstrações somente para organizar classes.
 
-51. Error Codes
+51. Identificadores de erro
 
-Os códigos devem possuir convenção consistente.
+Os erros são identificados pelo nome da classe de exceção, com
+convenção consistente:
 
-Exemplo:
+ErroClienteNaoEncontrado
+ErroClienteDuplicado
+ErroEstoqueInsuficiente
+ErroEstadoPedidoInvalido
+AuthenticationError
+AuthorizationError
+PersistenceError
+ExternalServiceError
 
-CLIENTE_NAO_ENCONTRADO
-CLIENTE_DUPLICADO
-INSUFFICIENT_STOCK
-ESTADO_PEDIDO_INVALIDO
-UNAUTHORIZED
-FORBIDDEN
-DATABASE_ERROR
-EXTERNAL_SERVICE_ERROR
-
-Evitar codes baseados em mensagens longas.
+Esses nomes valem para código, logs e testes; a API expõe somente
+{"detail": "<mensagem>"}.
 
 52. Mensagens
 

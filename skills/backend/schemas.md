@@ -507,7 +507,7 @@ Respostas podem conter estruturas aninhadas quando isso representar o contrato d
 Exemplo:
 
 class PedidoItemResposta(BaseModel):
-    product_id: UUID
+    produto_id: UUID
     quantity: int
 
 

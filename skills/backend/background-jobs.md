@@ -1079,7 +1079,7 @@ Algumas tarefas podem exigir que apenas uma execução esteja ativa por empresa 
 
 Exemplo:
 
-sync_products
+produto.sync
 
 pode não poder executar simultaneamente duas vezes para o mesma empresa.
 
@@ -1175,7 +1175,7 @@ Os tipos de job devem possuir nomes claros.
 Exemplos:
 
 cliente.sync
-product.sync
+produto.sync
 pedido.export
 estoque.recalcular
 notification.send

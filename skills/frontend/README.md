@@ -501,13 +501,11 @@ O frontend deve consumir a estrutura de erro definida pela API.
 Exemplo:
 
 {
-  "detail": {
-    "code": "INSUFFICIENT_STOCK",
-    "message": "Estoque insuficiente."
-  }
+  "detail": "Estoque insuficiente para o produto informado."
 }
 
-Não depender somente do texto da mensagem quando um código está disponível.
+O contrato atual não possui código de erro: detail carrega a mensagem
+que deve ser exibida ao usuário.
 
 31. Authentication Errors
 

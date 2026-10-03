@@ -169,7 +169,7 @@ Preferir migrations focadas em uma alteração lógica.
 
 Exemplo:
 
-add products table
+criar tabela de produtos
 
 em vez de uma migration que cria simultaneamente
 dezenas de entidades sem necessidade.

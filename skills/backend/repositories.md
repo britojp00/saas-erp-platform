@@ -540,9 +540,9 @@ transaction isolation
 
 Exemplo conceitual:
 
-select(Product).where(
-    Product.id == product_id,
-    Product.empresa_id == empresa_id,
+select(Produto).where(
+    Produto.id == produto_id,
+    Produto.empresa_id == empresa_id,
 ).with_for_update()
 
 Utilizar locking somente quando necessário.

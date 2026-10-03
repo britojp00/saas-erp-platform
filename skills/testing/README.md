@@ -590,11 +590,11 @@ Os fluxos E2E devem priorizar operações críticas.
 Exemplos:
 
 login
-cliente creation
-produto creation
-pedido creation
-estoque movement
-permission management
+criação de cliente
+criação de produto
+criação de pedido
+movimentação de estoque
+gestão de permissões
 
 Não testar cada pequena variação da interface em E2E.
 

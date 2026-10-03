@@ -437,13 +437,10 @@ Os erros da API devem possuir estrutura consistente.
 Exemplo:
 
 {
-  "detail": {
-    "code": "INSUFFICIENT_STOCK",
-    "message": "Estoque insuficiente."
-  }
+  "detail": "Estoque insuficiente para o produto informado."
 }
 
-O formato definitivo deve ser padronizado antes de existirem muitos endpoints públicos.
+O contrato atual utiliza apenas detail, com a mensagem exibida ao usuário.
 
 Não retornar erros em formatos completamente diferentes entre recursos.
 
