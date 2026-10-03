@@ -7,29 +7,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, get_password_hash
 from app.db.models.categoria import Categoria
+from app.db.models.empresa import Empresa
 from app.db.models.permission import Permission
 from app.db.models.produto import Produto
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
-from app.db.models.tenant import Tenant
 from app.db.models.user import User
 from app.db.models.user_role import UserRole
 
 
 async def _create_permission(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
 ) -> Permission:
     stmt = select(Permission).where(
-        Permission.tenant_id == tenant_id,
+        Permission.empresa_id == empresa_id,
         Permission.name == name,
     )
     result = await session.execute(stmt)
     existing = result.scalar_one_or_none()
     if existing:
         return existing
-    perm = Permission(tenant_id=tenant_id, name=name)
+    perm = Permission(empresa_id=empresa_id, name=name)
     session.add(perm)
     await session.flush()
     return perm
@@ -37,32 +37,32 @@ async def _create_permission(
 
 async def _create_role_with_perms(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     perm_names: list[str],
 ) -> Role:
     stmt = select(Role).where(
-        Role.tenant_id == tenant_id,
+        Role.empresa_id == empresa_id,
         Role.name == name,
     )
     result = await session.execute(stmt)
     existing = result.scalar_one_or_none()
     if existing:
         return existing
-    role = Role(tenant_id=tenant_id, name=name)
+    role = Role(empresa_id=empresa_id, name=name)
     session.add(role)
     await session.flush()
     for pname in perm_names:
-        perm = await _create_permission(session, tenant_id, pname)
+        perm = await _create_permission(session, empresa_id, pname)
         stmt_rp = select(RolePermission).where(
-            RolePermission.tenant_id == tenant_id,
+            RolePermission.empresa_id == empresa_id,
             RolePermission.role_id == role.id,
             RolePermission.permission_id == perm.id,
         )
         rp_result = await session.execute(stmt_rp)
         if rp_result.scalar_one_or_none() is None:
             rp = RolePermission(
-                tenant_id=tenant_id,
+                empresa_id=empresa_id,
                 role_id=role.id,
                 permission_id=perm.id,
             )
@@ -73,12 +73,12 @@ async def _create_role_with_perms(
 
 async def _assign_role_to_user(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     user_id: int,
     role_id: int,
 ) -> None:
     stmt = select(UserRole).where(
-        UserRole.tenant_id == tenant_id,
+        UserRole.empresa_id == empresa_id,
         UserRole.user_id == user_id,
         UserRole.role_id == role_id,
     )
@@ -86,7 +86,7 @@ async def _assign_role_to_user(
     if result.scalar_one_or_none():
         return
     ur = UserRole(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         user_id=user_id,
         role_id=role_id,
     )
@@ -96,12 +96,12 @@ async def _assign_role_to_user(
 
 async def _create_categoria_in_db(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     parent_id: int | None = None,
 ) -> Categoria:
     categoria = Categoria(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         name=name,
         parent_id=parent_id,
     )
@@ -112,12 +112,12 @@ async def _create_categoria_in_db(
 
 async def _create_produto_in_db(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     categoria_id: int | None = None,
 ) -> Produto:
     produto = Produto(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         sku=f"SKU-{name.upper().replace(' ', '-')}",
         name=name,
         price=10.00,
@@ -131,11 +131,11 @@ async def _create_produto_in_db(
 @pytest.fixture
 async def all_categoria_perms(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> Role:
     return await _create_role_with_perms(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         "categoria_admin",
         [
             "categoria.ler",
@@ -149,12 +149,12 @@ async def all_categoria_perms(
 @pytest.fixture
 async def admin_user(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
     all_categoria_perms: Role,
 ) -> User:
     await _assign_role_to_user(
-        db_session, test_tenant.id, test_user.id, all_categoria_perms.id
+        db_session, test_empresa.id, test_user.id, all_categoria_perms.id
     )
     await db_session.commit()
     return test_user
@@ -163,38 +163,38 @@ async def admin_user(
 @pytest.fixture
 async def admin_headers(
     admin_user: User,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> dict[str, str]:
     token = create_access_token(
         data={
             "sub": str(admin_user.id),
-            "tenant_id": str(test_tenant.id),
+            "empresa_id": str(test_empresa.id),
         }
     )
     return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
-async def other_tenant(db_session: AsyncSession) -> Tenant:
-    tenant = Tenant(
-        name="Other Tenant",
-        slug="other-categoria-tenant",
+async def other_empresa(db_session: AsyncSession) -> Empresa:
+    empresa = Empresa(
+        name="Outra Empresa",
+        slug="other-categoria-empresa",
         is_active=True,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
-    db_session.add(tenant)
+    db_session.add(empresa)
     await db_session.flush()
-    return tenant
+    return empresa
 
 
 @pytest.fixture
-async def other_tenant_user(
+async def other_empresa_user(
     db_session: AsyncSession,
-    other_tenant: Tenant,
+    other_empresa: Empresa,
 ) -> User:
     user = User(
-        tenant_id=other_tenant.id,
+        empresa_id=other_empresa.id,
         email="other@example.com",
         full_name="Other User",
         is_active=True,
@@ -208,14 +208,14 @@ async def other_tenant_user(
 
 
 @pytest.fixture
-async def other_tenant_headers(
+async def other_empresa_headers(
     db_session: AsyncClient,
-    other_tenant_user: User,
-    other_tenant: Tenant,
+    other_empresa_user: User,
+    other_empresa: Empresa,
 ) -> dict[str, str]:
     role = await _create_role_with_perms(
         db_session,
-        other_tenant.id,
+        other_empresa.id,
         "other_categoria_all",
         [
             "categoria.ler",
@@ -225,13 +225,13 @@ async def other_tenant_headers(
         ],
     )
     await _assign_role_to_user(
-        db_session, other_tenant.id, other_tenant_user.id, role.id
+        db_session, other_empresa.id, other_empresa_user.id, role.id
     )
     await db_session.commit()
     token = create_access_token(
         data={
-            "sub": str(other_tenant_user.id),
-            "tenant_id": str(other_tenant.id),
+            "sub": str(other_empresa_user.id),
+            "empresa_id": str(other_empresa.id),
         }
     )
     return {"Authorization": f"Bearer {token}"}
@@ -279,10 +279,10 @@ async def test_create_categoria_with_description(
 async def test_create_categoria_with_parent(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    parent = await _create_categoria_in_db(db_session, test_tenant.id, "Parent")
+    parent = await _create_categoria_in_db(db_session, test_empresa.id, "Parent")
     await db_session.commit()
 
     response = await client.post(
@@ -313,10 +313,10 @@ async def test_create_categoria_without_permission(
 async def test_create_categoria_duplicate_name(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    await _create_categoria_in_db(db_session, test_empresa.id, "Electronics")
     await db_session.commit()
 
     response = await client.post(
@@ -344,10 +344,10 @@ async def test_create_categoria_parent_not_found(
 async def test_create_categoria_self_reference(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Categoria")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Categoria")
     await db_session.commit()
 
     response = await client.post(
@@ -359,15 +359,15 @@ async def test_create_categoria_self_reference(
 
 
 @pytest.mark.asyncio
-async def test_create_categoria_cross_tenant_parent(
+async def test_create_categoria_cross_empresa_parent(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant: Tenant,
+    test_empresa: Empresa,
+    other_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     other_parent = await _create_categoria_in_db(
-        db_session, other_tenant.id, "Other Parent"
+        db_session, other_empresa.id, "Other Parent"
     )
     await db_session.commit()
 
@@ -383,12 +383,12 @@ async def test_create_categoria_cross_tenant_parent(
 async def test_create_categoria_deep_hierarchy(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    parent = await _create_categoria_in_db(db_session, test_tenant.id, "Level 1")
+    parent = await _create_categoria_in_db(db_session, test_empresa.id, "Level 1")
     child = await _create_categoria_in_db(
-        db_session, test_tenant.id, "Level 2", parent_id=parent.id
+        db_session, test_empresa.id, "Level 2", parent_id=parent.id
     )
     await db_session.commit()
 
@@ -424,11 +424,11 @@ async def test_list_categorias_empty(
 async def test_list_categorias_with_data(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_categoria_in_db(db_session, test_tenant.id, "Categoria A")
-    await _create_categoria_in_db(db_session, test_tenant.id, "Categoria B")
+    await _create_categoria_in_db(db_session, test_empresa.id, "Categoria A")
+    await _create_categoria_in_db(db_session, test_empresa.id, "Categoria B")
     await db_session.commit()
 
     response = await client.get(
@@ -445,11 +445,11 @@ async def test_list_categorias_with_data(
 async def test_list_categorias_search(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
-    await _create_categoria_in_db(db_session, test_tenant.id, "Clothing")
+    await _create_categoria_in_db(db_session, test_empresa.id, "Electronics")
+    await _create_categoria_in_db(db_session, test_empresa.id, "Clothing")
     await db_session.commit()
 
     response = await client.get(
@@ -467,11 +467,11 @@ async def test_list_categorias_search(
 async def test_list_categorias_pagination(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     for i in range(5):
-        await _create_categoria_in_db(db_session, test_tenant.id, f"Categoria {i}")
+        await _create_categoria_in_db(db_session, test_empresa.id, f"Categoria {i}")
     await db_session.commit()
 
     response = await client.get(
@@ -491,11 +491,11 @@ async def test_list_categorias_pagination(
 async def test_list_categorias_sort(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_categoria_in_db(db_session, test_tenant.id, "Zebra")
-    await _create_categoria_in_db(db_session, test_tenant.id, "Alpha")
+    await _create_categoria_in_db(db_session, test_empresa.id, "Zebra")
+    await _create_categoria_in_db(db_session, test_empresa.id, "Alpha")
     await db_session.commit()
 
     response = await client.get(
@@ -528,10 +528,12 @@ async def test_list_categorias_without_permission(
 async def test_get_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     await db_session.commit()
 
     response = await client.get(
@@ -557,20 +559,20 @@ async def test_get_categoria_not_found(
 
 
 @pytest.mark.asyncio
-async def test_get_categoria_cross_tenant(
+async def test_get_categoria_cross_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant_headers: dict[str, str],
+    test_empresa: Empresa,
+    other_empresa_headers: dict[str, str],
 ):
     categoria = await _create_categoria_in_db(
-        db_session, test_tenant.id, "My Categoria"
+        db_session, test_empresa.id, "My Categoria"
     )
     await db_session.commit()
 
     response = await client.get(
         f"/api/v1/categorias/{categoria.id}",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response.status_code == 404
 
@@ -594,10 +596,12 @@ async def test_get_categoria_without_permission(
 async def test_update_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     await db_session.commit()
 
     response = await client.patch(
@@ -614,10 +618,12 @@ async def test_update_categoria(
 async def test_update_categoria_description(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     await db_session.commit()
 
     response = await client.patch(
@@ -634,10 +640,12 @@ async def test_update_categoria_description(
 async def test_update_categoria_clear_description(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     categoria.description = "Some description"
     await db_session.commit()
 
@@ -655,13 +663,13 @@ async def test_update_categoria_clear_description(
 async def test_update_categoria_change_parent(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    parent_a = await _create_categoria_in_db(db_session, test_tenant.id, "Parent A")
-    parent_b = await _create_categoria_in_db(db_session, test_tenant.id, "Parent B")
+    parent_a = await _create_categoria_in_db(db_session, test_empresa.id, "Parent A")
+    parent_b = await _create_categoria_in_db(db_session, test_empresa.id, "Parent B")
     child = await _create_categoria_in_db(
-        db_session, test_tenant.id, "Child", parent_id=parent_a.id
+        db_session, test_empresa.id, "Child", parent_id=parent_a.id
     )
     await db_session.commit()
 
@@ -679,12 +687,12 @@ async def test_update_categoria_change_parent(
 async def test_update_categoria_remove_parent(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    parent = await _create_categoria_in_db(db_session, test_tenant.id, "Parent")
+    parent = await _create_categoria_in_db(db_session, test_empresa.id, "Parent")
     child = await _create_categoria_in_db(
-        db_session, test_tenant.id, "Child", parent_id=parent.id
+        db_session, test_empresa.id, "Child", parent_id=parent.id
     )
     await db_session.commit()
 
@@ -702,10 +710,12 @@ async def test_update_categoria_remove_parent(
 async def test_update_categoria_without_permission(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     authenticated_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     await db_session.commit()
 
     response = await client.patch(
@@ -730,20 +740,20 @@ async def test_update_categoria_not_found(
 
 
 @pytest.mark.asyncio
-async def test_update_categoria_cross_tenant(
+async def test_update_categoria_cross_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant_headers: dict[str, str],
+    test_empresa: Empresa,
+    other_empresa_headers: dict[str, str],
 ):
     categoria = await _create_categoria_in_db(
-        db_session, test_tenant.id, "My Categoria"
+        db_session, test_empresa.id, "My Categoria"
     )
     await db_session.commit()
 
     response = await client.patch(
         f"/api/v1/categorias/{categoria.id}",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
         json={"name": "Hacked"},
     )
     assert response.status_code == 404
@@ -753,10 +763,10 @@ async def test_update_categoria_cross_tenant(
 async def test_update_categoria_self_reference(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Categoria")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Categoria")
     await db_session.commit()
 
     response = await client.patch(
@@ -771,15 +781,15 @@ async def test_update_categoria_self_reference(
 async def test_update_categoria_cycle_prevention(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    grandparent = await _create_categoria_in_db(db_session, test_tenant.id, "GP")
+    grandparent = await _create_categoria_in_db(db_session, test_empresa.id, "GP")
     parent = await _create_categoria_in_db(
-        db_session, test_tenant.id, "P", parent_id=grandparent.id
+        db_session, test_empresa.id, "P", parent_id=grandparent.id
     )
     child = await _create_categoria_in_db(
-        db_session, test_tenant.id, "C", parent_id=parent.id
+        db_session, test_empresa.id, "C", parent_id=parent.id
     )
     await db_session.commit()
 
@@ -795,11 +805,11 @@ async def test_update_categoria_cycle_prevention(
 async def test_update_categoria_duplicate_name(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
-    other = await _create_categoria_in_db(db_session, test_tenant.id, "Clothing")
+    await _create_categoria_in_db(db_session, test_empresa.id, "Electronics")
+    other = await _create_categoria_in_db(db_session, test_empresa.id, "Clothing")
     await db_session.commit()
 
     response = await client.patch(
@@ -814,10 +824,10 @@ async def test_update_categoria_duplicate_name(
 async def test_update_categoria_parent_not_found(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Categoria")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Categoria")
     await db_session.commit()
 
     response = await client.patch(
@@ -832,10 +842,12 @@ async def test_update_categoria_parent_not_found(
 async def test_update_categoria_name_same_no_conflict(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     await db_session.commit()
 
     response = await client.patch(
@@ -853,10 +865,12 @@ async def test_update_categoria_name_same_no_conflict(
 async def test_delete_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     await db_session.commit()
 
     response = await client.delete(
@@ -870,10 +884,12 @@ async def test_delete_categoria(
 async def test_deleted_categoria_not_in_list(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     await db_session.commit()
 
     await client.delete(
@@ -893,10 +909,12 @@ async def test_deleted_categoria_not_in_list(
 async def test_deleted_categoria_not_found(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     await db_session.commit()
 
     await client.delete(
@@ -915,10 +933,12 @@ async def test_deleted_categoria_not_found(
 async def test_deleted_categoria_cannot_be_updated(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     await db_session.commit()
 
     await client.delete(
@@ -947,20 +967,20 @@ async def test_delete_categoria_not_found(
 
 
 @pytest.mark.asyncio
-async def test_delete_categoria_cross_tenant(
+async def test_delete_categoria_cross_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant_headers: dict[str, str],
+    test_empresa: Empresa,
+    other_empresa_headers: dict[str, str],
 ):
     categoria = await _create_categoria_in_db(
-        db_session, test_tenant.id, "My Categoria"
+        db_session, test_empresa.id, "My Categoria"
     )
     await db_session.commit()
 
     response = await client.delete(
         f"/api/v1/categorias/{categoria.id}",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response.status_code == 404
 
@@ -969,12 +989,12 @@ async def test_delete_categoria_cross_tenant(
 async def test_delete_categoria_with_children_blocked(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    parent = await _create_categoria_in_db(db_session, test_tenant.id, "Parent")
+    parent = await _create_categoria_in_db(db_session, test_empresa.id, "Parent")
     await _create_categoria_in_db(
-        db_session, test_tenant.id, "Child", parent_id=parent.id
+        db_session, test_empresa.id, "Child", parent_id=parent.id
     )
     await db_session.commit()
 
@@ -989,12 +1009,14 @@ async def test_delete_categoria_with_children_blocked(
 async def test_delete_categoria_with_produtos_blocked(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", categoria_id=categoria.id
+        db_session, test_empresa.id, "Laptop", categoria_id=categoria.id
     )
     await db_session.commit()
 
@@ -1009,10 +1031,12 @@ async def test_delete_categoria_with_produtos_blocked(
 async def test_delete_categoria_without_permission(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     authenticated_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     await db_session.commit()
 
     response = await client.delete(
@@ -1029,10 +1053,10 @@ async def test_delete_categoria_without_permission(
 async def test_create_multiple_children(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    parent = await _create_categoria_in_db(db_session, test_tenant.id, "Parent")
+    parent = await _create_categoria_in_db(db_session, test_empresa.id, "Parent")
     await db_session.commit()
 
     await client.post(
@@ -1052,12 +1076,12 @@ async def test_create_multiple_children(
 async def test_delete_child_before_parent(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    parent = await _create_categoria_in_db(db_session, test_tenant.id, "Parent")
+    parent = await _create_categoria_in_db(db_session, test_empresa.id, "Parent")
     child = await _create_categoria_in_db(
-        db_session, test_tenant.id, "Child", parent_id=parent.id
+        db_session, test_empresa.id, "Child", parent_id=parent.id
     )
     await db_session.commit()
 
@@ -1077,20 +1101,20 @@ async def test_unauthenticated_access(client: AsyncClient):
     assert response.status_code == 401
 
 
-# --- TENANT ISOLATION ---
+# --- ISOLAMENTO POR EMPRESA ---
 
 
 @pytest.mark.asyncio
-async def test_categorias_isolated_by_tenant(
+async def test_categorias_isolated_by_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant: Tenant,
+    test_empresa: Empresa,
+    other_empresa: Empresa,
     admin_headers: dict[str, str],
-    other_tenant_headers: dict[str, str],
+    other_empresa_headers: dict[str, str],
 ):
-    await _create_categoria_in_db(db_session, test_tenant.id, "Tenant A Categoria")
-    await _create_categoria_in_db(db_session, other_tenant.id, "Tenant B Categoria")
+    await _create_categoria_in_db(db_session, test_empresa.id, "Empresa A Categoria")
+    await _create_categoria_in_db(db_session, other_empresa.id, "Empresa B Categoria")
     await db_session.commit()
 
     response_a = await client.get(
@@ -1098,27 +1122,27 @@ async def test_categorias_isolated_by_tenant(
         headers=admin_headers,
     )
     assert response_a.json()["total"] == 1
-    assert response_a.json()["items"][0]["name"] == "Tenant A Categoria"
+    assert response_a.json()["items"][0]["name"] == "Empresa A Categoria"
 
     response_b = await client.get(
         "/api/v1/categorias",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response_b.json()["total"] == 1
-    assert response_b.json()["items"][0]["name"] == "Tenant B Categoria"
+    assert response_b.json()["items"][0]["name"] == "Empresa B Categoria"
 
 
 @pytest.mark.asyncio
-async def test_same_name_different_tenants(
+async def test_same_name_different_empresas(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant: Tenant,
+    test_empresa: Empresa,
+    other_empresa: Empresa,
     admin_headers: dict[str, str],
-    other_tenant_headers: dict[str, str],
+    other_empresa_headers: dict[str, str],
 ):
-    await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
-    await _create_categoria_in_db(db_session, other_tenant.id, "Electronics")
+    await _create_categoria_in_db(db_session, test_empresa.id, "Electronics")
+    await _create_categoria_in_db(db_session, other_empresa.id, "Electronics")
     await db_session.commit()
 
     response_a = await client.post(
@@ -1130,7 +1154,7 @@ async def test_same_name_different_tenants(
 
     response_b = await client.post(
         "/api/v1/categorias",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
         json={"name": "Electronics"},
     )
     assert response_b.status_code == 409

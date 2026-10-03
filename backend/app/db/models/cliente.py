@@ -4,8 +4,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import (
     BigIntPrimaryKeyMixin,
+    EscopoEmpresaMixin,
     SoftDeleteMixin,
-    TenantScopedMixin,
     TimestampMixin,
 )
 
@@ -14,21 +14,21 @@ class Cliente(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
-    TenantScopedMixin,
+    EscopoEmpresaMixin,
     Base,
 ):
     __tablename__ = "clientes"
 
     __table_args__ = (
         UniqueConstraint(
-            "tenant_id",
+            "empresa_id",
             "document",
-            name="uq_clientes_tenant_document",
+            name="uq_clientes_empresa_document",
         ),
         UniqueConstraint(
-            "tenant_id",
+            "empresa_id",
             "id",
-            name="uq_clientes_tenant_id",
+            name="uq_clientes_empresa_id",
         ),
     )
 

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import (
     BigIntPrimaryKeyMixin,
-    TenantScopedMixin,
+    EscopoEmpresaMixin,
     TimestampMixin,
 )
 
@@ -14,26 +14,26 @@ from app.db.mixins import (
 class PedidoItem(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
-    TenantScopedMixin,
+    EscopoEmpresaMixin,
     Base,
 ):
     __tablename__ = "pedido_itens"
 
     __table_args__ = (
         UniqueConstraint(
-            "tenant_id",
+            "empresa_id",
             "pedido_id",
             "produto_id",
-            name="uq_pedido_itens_tenant_pedido_produto",
+            name="uq_pedido_itens_empresa_pedido_produto",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "pedido_id"],
-            ["pedidos.tenant_id", "pedidos.id"],
+            ["empresa_id", "pedido_id"],
+            ["pedidos.empresa_id", "pedidos.id"],
             ondelete="CASCADE",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "produto_id"],
-            ["produtos.tenant_id", "produtos.id"],
+            ["empresa_id", "produto_id"],
+            ["produtos.empresa_id", "produtos.id"],
             ondelete="RESTRICT",
         ),
     )

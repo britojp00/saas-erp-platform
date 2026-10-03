@@ -26,7 +26,7 @@ class MovimentacaoResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
-    tenant_id: int
+    empresa_id: int
     produto_id: int
     tipo_movimentacao: str
     quantity: Decimal
@@ -77,7 +77,7 @@ class ReservaResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
-    tenant_id: int
+    empresa_id: int
     produto_id: int
     quantity: Decimal
     status: str
@@ -127,7 +127,7 @@ class EstoqueResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
-    tenant_id: int
+    empresa_id: int
     produto_id: int
     quantity: Decimal
     reserved_quantity: Decimal
@@ -154,7 +154,7 @@ class ConfirmarReservaResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
-    tenant_id: int
+    empresa_id: int
     produto_id: int
     quantity: Decimal
     status: str

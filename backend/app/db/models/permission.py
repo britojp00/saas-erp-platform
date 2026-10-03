@@ -4,8 +4,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import (
     BigIntPrimaryKeyMixin,
+    EscopoEmpresaMixin,
     SoftDeleteMixin,
-    TenantScopedMixin,
     TimestampMixin,
 )
 
@@ -14,21 +14,21 @@ class Permission(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
-    TenantScopedMixin,
+    EscopoEmpresaMixin,
     Base,
 ):
     __tablename__ = "permissions"
 
     __table_args__ = (
         UniqueConstraint(
-            "tenant_id",
+            "empresa_id",
             "name",
-            name="uq_permissions_tenant_name",
+            name="uq_permissions_empresa_name",
         ),
         UniqueConstraint(
-            "tenant_id",
+            "empresa_id",
             "id",
-            name="uq_permissions_tenant_id",
+            name="uq_permissions_empresa_id",
         ),
     )
 

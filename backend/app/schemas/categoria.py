@@ -21,7 +21,7 @@ class CategoriaResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
-    tenant_id: int
+    empresa_id: int
     name: str
     description: str | None
     parent_id: int | None

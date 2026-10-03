@@ -9,7 +9,7 @@ Dependencies são utilizadas para resolver responsabilidades transversais da apl
 ```text
 Database Session
 Authenticated User
-Tenant Context
+Contexto de Empresa
 Authorization
 Request Context
 
@@ -166,9 +166,9 @@ usuário não deve autenticar
 
 A implementação exata deve seguir o comportamento definido em authentication.md.
 
-9. Tenant Context
+9. Contexto de Empresa
 
-Uma dependency deve ser capaz de resolver o contexto do tenant do usuário autenticado.
+Uma dependency deve ser capaz de resolver o contexto da empresa do usuário autenticado.
 
 Fluxo:
 
@@ -176,44 +176,44 @@ JWT
  ↓
 Current User
  ↓
-Tenant
+Empresa
  ↓
-Current Tenant
+CurrentEmpresa
 
 Exemplo conceitual:
 
-async def get_current_tenant(
+async def get_current_empresa(
     current_user: User = Depends(get_current_user),
 ):
     ...
-10. Tenant Context não vem do frontend
+10. Contexto de Empresa não vem do frontend
 
-Não utilizar um valor arbitrário recebido pelo cliente como fonte principal do tenant.
+Não utilizar um valor arbitrário recebido pelo cliente como fonte principal da empresa.
 
 Evitar:
 
-X-Tenant-ID
-tenant_id no body
-tenant_id na query
+X-Empresa-ID
+empresa_id no body
+empresa_id na query
 
 como mecanismo automático de autorização.
 
-O tenant deve ser derivado de uma relação confiável.
+A empresa deve ser derivada de uma relação confiável.
 
-11. Current Tenant
+11. CurrentEmpresa
 
 Uma dependency pode retornar uma estrutura de contexto.
 
 Exemplo conceitual:
 
 @dataclass
-class TenantContext:
-    tenant_id: UUID
+class EmpresaContext:
+    empresa_id: UUID
     user_id: UUID
 
 Isso pode ser útil quando a operação precisar de:
 
-tenant_id
+empresa_id
 user_id
 
 simultaneamente.
@@ -234,7 +234,7 @@ Request
  ↓
 Current User
  ↓
-Current Tenant
+CurrentEmpresa
  ↓
 Permission Check
  ↓
@@ -307,7 +307,7 @@ Database
  ↓
 Current User
  ↓
-Current Tenant
+CurrentEmpresa
  ↓
 Permission
  ↓
@@ -323,7 +323,7 @@ Exemplos apropriados:
 
 get_db
 get_current_user
-get_current_tenant
+get_current_empresa
 require_permission
 get_request_context
 
@@ -364,14 +364,14 @@ verificar status
 
 Não deve executar operações de negócio.
 
-21. Current Tenant Dependency
+21. CurrentEmpresa Dependency
 
-A dependency de tenant pode:
+A dependency de empresa pode:
 
-obter tenant_id
+obter empresa_id
 validar associação do usuário
-carregar tenant
-verificar status do tenant
+carregar empresa
+verificar status da empresa
 
 quando essas verificações fizerem parte do contrato de identidade e contexto.
 
@@ -438,7 +438,7 @@ Headers recebidos do cliente não devem ser tratados automaticamente como inform
 Exemplo:
 
 X-User-ID
-X-Tenant-ID
+X-Empresa-ID
 X-Role
 X-Permission
 
@@ -563,7 +563,7 @@ Cobrir:
 
 get_db
 get_current_user
-get_current_tenant
+get_current_empresa
 require_permission
 
 quando forem implementadas.
@@ -578,17 +578,17 @@ token expirado
 token ausente
 usuário inexistente
 usuário inativo
-36. Testes de Tenant
+36. Testes de Empresa
 
 Testar:
 
-User A → Tenant A
+User A → Empresa A
 
 permitido.
 
 E:
 
-User A → Tenant B
+User A → Empresa B
 
 bloqueado.
 
@@ -612,7 +612,7 @@ FastAPI permite substituir dependencies durante testes.
 Isso pode ser útil para:
 
 mock user
-mock tenant
+mock empresa
 test database
 
 Exemplo conceitual:
@@ -675,7 +675,7 @@ Dependencies executadas em todas as requisições devem ser eficientes.
 Exemplos:
 
 get_current_user
-get_current_tenant
+get_current_empresa
 
 podem ser chamadas frequentemente.
 
@@ -692,11 +692,11 @@ Sem comprometer segurança.
 Cache de identidade ou autorização deve considerar:
 
 user_id
-tenant_id
+empresa_id
 
 e possuir invalidação adequada.
 
-Não utilizar cache global que possa misturar contextos de diferentes tenants.
+Não utilizar cache global que possa misturar contextos de diferentes empresas.
 
 45. Background Jobs
 
@@ -831,7 +831,7 @@ As dependencies de autenticação e autorização devem seguir:
 não autenticado
 → negar
 
-tenant inválido
+empresa inválido
 → negar
 
 permission ausente
@@ -846,7 +846,7 @@ Ao implementar dependencies:
 1. Database session
 2. Authentication
 3. Current user
-4. Tenant context
+4. Contexto de empresa
 5. Authorization
 6. Request context
 7. Service factories quando necessárias
@@ -864,7 +864,7 @@ Antes de finalizar uma dependency:
  Não acessa diretamente o frontend;
  Não confia em headers arbitrários;
  Authentication está separada de Authorization;
- Tenant context é confiável;
+ Contexto de empresa é confiável;
  Session possui lifecycle correto;
  Services não dependem diretamente de Depends;
  Repositories não dependem diretamente de Depends;

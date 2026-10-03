@@ -5,7 +5,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, get_password_hash
-from app.db.models.tenant import Tenant
+from app.db.models.empresa import Empresa
 from app.db.models.user import User
 
 
@@ -13,7 +13,7 @@ from app.db.models.user import User
 async def test_login_success(
     client: AsyncClient,
     test_user: User,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     response = await client.post(
         "/api/v1/auth/login",
@@ -55,10 +55,10 @@ async def test_login_nonexistent_email(
 async def test_login_inactive_user(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     user = User(
-        tenant_id=test_tenant.id,
+        empresa_id=test_empresa.id,
         email="inactive@example.com",
         password_hash=get_password_hash("password123"),
         full_name="Inactive User",
@@ -81,10 +81,10 @@ async def test_login_inactive_user(
 async def test_login_deleted_user(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     user = User(
-        tenant_id=test_tenant.id,
+        empresa_id=test_empresa.id,
         email="deleted@example.com",
         password_hash=get_password_hash("password123"),
         full_name="Deleted User",
@@ -105,25 +105,25 @@ async def test_login_deleted_user(
 
 
 @pytest.mark.asyncio
-async def test_login_inactive_tenant(
+async def test_login_inactive_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
 ):
-    tenant = Tenant(
-        name="Inactive Tenant",
-        slug="inactive-tenant",
+    empresa = Empresa(
+        name="Empresa Inativa",
+        slug="inactive-empresa",
         is_active=False,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
-    db_session.add(tenant)
+    db_session.add(empresa)
     await db_session.flush()
 
     user = User(
-        tenant_id=tenant.id,
+        empresa_id=empresa.id,
         email="user@inactive.com",
         password_hash=get_password_hash("password123"),
-        full_name="User Inactive Tenant",
+        full_name="Usuario Empresa Inativa",
         is_active=True,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
@@ -155,7 +155,7 @@ async def test_me_with_valid_token(
     assert data["full_name"] == "Test User"
     assert data["is_active"] is True
     assert "id" in data
-    assert "tenant_id" in data
+    assert "empresa_id" in data
     assert "created_at" in data
 
 
@@ -178,12 +178,12 @@ async def test_me_with_invalid_token(client: AsyncClient):
 async def test_me_with_expired_token(
     client: AsyncClient,
     test_user: User,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     token = create_access_token(
         data={
             "sub": str(test_user.id),
-            "tenant_id": str(test_tenant.id),
+            "empresa_id": str(test_empresa.id),
         },
         expires_delta=timedelta(seconds=-1),
     )
@@ -195,23 +195,23 @@ async def test_me_with_expired_token(
 
 
 @pytest.mark.asyncio
-async def test_cross_tenant_user_id_mismatch(
+async def test_cross_empresa_user_id_mismatch(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
-    other_tenant = Tenant(
-        name="Other Tenant",
-        slug="other-tenant",
+    other_empresa = Empresa(
+        name="Outra Empresa",
+        slug="other-empresa",
         is_active=True,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
-    db_session.add(other_tenant)
+    db_session.add(other_empresa)
     await db_session.flush()
 
     other_user = User(
-        tenant_id=other_tenant.id,
+        empresa_id=other_empresa.id,
         email="other@example.com",
         password_hash=get_password_hash("password123"),
         full_name="Other User",
@@ -225,7 +225,7 @@ async def test_cross_tenant_user_id_mismatch(
     token = create_access_token(
         data={
             "sub": str(other_user.id),
-            "tenant_id": str(test_tenant.id),
+            "empresa_id": str(test_empresa.id),
         }
     )
     response = await client.get(

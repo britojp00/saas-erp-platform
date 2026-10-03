@@ -41,16 +41,16 @@ PostgreSQL
           |
           └── public
                 |
-                ├── tenants
+                ├── empresas
                 ├── users
                 ├── clientes
                 ├── produtos
                 ├── pedidos
                 └── estoque
 
-Não criar schemas PostgreSQL separados por tenant.
+Não criar schemas PostgreSQL separados por empresa.
 
-O isolamento entre tenants será realizado através do
+O isolamento entre empresas será realizado através do
 modelo definido em:
 
 skills/database/multi-tenancy.md
@@ -64,7 +64,7 @@ Utilizar nomes no plural.
 
 Exemplos:
 
-tenants
+empresas
 users
 roles
 permissions
@@ -79,7 +79,7 @@ Utilizar nomes descritivos em snake_case.
 
 Exemplos:
 
-tenant_id
+empresa_id
 cliente_id
 created_at
 updated_at
@@ -123,9 +123,9 @@ Exemplo:
 
 cliente_id UUID REFERENCES clientes(id)
 
-Quando a tabela pertencer a um tenant:
+Quando a tabela pertencer a uma empresa:
 
-tenant_id UUID REFERENCES tenants(id)
+empresa_id UUID REFERENCES empresas(id)
 
 Foreign keys devem possuir nomes claros e consistentes.
 
@@ -403,7 +403,7 @@ quando a ausência do valor for inválida para a entidade.
 Exemplo:
 
 name NOT NULL
-tenant_id NOT NULL
+empresa_id NOT NULL
 created_at NOT NULL
 
 Não utilizar NULL apenas porque a coluna poderia ficar vazia.
@@ -418,38 +418,38 @@ email
 
 ou:
 
-tenant_id + sku
+empresa_id + sku
 
 A estratégia deve respeitar o escopo do dado.
 
-Uma informação que é única dentro de um tenant
+Uma informação que é única dentro de uma empresa
 não deve receber automaticamente uma constraint global.
 
 23. Unique composto
 
-Para unicidade por tenant, preferir constraints compostas.
+Para unicidade por empresa, preferir constraints compostas.
 
 Exemplo:
 
 UNIQUE (
-    tenant_id,
+    empresa_id,
     sku
 )
 
 Exemplo:
 
-Tenant A + SKU 001
+Empresa A + SKU 001
 
 e:
 
-Tenant B + SKU 001
+Empresa B + SKU 001
 
 podem existir.
 
 Mas:
 
-Tenant A + SKU 001
-Tenant A + SKU 001
+Empresa A + SKU 001
+Empresa A + SKU 001
 
 não podem coexistir.
 
@@ -490,10 +490,10 @@ Foreign keys devem possuir constraints explícitas.
 
 Exemplo conceitual:
 
-CONSTRAINT fk_pedidos_tenant_cliente
+CONSTRAINT fk_pedidos_empresa_cliente
 FOREIGN KEY (cliente_id)
 REFERENCES clientes(id)
-27. Foreign Key e Tenant
+27. Foreign Key e Empresa
 
 Relacionamentos entre entidades multi-tenant devem respeitar
 as regras de multi-tenancy.
@@ -504,20 +504,20 @@ pedidos
     |
     +---- cliente_id
     |
-    +---- tenant_id
+    +---- empresa_id
 
 A aplicação deve garantir que:
 
-Pedido Tenant
+Pedida Empresa
 =
-Cliente Tenant
+Empresa do cliente
 
 A foreign key simples entre:
 
 pedidos.cliente_id
 → clientes.id
 
-não substitui a validação de contexto de tenant.
+não substitui a validação de contexto de empresa.
 
 28. ON DELETE
 
@@ -599,22 +599,22 @@ Não criar índices indiscriminadamente.
 32. Índices multi-tenant
 
 Quando uma tabela for multi-tenant e as consultas
-frequentemente utilizarem o tenant como filtro,
+frequentemente utilizarem a empresa como filtro,
 avaliar índices iniciados por:
 
-tenant_id
+empresa_id
 
 Exemplo:
 
 INDEX (
-    tenant_id,
+    empresa_id,
     created_at
 )
 
 ou:
 
 INDEX (
-    tenant_id,
+    empresa_id,
     status
 )
 
@@ -639,7 +639,7 @@ os padrões de consulta.
 Exemplo:
 
 INDEX (
-    tenant_id,
+    empresa_id,
     status,
     created_at
 )
@@ -649,7 +649,7 @@ não deve ser criado apenas por conveniência.
 Avaliar:
 
 WHERE
-tenant_id = ...
+empresa_id = ...
 
 AND status = ...
 
@@ -754,7 +754,7 @@ source_system
 Quando necessário:
 
 UNIQUE (
-    tenant_id,
+    empresa_id,
     source_system,
     external_id
 )
@@ -872,7 +872,7 @@ Antes de criar uma tabela PostgreSQL:
 
 1. Definir entidade
 2. Definir primary key
-3. Definir tenant
+3. Definir empresa
 4. Definir colunas
 5. Definir tipos
 6. Definir NOT NULL
@@ -898,7 +898,7 @@ Antes de alterar uma tabela existente:
 4. Verificar dados existentes
 5. Verificar índices
 6. Verificar constraints
-7. Verificar tenant
+7. Verificar empresa
 8. Verificar soft delete
 9. Verificar impacto na API
 10. Criar migration

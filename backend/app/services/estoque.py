@@ -32,17 +32,17 @@ class EstoqueService:
 
     async def _validate_produto_exists(
         self,
-        tenant_id: int,
+        empresa_id: int,
         produto_id: int,
     ) -> Produto:
-        produto = await self.produto_repo.get_by_id(produto_id, tenant_id)
+        produto = await self.produto_repo.get_by_id(produto_id, empresa_id)
         if produto is None:
             raise ErroProdutoNaoEncontrado()
         return produto
 
     async def list_saldos(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         page: int,
         page_size: int,
@@ -50,7 +50,7 @@ class EstoqueService:
     ) -> tuple[list[Estoque], int]:
         offset = (page - 1) * page_size
         return await self.estoque_repo.list(
-            tenant_id,
+            empresa_id,
             offset=offset,
             limit=page_size,
             produto_id=produto_id,
@@ -58,17 +58,17 @@ class EstoqueService:
 
     async def get_saldo(
         self,
-        tenant_id: int,
+        empresa_id: int,
         produto_id: int,
     ) -> Estoque:
-        estoque = await self.estoque_repo.get_by_produto_id(tenant_id, produto_id)
+        estoque = await self.estoque_repo.get_by_produto_id(empresa_id, produto_id)
         if estoque is None:
             raise ErroEstoqueNaoEncontrado()
         return estoque
 
     async def list_movimentacoes(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         page: int,
         page_size: int,
@@ -76,7 +76,7 @@ class EstoqueService:
     ) -> tuple[list[MovimentacaoEstoque], int]:
         offset = (page - 1) * page_size
         return await self.movimentacao_repo.list(
-            tenant_id,
+            empresa_id,
             offset=offset,
             limit=page_size,
             produto_id=produto_id,
@@ -84,7 +84,7 @@ class EstoqueService:
 
     async def list_reservas(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         page: int,
         page_size: int,
@@ -92,7 +92,7 @@ class EstoqueService:
     ) -> tuple[list[ReservaEstoque], int]:
         offset = (page - 1) * page_size
         return await self.reserva_repo.list(
-            tenant_id,
+            empresa_id,
             offset=offset,
             limit=page_size,
             produto_id=produto_id,
@@ -100,25 +100,25 @@ class EstoqueService:
 
     async def create_movimentacao(
         self,
-        tenant_id: int,
+        empresa_id: int,
         data: MovimentacaoCriarPayload,
         user_id: int | None = None,
     ) -> MovimentacaoEstoque:
-        await self._validate_produto_exists(tenant_id, data.produto_id)
+        await self._validate_produto_exists(empresa_id, data.produto_id)
 
         if data.tipo_movimentacao == "AJUSTE" and data.quantity <= 0:
             raise ErroOperacaoEstoqueInvalida()
 
         existing = await self.movimentacao_repo.exists_by_idempotency_key(
-            tenant_id, data.idempotency_key
+            empresa_id, data.idempotency_key
         )
         if existing:
             raise ErroChaveIdempotenciaDuplicada()
 
-        estoque = await self.estoque_repo.get_for_update(tenant_id, data.produto_id)
+        estoque = await self.estoque_repo.get_for_update(empresa_id, data.produto_id)
         if estoque is None:
             estoque = Estoque(
-                tenant_id=tenant_id,
+                empresa_id=empresa_id,
                 produto_id=data.produto_id,
             )
             self.session.add(estoque)
@@ -139,7 +139,7 @@ class EstoqueService:
                 raise ErroOperacaoEstoqueInvalida()
 
         movimentacao = MovimentacaoEstoque(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             produto_id=data.produto_id,
             tipo_movimentacao=TipoMovimentacao(data.tipo_movimentacao),
             quantity=data.quantity,
@@ -157,7 +157,7 @@ class EstoqueService:
         }
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action=action_map[data.tipo_movimentacao],
             entity_type="estoque",
@@ -170,22 +170,22 @@ class EstoqueService:
 
     async def create_reserva(
         self,
-        tenant_id: int,
+        empresa_id: int,
         data: ReservaCriarPayload,
         user_id: int | None = None,
     ) -> ReservaEstoque:
-        produto = await self._validate_produto_exists(tenant_id, data.produto_id)
+        produto = await self._validate_produto_exists(empresa_id, data.produto_id)
 
         if not produto.is_active:
             raise ErroOperacaoEstoqueInvalida()
 
         existing = await self.reserva_repo.exists_by_idempotency_key(
-            tenant_id, data.idempotency_key
+            empresa_id, data.idempotency_key
         )
         if existing:
             raise ErroChaveIdempotenciaDuplicada()
 
-        estoque = await self.estoque_repo.get_for_update(tenant_id, data.produto_id)
+        estoque = await self.estoque_repo.get_for_update(empresa_id, data.produto_id)
         if estoque is None:
             raise ErroEstoqueNaoEncontrado()
 
@@ -196,7 +196,7 @@ class EstoqueService:
         estoque.reserved_quantity = estoque.reserved_quantity + data.quantity
 
         reserva = ReservaEstoque(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             produto_id=data.produto_id,
             quantity=data.quantity,
             status=StatusReserva.ATIVA,
@@ -209,7 +209,7 @@ class EstoqueService:
         result = await self.reserva_repo.create(reserva)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="RESERVA_CRIAR",
             entity_type="reserva",
@@ -225,18 +225,18 @@ class EstoqueService:
 
     async def confirm_reserva(
         self,
-        tenant_id: int,
+        empresa_id: int,
         reserva_id: int,
         user_id: int | None = None,
     ) -> ReservaEstoque:
-        reserva = await self.reserva_repo.get_by_id(tenant_id, reserva_id)
+        reserva = await self.reserva_repo.get_by_id(empresa_id, reserva_id)
         if reserva is None:
             raise ErroReservaNaoEncontrada()
 
         if reserva.status != StatusReserva.ATIVA:
             raise ErroEstadoReservaInvalido()
 
-        estoque = await self.estoque_repo.get_for_update(tenant_id, reserva.produto_id)
+        estoque = await self.estoque_repo.get_for_update(empresa_id, reserva.produto_id)
         if estoque is None:
             raise ErroEstoqueNaoEncontrado()
 
@@ -249,7 +249,7 @@ class EstoqueService:
         result = await self.reserva_repo.update(reserva)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="RESERVA_CONFIRMAR",
             entity_type="reserva",
@@ -262,18 +262,18 @@ class EstoqueService:
 
     async def release_reserva(
         self,
-        tenant_id: int,
+        empresa_id: int,
         reserva_id: int,
         user_id: int | None = None,
     ) -> ReservaEstoque:
-        reserva = await self.reserva_repo.get_by_id(tenant_id, reserva_id)
+        reserva = await self.reserva_repo.get_by_id(empresa_id, reserva_id)
         if reserva is None:
             raise ErroReservaNaoEncontrada()
 
         if reserva.status != StatusReserva.ATIVA:
             raise ErroEstadoReservaInvalido()
 
-        estoque = await self.estoque_repo.get_for_update(tenant_id, reserva.produto_id)
+        estoque = await self.estoque_repo.get_for_update(empresa_id, reserva.produto_id)
         if estoque is None:
             raise ErroEstoqueNaoEncontrado()
 
@@ -286,7 +286,7 @@ class EstoqueService:
         result = await self.reserva_repo.update(reserva)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="RESERVA_LIBERAR",
             entity_type="reserva",
@@ -299,18 +299,18 @@ class EstoqueService:
 
     async def cancel_reserva(
         self,
-        tenant_id: int,
+        empresa_id: int,
         reserva_id: int,
         user_id: int | None = None,
     ) -> ReservaEstoque:
-        reserva = await self.reserva_repo.get_by_id(tenant_id, reserva_id)
+        reserva = await self.reserva_repo.get_by_id(empresa_id, reserva_id)
         if reserva is None:
             raise ErroReservaNaoEncontrada()
 
         if reserva.status != StatusReserva.ATIVA:
             raise ErroEstadoReservaInvalido()
 
-        estoque = await self.estoque_repo.get_for_update(tenant_id, reserva.produto_id)
+        estoque = await self.estoque_repo.get_for_update(empresa_id, reserva.produto_id)
         if estoque is None:
             raise ErroEstoqueNaoEncontrado()
 
@@ -323,7 +323,7 @@ class EstoqueService:
         result = await self.reserva_repo.update(reserva)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="RESERVA_CANCELAR",
             entity_type="reserva",

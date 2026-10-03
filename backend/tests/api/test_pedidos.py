@@ -6,31 +6,31 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.cliente import Cliente
+from app.db.models.empresa import Empresa
 from app.db.models.estoque import Estoque
 from app.db.models.pedido import Pedido
 from app.db.models.permission import Permission
 from app.db.models.produto import Produto
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
-from app.db.models.tenant import Tenant
 from app.db.models.user import User
 from app.db.models.user_role import UserRole
 
 
 async def _create_permission(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
 ) -> Permission:
     stmt = select(Permission).where(
-        Permission.tenant_id == tenant_id,
+        Permission.empresa_id == empresa_id,
         Permission.name == name,
     )
     result = await session.execute(stmt)
     existing = result.scalar_one_or_none()
     if existing:
         return existing
-    perm = Permission(tenant_id=tenant_id, name=name)
+    perm = Permission(empresa_id=empresa_id, name=name)
     session.add(perm)
     await session.flush()
     return perm
@@ -38,32 +38,32 @@ async def _create_permission(
 
 async def _create_role_with_perms(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     perm_names: list[str],
 ) -> Role:
     stmt = select(Role).where(
-        Role.tenant_id == tenant_id,
+        Role.empresa_id == empresa_id,
         Role.name == name,
     )
     result = await session.execute(stmt)
     existing = result.scalar_one_or_none()
     if existing:
         return existing
-    role = Role(tenant_id=tenant_id, name=name)
+    role = Role(empresa_id=empresa_id, name=name)
     session.add(role)
     await session.flush()
     for pname in perm_names:
-        perm = await _create_permission(session, tenant_id, pname)
+        perm = await _create_permission(session, empresa_id, pname)
         stmt_rp = select(RolePermission).where(
-            RolePermission.tenant_id == tenant_id,
+            RolePermission.empresa_id == empresa_id,
             RolePermission.role_id == role.id,
             RolePermission.permission_id == perm.id,
         )
         rp_result = await session.execute(stmt_rp)
         if rp_result.scalar_one_or_none() is None:
             rp = RolePermission(
-                tenant_id=tenant_id,
+                empresa_id=empresa_id,
                 role_id=role.id,
                 permission_id=perm.id,
             )
@@ -74,12 +74,12 @@ async def _create_role_with_perms(
 
 async def _assign_role_to_user(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     user_id: int,
     role_id: int,
 ) -> None:
     stmt = select(UserRole).where(
-        UserRole.tenant_id == tenant_id,
+        UserRole.empresa_id == empresa_id,
         UserRole.user_id == user_id,
         UserRole.role_id == role_id,
     )
@@ -87,7 +87,7 @@ async def _assign_role_to_user(
     if result.scalar_one_or_none():
         return
     ur = UserRole(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         user_id=user_id,
         role_id=role_id,
     )
@@ -97,11 +97,11 @@ async def _assign_role_to_user(
 
 async def _create_cliente_in_db(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
 ) -> Cliente:
     cliente = Cliente(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         name=name,
     )
     session.add(cliente)
@@ -111,13 +111,13 @@ async def _create_cliente_in_db(
 
 async def _create_produto_in_db(
     session: AsyncClient,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     price: Decimal = Decimal("10.00"),
     is_active: bool = True,
 ) -> Produto:
     produto = Produto(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         sku=f"SKU-{name.upper().replace(' ', '-')}",
         name=name,
         price=price,
@@ -130,13 +130,13 @@ async def _create_produto_in_db(
 
 async def _create_produto(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     price: Decimal = Decimal("10.00"),
     is_active: bool = True,
 ) -> Produto:
     produto = Produto(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         sku=f"SKU-{name.upper().replace(' ', '-')}",
         name=name,
         price=price,
@@ -149,12 +149,12 @@ async def _create_produto(
 
 async def _create_estoque(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     produto_id: int,
     quantity: Decimal = Decimal("100.000"),
 ) -> Estoque:
     estoque = Estoque(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         produto_id=produto_id,
         quantity=quantity,
     )
@@ -164,40 +164,40 @@ async def _create_estoque(
 
 
 @pytest.fixture
-async def cliente(db_session: AsyncSession, test_tenant: Tenant) -> Cliente:
-    return await _create_cliente_in_db(db_session, test_tenant.id, "Cliente Teste")
+async def cliente(db_session: AsyncSession, test_empresa: Empresa) -> Cliente:
+    return await _create_cliente_in_db(db_session, test_empresa.id, "Cliente Teste")
 
 
 @pytest.fixture
-async def produto(db_session: AsyncSession, test_tenant: Tenant) -> Produto:
-    return await _create_produto(db_session, test_tenant.id, "Produto Teste")
+async def produto(db_session: AsyncSession, test_empresa: Empresa) -> Produto:
+    return await _create_produto(db_session, test_empresa.id, "Produto Teste")
 
 
 @pytest.fixture
-async def produto_b(db_session: AsyncSession, test_tenant: Tenant) -> Produto:
+async def produto_b(db_session: AsyncSession, test_empresa: Empresa) -> Produto:
     return await _create_produto(
-        db_session, test_tenant.id, "Produto B", price=Decimal("25.00")
+        db_session, test_empresa.id, "Produto B", price=Decimal("25.00")
     )
 
 
 @pytest.fixture
 async def estoque(
-    db_session: AsyncSession, test_tenant: Tenant, produto: Produto
+    db_session: AsyncSession, test_empresa: Empresa, produto: Produto
 ) -> Estoque:
-    return await _create_estoque(db_session, test_tenant.id, produto.id)
+    return await _create_estoque(db_session, test_empresa.id, produto.id)
 
 
 @pytest.fixture
 async def estoque_b(
-    db_session: AsyncSession, test_tenant: Tenant, produto_b: Produto
+    db_session: AsyncSession, test_empresa: Empresa, produto_b: Produto
 ) -> Estoque:
-    return await _create_estoque(db_session, test_tenant.id, produto_b.id)
+    return await _create_estoque(db_session, test_empresa.id, produto_b.id)
 
 
 @pytest.fixture
 async def pedido_com_itens(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
     cliente: Cliente,
     produto: Produto,
@@ -205,7 +205,7 @@ async def pedido_com_itens(
 ) -> Pedido:
     role = await _create_role_with_perms(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         "pedido_admin",
         [
             "pedido.ler",
@@ -214,7 +214,7 @@ async def pedido_com_itens(
             "pedido.cancelar",
         ],
     )
-    await _assign_role_to_user(db_session, test_tenant.id, test_user.id, role.id)
+    await _assign_role_to_user(db_session, test_empresa.id, test_user.id, role.id)
     await db_session.commit()
     return cliente  # type: ignore[return-value]
 
@@ -224,7 +224,7 @@ class TestPedidoCriacao:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -232,14 +232,14 @@ class TestPedidoCriacao:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_creator",
             ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -267,7 +267,7 @@ class TestPedidoCriacao:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -277,14 +277,14 @@ class TestPedidoCriacao:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_creator",
             ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -310,20 +310,20 @@ class TestPedidoCriacao:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_creator",
             ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -339,21 +339,21 @@ class TestPedidoCriacao:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         produto: Produto,
         estoque: Estoque,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_creator",
             ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -372,20 +372,20 @@ class TestPedidoCriacao:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_creator",
             ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -404,7 +404,7 @@ class TestPedidoCriacao:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -412,14 +412,14 @@ class TestPedidoCriacao:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_creator",
             ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -441,7 +441,7 @@ class TestPedidoCriacao:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -449,14 +449,14 @@ class TestPedidoCriacao:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_creator",
             ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -489,7 +489,7 @@ class TestPedidoNumero:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -497,14 +497,14 @@ class TestPedidoNumero:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_creator",
             ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -539,7 +539,7 @@ class TestPedidoListaEDetalhe:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -547,14 +547,14 @@ class TestPedidoListaEDetalhe:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_list",
             ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -581,7 +581,7 @@ class TestPedidoListaEDetalhe:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -589,14 +589,14 @@ class TestPedidoListaEDetalhe:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_list",
             ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -623,7 +623,7 @@ class TestPedidoListaEDetalhe:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -631,14 +631,14 @@ class TestPedidoListaEDetalhe:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_detail",
             ["pedido.ler", "pedido.criar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -666,19 +666,19 @@ class TestPedidoListaEDetalhe:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_detail",
             ["pedido.ler"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -695,7 +695,7 @@ class TestPedidoAtualizacao:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -703,14 +703,14 @@ class TestPedidoAtualizacao:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_update",
             ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -726,7 +726,7 @@ class TestPedidoAtualizacao:
         pedido_id = create_resp.json()["id"]
 
         new_cliente = await _create_cliente_in_db(
-            db_session, test_tenant.id, "Novo Cliente"
+            db_session, test_empresa.id, "Novo Cliente"
         )
         await db_session.commit()
 
@@ -742,7 +742,7 @@ class TestPedidoAtualizacao:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -750,14 +750,14 @@ class TestPedidoAtualizacao:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_update",
             ["pedido.ler", "pedido.criar", "pedido.atualizar", "pedido.cancelar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -790,7 +790,7 @@ class TestPedidoItens:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -800,14 +800,14 @@ class TestPedidoItens:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_items",
             ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -843,7 +843,7 @@ class TestPedidoItens:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -851,14 +851,14 @@ class TestPedidoItens:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_items",
             ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -884,7 +884,7 @@ class TestPedidoItens:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -892,14 +892,14 @@ class TestPedidoItens:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_items",
             ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -936,7 +936,7 @@ class TestPedidoItens:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -946,14 +946,14 @@ class TestPedidoItens:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_items",
             ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -988,7 +988,7 @@ class TestPedidoItens:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -996,14 +996,14 @@ class TestPedidoItens:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_items",
             ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -1029,7 +1029,7 @@ class TestPedidoItens:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -1039,14 +1039,14 @@ class TestPedidoItens:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_items",
             ["pedido.ler", "pedido.criar", "pedido.atualizar", "pedido.cancelar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -1079,7 +1079,7 @@ class TestPedidoMaquinaDeEstados:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -1087,7 +1087,7 @@ class TestPedidoMaquinaDeEstados:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_confirm",
             [
                 "pedido.ler",
@@ -1099,8 +1099,8 @@ class TestPedidoMaquinaDeEstados:
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -1133,7 +1133,7 @@ class TestPedidoMaquinaDeEstados:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -1141,14 +1141,14 @@ class TestPedidoMaquinaDeEstados:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_complete",
             ["pedido.ler", "pedido.criar", "pedido.atualizar", "estoque.ler"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -1187,7 +1187,7 @@ class TestPedidoMaquinaDeEstados:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -1195,14 +1195,14 @@ class TestPedidoMaquinaDeEstados:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_cancel",
             ["pedido.ler", "pedido.criar", "pedido.atualizar", "pedido.cancelar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -1228,7 +1228,7 @@ class TestPedidoMaquinaDeEstados:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -1236,7 +1236,7 @@ class TestPedidoMaquinaDeEstados:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_cancel",
             [
                 "pedido.ler",
@@ -1248,8 +1248,8 @@ class TestPedidoMaquinaDeEstados:
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -1287,7 +1287,7 @@ class TestPedidoMaquinaDeEstados:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -1295,14 +1295,14 @@ class TestPedidoMaquinaDeEstados:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_complete",
             ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -1327,7 +1327,7 @@ class TestPedidoMaquinaDeEstados:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -1335,14 +1335,14 @@ class TestPedidoMaquinaDeEstados:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_terminal",
             ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -1376,7 +1376,7 @@ class TestPedidoMaquinaDeEstados:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -1384,14 +1384,14 @@ class TestPedidoMaquinaDeEstados:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_terminal",
             ["pedido.ler", "pedido.criar", "pedido.atualizar", "pedido.cancelar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -1422,7 +1422,7 @@ class TestPedidoRBAC:
     async def test_criar_pedido_sem_permissao_falha(
         self,
         client: AsyncClient,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
     ) -> None:
         response = await client.post(
@@ -1435,7 +1435,7 @@ class TestPedidoRBAC:
     async def test_listar_pedidos_sem_permissao_falha(
         self,
         client: AsyncClient,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
     ) -> None:
         response = await client.get(
@@ -1447,7 +1447,7 @@ class TestPedidoRBAC:
     async def test_obter_pedido_sem_permissao_falha(
         self,
         client: AsyncClient,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
     ) -> None:
         response = await client.get(
@@ -1458,11 +1458,11 @@ class TestPedidoRBAC:
 
 
 class TestPedidoMultiTenancy:
-    async def test_nao_acessa_pedido_de_outro_tenant(
+    async def test_nao_acessa_pedido_de_outro_empresa(
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         test_user: User,
         authenticated_headers: dict,
         cliente: Cliente,
@@ -1471,16 +1471,16 @@ class TestPedidoMultiTenancy:
     ) -> None:
         from app.core.security import create_access_token
 
-        other_tenant = Tenant(name="Outro Tenant", slug="outro-tenant")
-        db_session.add(other_tenant)
+        other_empresa = Empresa(name="Outra Empresa", slug="outro-empresa")
+        db_session.add(other_empresa)
         await db_session.flush()
 
-        other_cliente = Cliente(tenant_id=other_tenant.id, name="Outro Cliente")
+        other_cliente = Cliente(empresa_id=other_empresa.id, name="Outro Cliente")
         db_session.add(other_cliente)
         await db_session.flush()
 
         other_produto = Produto(
-            tenant_id=other_tenant.id,
+            empresa_id=other_empresa.id,
             sku="SKU-OUTRO",
             name="Outro Produto",
             price=Decimal("50.00"),
@@ -1489,34 +1489,34 @@ class TestPedidoMultiTenancy:
         await db_session.flush()
 
         other_estoque = Estoque(
-            tenant_id=other_tenant.id,
+            empresa_id=other_empresa.id,
             produto_id=other_produto.id,
             quantity=Decimal("100.000"),
         )
         db_session.add(other_estoque)
         await db_session.flush()
 
-        other_perm = Permission(tenant_id=other_tenant.id, name="pedido.ler")
+        other_perm = Permission(empresa_id=other_empresa.id, name="pedido.ler")
         db_session.add(other_perm)
         await db_session.flush()
 
-        other_perm_create = Permission(tenant_id=other_tenant.id, name="pedido.criar")
+        other_perm_create = Permission(empresa_id=other_empresa.id, name="pedido.criar")
         db_session.add(other_perm_create)
         await db_session.flush()
 
-        other_role = Role(tenant_id=other_tenant.id, name="admin")
+        other_role = Role(empresa_id=other_empresa.id, name="admin")
         db_session.add(other_role)
         await db_session.flush()
 
         other_rp1 = RolePermission(
-            tenant_id=other_tenant.id,
+            empresa_id=other_empresa.id,
             role_id=other_role.id,
             permission_id=other_perm.id,
         )
         db_session.add(other_rp1)
 
         other_rp2 = RolePermission(
-            tenant_id=other_tenant.id,
+            empresa_id=other_empresa.id,
             role_id=other_role.id,
             permission_id=other_perm_create.id,
         )
@@ -1524,7 +1524,7 @@ class TestPedidoMultiTenancy:
         await db_session.flush()
 
         other_user = User(
-            tenant_id=other_tenant.id,
+            empresa_id=other_empresa.id,
             email="outro@test.com",
             password_hash="fake",
             full_name="Outro User",
@@ -1533,7 +1533,7 @@ class TestPedidoMultiTenancy:
         await db_session.flush()
 
         other_ur = UserRole(
-            tenant_id=other_tenant.id,
+            empresa_id=other_empresa.id,
             user_id=other_user.id,
             role_id=other_role.id,
         )
@@ -1543,7 +1543,7 @@ class TestPedidoMultiTenancy:
         other_token = create_access_token(
             data={
                 "sub": str(other_user.id),
-                "tenant_id": other_tenant.id,
+                "empresa_id": other_empresa.id,
                 "user_email": other_user.email,
             }
         )
@@ -1572,7 +1572,7 @@ class TestPedidoEstoqueIntegracao:
         self,
         client: AsyncClient,
         db_session: AsyncSession,
-        test_tenant: Tenant,
+        test_empresa: Empresa,
         authenticated_headers: dict,
         cliente: Cliente,
         produto: Produto,
@@ -1580,14 +1580,14 @@ class TestPedidoEstoqueIntegracao:
     ) -> None:
         role = await _create_role_with_perms(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             "pedido_insufficient",
             ["pedido.ler", "pedido.criar", "pedido.atualizar"],
         )
         await _assign_role_to_user(
             db_session,
-            test_tenant.id,
-            (await _get_user(db_session, test_tenant.id)).id,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
             role.id,
         )
         await db_session.commit()
@@ -1609,10 +1609,10 @@ class TestPedidoEstoqueIntegracao:
         assert response.status_code == 409
 
 
-async def _get_user(session: AsyncSession, tenant_id: int) -> User:
+async def _get_user(session: AsyncSession, empresa_id: int) -> User:
 
     stmt = select(User).where(
-        User.tenant_id == tenant_id,
+        User.empresa_id == empresa_id,
     )
     result = await session.execute(stmt)
     user = result.scalar_one()

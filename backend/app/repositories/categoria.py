@@ -18,7 +18,7 @@ class CategoriaRepository:
 
     async def list(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         offset: int,
         limit: int,
@@ -27,7 +27,7 @@ class CategoriaRepository:
         order: str = "desc",
     ) -> tuple[list[Categoria], int]:
         base_stmt = select(Categoria).where(
-            Categoria.tenant_id == tenant_id,
+            Categoria.empresa_id == empresa_id,
             Categoria.deleted_at.is_(None),
         )
         if search:
@@ -52,11 +52,11 @@ class CategoriaRepository:
     async def get_by_id(
         self,
         categoria_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> Categoria | None:
         stmt = select(Categoria).where(
             Categoria.id == categoria_id,
-            Categoria.tenant_id == tenant_id,
+            Categoria.empresa_id == empresa_id,
             Categoria.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
@@ -64,12 +64,12 @@ class CategoriaRepository:
 
     async def exists_by_name(
         self,
-        tenant_id: int,
+        empresa_id: int,
         name: str,
         exclude_id: int | None = None,
     ) -> bool:
         stmt = select(Categoria).where(
-            Categoria.tenant_id == tenant_id,
+            Categoria.empresa_id == empresa_id,
             Categoria.name == name,
         )
         if exclude_id is not None:
@@ -79,11 +79,11 @@ class CategoriaRepository:
 
     async def get_children_ids(
         self,
-        tenant_id: int,
+        empresa_id: int,
         parent_id: int,
     ) -> set[int]:
         stmt = select(Categoria.id).where(
-            Categoria.tenant_id == tenant_id,
+            Categoria.empresa_id == empresa_id,
             Categoria.parent_id == parent_id,
             Categoria.deleted_at.is_(None),
         )
@@ -92,7 +92,7 @@ class CategoriaRepository:
 
     async def get_ancestor_ids(
         self,
-        tenant_id: int,
+        empresa_id: int,
         categoria_id: int,
     ) -> set[int]:
         ancestors: set[int] = set()
@@ -100,7 +100,7 @@ class CategoriaRepository:
         while True:
             stmt = select(Categoria.parent_id).where(
                 Categoria.id == current_parent_id,
-                Categoria.tenant_id == tenant_id,
+                Categoria.empresa_id == empresa_id,
                 Categoria.deleted_at.is_(None),
             )
             result = await self.session.execute(stmt)
@@ -115,21 +115,21 @@ class CategoriaRepository:
 
     async def has_children(
         self,
-        tenant_id: int,
+        empresa_id: int,
         categoria_id: int,
     ) -> bool:
-        children = await self.get_children_ids(tenant_id, categoria_id)
+        children = await self.get_children_ids(empresa_id, categoria_id)
         return len(children) > 0
 
     async def has_produtos(
         self,
-        tenant_id: int,
+        empresa_id: int,
         categoria_id: int,
     ) -> bool:
         stmt = (
             select(Produto)
             .where(
-                Produto.tenant_id == tenant_id,
+                Produto.empresa_id == empresa_id,
                 Produto.categoria_id == categoria_id,
                 Produto.deleted_at.is_(None),
             )

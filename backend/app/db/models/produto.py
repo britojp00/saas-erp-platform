@@ -14,8 +14,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import (
     BigIntPrimaryKeyMixin,
+    EscopoEmpresaMixin,
     SoftDeleteMixin,
-    TenantScopedMixin,
     TimestampMixin,
 )
 
@@ -24,26 +24,26 @@ class Produto(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
-    TenantScopedMixin,
+    EscopoEmpresaMixin,
     Base,
 ):
     __tablename__ = "produtos"
 
     __table_args__ = (
         UniqueConstraint(
-            "tenant_id",
+            "empresa_id",
             "sku",
-            name="uq_produtos_tenant_sku",
+            name="uq_produtos_empresa_sku",
         ),
         UniqueConstraint(
-            "tenant_id",
+            "empresa_id",
             "id",
-            name="uq_produtos_tenant_id",
+            name="uq_produtos_empresa_id",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "categoria_id"],
-            ["categorias.tenant_id", "categorias.id"],
-            name="fk_produtos_tenant_categoria",
+            ["empresa_id", "categoria_id"],
+            ["categorias.empresa_id", "categorias.id"],
+            name="fk_produtos_empresa_categoria",
             ondelete="RESTRICT",
         ),
     )

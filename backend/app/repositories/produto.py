@@ -23,7 +23,7 @@ class ProdutoRepository:
 
     async def list(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         offset: int,
         limit: int,
@@ -34,7 +34,7 @@ class ProdutoRepository:
         is_active: bool | None = None,
     ) -> tuple[list[Produto], int]:
         base_stmt = select(Produto).where(
-            Produto.tenant_id == tenant_id,
+            Produto.empresa_id == empresa_id,
             Produto.deleted_at.is_(None),
         )
         if search:
@@ -65,11 +65,11 @@ class ProdutoRepository:
     async def get_by_id(
         self,
         produto_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> Produto | None:
         stmt = select(Produto).where(
             Produto.id == produto_id,
-            Produto.tenant_id == tenant_id,
+            Produto.empresa_id == empresa_id,
             Produto.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
@@ -78,11 +78,11 @@ class ProdutoRepository:
     async def get_categoria_by_id(
         self,
         categoria_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> Categoria | None:
         stmt = select(Categoria).where(
             Categoria.id == categoria_id,
-            Categoria.tenant_id == tenant_id,
+            Categoria.empresa_id == empresa_id,
             Categoria.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
@@ -90,12 +90,12 @@ class ProdutoRepository:
 
     async def exists_by_sku(
         self,
-        tenant_id: int,
+        empresa_id: int,
         sku: str,
         exclude_id: int | None = None,
     ) -> bool:
         stmt = select(Produto).where(
-            Produto.tenant_id == tenant_id,
+            Produto.empresa_id == empresa_id,
             Produto.sku == sku,
         )
         if exclude_id is not None:
@@ -105,13 +105,13 @@ class ProdutoRepository:
 
     async def tem_estoque(
         self,
-        tenant_id: int,
+        empresa_id: int,
         produto_id: int,
     ) -> bool:
         stmt = (
             select(Estoque)
             .where(
-                Estoque.tenant_id == tenant_id,
+                Estoque.empresa_id == empresa_id,
                 Estoque.produto_id == produto_id,
             )
             .limit(1)
@@ -121,13 +121,13 @@ class ProdutoRepository:
 
     async def tem_itens_pedido(
         self,
-        tenant_id: int,
+        empresa_id: int,
         produto_id: int,
     ) -> bool:
         stmt = (
             select(PedidoItem)
             .where(
-                PedidoItem.tenant_id == tenant_id,
+                PedidoItem.empresa_id == empresa_id,
                 PedidoItem.produto_id == produto_id,
             )
             .limit(1)

@@ -35,10 +35,10 @@ class SoftDeleteMixin:
     )
 
 
-class TenantScopedMixin:
-    tenant_id: Mapped[int] = mapped_column(
+class EscopoEmpresaMixin:
+    empresa_id: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        ForeignKey("empresas.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
     )

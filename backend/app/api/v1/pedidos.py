@@ -45,7 +45,7 @@ async def list_pedidos(
     cliente_id: int | None = Query(default=None),
 ) -> ListaPedidosResposta:
     items, total = await service.listar_pedidos(
-        current_user.tenant_id,
+        current_user.empresa_id,
         page=page,
         page_size=page_size,
         search=search,
@@ -74,7 +74,7 @@ async def get_pedido(
     current_user: CurrentUser,
     service: Annotated[PedidoService, Depends(get_pedido_service)],
 ) -> PedidoResposta:
-    pedido = await service.obter_pedido_com_itens(current_user.tenant_id, pedido_id)
+    pedido = await service.obter_pedido_com_itens(current_user.empresa_id, pedido_id)
     return PedidoResposta.model_validate(pedido)
 
 
@@ -92,9 +92,9 @@ async def create_pedido(
     service: Annotated[PedidoService, Depends(get_pedido_service)],
 ) -> PedidoResposta:
     pedido = await service.criar_pedido(
-        current_user.tenant_id, data, user_id=current_user.id
+        current_user.empresa_id, data, user_id=current_user.id
     )
-    pedido = await service.obter_pedido_com_itens(current_user.tenant_id, pedido.id)
+    pedido = await service.obter_pedido_com_itens(current_user.empresa_id, pedido.id)
     return PedidoResposta.model_validate(pedido)
 
 
@@ -112,9 +112,9 @@ async def update_pedido(
     service: Annotated[PedidoService, Depends(get_pedido_service)],
 ) -> PedidoResposta:
     pedido = await service.atualizar_pedido(
-        current_user.tenant_id, pedido_id, data, user_id=current_user.id
+        current_user.empresa_id, pedido_id, data, user_id=current_user.id
     )
-    pedido = await service.obter_pedido_com_itens(current_user.tenant_id, pedido.id)
+    pedido = await service.obter_pedido_com_itens(current_user.empresa_id, pedido.id)
     return PedidoResposta.model_validate(pedido)
 
 
@@ -133,7 +133,7 @@ async def add_pedido_item(
     service: Annotated[PedidoService, Depends(get_pedido_service)],
 ) -> PedidoItemResposta:
     item = await service.adicionar_item(
-        current_user.tenant_id, pedido_id, data, user_id=current_user.id
+        current_user.empresa_id, pedido_id, data, user_id=current_user.id
     )
     return PedidoItemResposta.model_validate(item)
 
@@ -153,7 +153,11 @@ async def update_pedido_item(
     service: Annotated[PedidoService, Depends(get_pedido_service)],
 ) -> PedidoItemResposta:
     item = await service.atualizar_item(
-        current_user.tenant_id, pedido_id, pedido_item_id, data, user_id=current_user.id
+        current_user.empresa_id,
+        pedido_id,
+        pedido_item_id,
+        data,
+        user_id=current_user.id,
     )
     return PedidoItemResposta.model_validate(item)
 
@@ -172,7 +176,7 @@ async def remove_pedido_item(
     service: Annotated[PedidoService, Depends(get_pedido_service)],
 ) -> None:
     await service.remover_item(
-        current_user.tenant_id, pedido_id, pedido_item_id, user_id=current_user.id
+        current_user.empresa_id, pedido_id, pedido_item_id, user_id=current_user.id
     )
 
 
@@ -189,9 +193,9 @@ async def confirm_pedido(
     service: Annotated[PedidoService, Depends(get_pedido_service)],
 ) -> PedidoResposta:
     pedido = await service.confirmar_pedido(
-        current_user.tenant_id, pedido_id, user_id=current_user.id
+        current_user.empresa_id, pedido_id, user_id=current_user.id
     )
-    pedido = await service.obter_pedido_com_itens(current_user.tenant_id, pedido.id)
+    pedido = await service.obter_pedido_com_itens(current_user.empresa_id, pedido.id)
     return PedidoResposta.model_validate(pedido)
 
 
@@ -208,9 +212,9 @@ async def cancel_pedido(
     service: Annotated[PedidoService, Depends(get_pedido_service)],
 ) -> PedidoResposta:
     pedido = await service.cancelar_pedido(
-        current_user.tenant_id, pedido_id, user_id=current_user.id
+        current_user.empresa_id, pedido_id, user_id=current_user.id
     )
-    pedido = await service.obter_pedido_com_itens(current_user.tenant_id, pedido.id)
+    pedido = await service.obter_pedido_com_itens(current_user.empresa_id, pedido.id)
     return PedidoResposta.model_validate(pedido)
 
 
@@ -227,7 +231,7 @@ async def complete_pedido(
     service: Annotated[PedidoService, Depends(get_pedido_service)],
 ) -> PedidoResposta:
     pedido = await service.concluir_pedido(
-        current_user.tenant_id, pedido_id, user_id=current_user.id
+        current_user.empresa_id, pedido_id, user_id=current_user.id
     )
-    pedido = await service.obter_pedido_com_itens(current_user.tenant_id, pedido.id)
+    pedido = await service.obter_pedido_com_itens(current_user.empresa_id, pedido.id)
     return PedidoResposta.model_validate(pedido)

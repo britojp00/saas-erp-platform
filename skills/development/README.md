@@ -302,7 +302,7 @@ Database
 ↓
 Authentication
 ↓
-Tenant
+Empresa
 ↓
 Cliente
 ↓
@@ -366,7 +366,7 @@ type: description
 Exemplos:
 
 feat: add cliente management
-fix: prevent cross-tenant access
+fix: prevent cross-empresa access
 test: add pedido service tests
 refactor: simplify cliente repository
 docs: update database guidelines
@@ -458,7 +458,7 @@ fix/nome-do-problema
 
 Exemplo:
 
-fix/cross-tenant-access
+fix/cross-empresa-access
 31. Refactor Branch
 
 Refatorações independentes podem utilizar:
@@ -759,7 +759,7 @@ Antes de adicionar cache:
 identificar custo
 avaliar frequência
 definir invalidação
-considerar tenant
+considerar empresa
 
 Um cache incorreto pode causar problemas de consistência.
 
@@ -769,7 +769,7 @@ Alterações que afetem:
 
 authentication
 authorization
-tenant
+empresa
 database
 external integrations
 secrets
@@ -779,10 +779,10 @@ devem receber revisão adicional de segurança.
 
 56. Multi-tenancy Review
 
-Toda funcionalidade que acessar dados de tenant deve verificar:
+Toda funcionalidade que acessar dados de empresa deve verificar:
 
-tenant context
-tenant filter
+contexto de empresa
+empresa filter
 ownership
 cache
 jobs
@@ -868,7 +868,7 @@ Código gerado por IA deve ser especialmente revisado em:
 
 authentication
 authorization
-tenant isolation
+empresa isolation
 SQL
 secrets
 validation
@@ -881,7 +881,7 @@ A IA não deve remover:
 authentication
 authorization
 validation
-tenant filters
+empresa filters
 constraints
 tests
 
@@ -1023,7 +1023,7 @@ o que o código já deixa evidente
 
 Exemplo útil:
 
-# Use tenant_id here to prevent cross-tenant access.
+# Use empresa_id here to prevent cross-empresa access.
 
 Evitar comentários óbvios como:
 

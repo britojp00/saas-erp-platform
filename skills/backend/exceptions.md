@@ -273,7 +273,7 @@ ErroClienteNaoEncontrado
 ErroProdutoNaoEncontrado
 ErroPedidoNaoEncontrado
 
-Em recursos multi-tenant, não revelar dados que permitam descobrir a existência de recursos de outro tenant.
+Em recursos multi-tenant, não revelar dados que permitam descobrir a existência de recursos de outra empresa.
 
 17. Conflict
 
@@ -477,7 +477,7 @@ Exceptions relevantes devem ser registradas com contexto suficiente para investi
 Quando disponível:
 
 request_id
-tenant_id
+empresa_id
 user_id
 error_code
 event
@@ -522,17 +522,17 @@ monitoramento
 
 Somente expor ao cliente o que fizer parte do contrato público.
 
-33. Exceptions e Tenant
+33. Exceptions e Empresa
 
-Erros relacionados a recursos multi-tenant não devem revelar informações sobre outro tenant.
+Erros relacionados a recursos multi-tenant não devem revelar informações sobre outra empresa.
 
 Exemplo:
 
-Tenant A solicita Cliente B
+Empresa A solicita Cliente B
 
 Não retornar:
 
-"Cliente B existe, mas pertence ao Tenant B"
+"Cliente B existe, mas pertence à Empresa B"
 
 quando essa informação não deveria ser revelada.
 
@@ -756,7 +756,7 @@ AuthenticationError
 
 Verificar que erros não revelam:
 
-dados de outro tenant
+dados de outra empresa
 estrutura do banco
 credentials
 tokens
@@ -879,7 +879,7 @@ Antes de finalizar uma alteração relacionada a exceptions:
  Message não expõe informação interna;
  PostgreSQL errors não são retornados diretamente;
  Stack traces não são expostos em produção;
- Tenant isolation foi considerado;
+ Empresa isolation foi considerado;
  Retry foi avaliado quando aplicável;
  Transação realiza rollback quando necessário;
  Exceptions não são engolidas;

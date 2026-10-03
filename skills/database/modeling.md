@@ -23,7 +23,7 @@ clareza;
 manutenção;
 desempenho;
 segurança;
-isolamento entre tenants.
+isolamento entre empresas.
 
 Não criar estruturas genéricas apenas para evitar criar
 tabelas ou entidades específicas.
@@ -41,7 +41,7 @@ e nomes no plural.
 
 Exemplos:
 
-tenants
+empresas
 users
 roles
 permissions
@@ -72,7 +72,7 @@ first_name
 created_at
 updated_at
 deleted_at
-tenant_id
+empresa_id
 produto_id
 unit_price
 
@@ -81,7 +81,7 @@ Não utilizar:
 firstName
 CreatedAt
 DeletedAt
-TenantId
+EmpresaId
 3. Primary Key
 
 As entidades principais devem possuir uma chave primária
@@ -120,7 +120,7 @@ Exemplo:
 
 cliente_id
 produto_id
-tenant_id
+empresa_id
 user_id
 pedido_id
 
@@ -131,11 +131,11 @@ Não utilizar somente convenções de nomenclatura para
 representar relacionamentos sem constraint no banco quando
 uma foreign key for aplicável.
 
-5. Tenant ID
+5. Empresa ID
 
 Entidades de negócio que pertencem a uma empresa devem possuir:
 
-tenant_id
+empresa_id
 
 Exemplo:
 
@@ -147,37 +147,37 @@ estoque
 Estrutura conceitual:
 
 id
-tenant_id
+empresa_id
 name
 created_at
 updated_at
 deleted_at
 
-O tenant_id deve possuir foreign key para:
+O empresa_id deve possuir foreign key para:
 
-tenants.id
+empresas.id
 
 quando aplicável.
 
-A ausência ou presença de tenant_id deve ser uma decisão
-consciente baseada no relacionamento da entidade com o tenant.
+A ausência ou presença de empresa_id deve ser uma decisão
+consciente baseada no relacionamento da entidade com a empresa.
 
-6. Tenant como entidade raiz
+6. Empresa como entidade raiz
 
 A tabela:
 
-tenants
+empresas
 
 representa as empresas que utilizam a plataforma.
 
 Ela é uma entidade raiz do modelo multi-tenant.
 
-A própria tabela tenants não deve possuir tenant_id
+A própria tabela empresas não deve possuir empresa_id
 referenciando a si mesma.
 
 Exemplo conceitual:
 
-tenants
+empresas
 
 id
 name
@@ -195,7 +195,7 @@ Exemplo:
 produtos
 
 id
-tenant_id
+empresa_id
 name
 created_at
 updated_at
@@ -510,9 +510,9 @@ Exemplo global:
 
 email
 
-ou exemplo relacionado a um tenant:
+ou exemplo relacionado a uma empresa:
 
-tenant_id + sku
+empresa_id + sku
 
 No modelo multi-tenant, avaliar se a unicidade deve ser:
 
@@ -520,40 +520,40 @@ global
 
 ou:
 
-por tenant
+por empresa
 
 Exemplo:
 
-tenant_id + email
+empresa_id + email
 
-permite o mesmo e-mail em tenants diferentes.
+permite o mesmo e-mail em empresas diferentes.
 
 23. Unique composto
 
 Quando a regra de negócio exigir unicidade dentro
-de um tenant, utilizar uma constraint composta.
+de uma empresa, utilizar uma constraint composta.
 
 Exemplo:
 
 UNIQUE (
-    tenant_id,
+    empresa_id,
     sku
 )
 
 Isso significa:
 
-Tenant A + SKU 001
+Empresa A + SKU 001
 
 e:
 
-Tenant B + SKU 001
+Empresa B + SKU 001
 
 podem existir simultaneamente.
 
 Mas:
 
-Tenant A + SKU 001
-Tenant A + SKU 001
+Empresa A + SKU 001
+Empresa A + SKU 001
 
 não podem coexistir.
 
@@ -575,30 +575,30 @@ combinações frequentes de filtros.
 
 Não criar índices em todas as colunas automaticamente.
 
-25. Índices relacionados ao tenant
+25. Índices relacionados à empresa
 
 Entidades multi-tenant frequentemente possuem consultas
 que filtram por:
 
-tenant_id
+empresa_id
 
-Quando apropriado, avaliar índices iniciados por tenant_id.
+Quando apropriado, avaliar índices iniciados por empresa_id.
 
 Exemplo:
 
 INDEX (
-    tenant_id,
+    empresa_id,
     created_at
 )
 
 pode ser apropriado quando o sistema realiza frequentemente
-consultas por tenant ordenadas por data.
+consultas por empresa ordenadas por data.
 
 O índice deve refletir os padrões reais de consulta.
 
 26. Índices e UNIQUE
 
-Quando houver uma regra de unicidade por tenant,
+Quando houver uma regra de unicidade por empresa,
 a constraint pode também produzir o índice necessário.
 
 Evitar criar um índice duplicado que represente
@@ -631,13 +631,13 @@ Exemplo:
 external_id
 source_system
 
-Quando a combinação precisar ser única por tenant,
+Quando a combinação precisar ser única por empresa,
 utilizar uma constraint apropriada.
 
 Exemplo:
 
 UNIQUE (
-    tenant_id,
+    empresa_id,
     source_system,
     external_id
 )
@@ -655,7 +655,7 @@ Exemplo conceitual:
 audit_logs
 
 id
-tenant_id
+empresa_id
 user_id
 action
 entity
@@ -718,7 +718,7 @@ Antes de criar uma tabela, definir:
 Nome
 Responsabilidade
 Primary Key
-Tenant
+Empresa
 Foreign Keys
 Campos obrigatórios
 Campos opcionais
@@ -739,7 +739,7 @@ Exemplo:
 produtos
 
 id
-tenant_id
+empresa_id
 categoria_id
 sku
 name
@@ -761,7 +761,7 @@ CHECK
 
 Exemplo conceitual:
 
-tenants
+empresas
 ---------
 id
 name
@@ -773,7 +773,7 @@ deleted_at
 clientes
 ---------
 id
-tenant_id
+empresa_id
 name
 email
 created_at
@@ -784,7 +784,7 @@ deleted_at
 produtos
 --------
 id
-tenant_id
+empresa_id
 sku
 name
 price
@@ -796,7 +796,7 @@ deleted_at
 pedidos
 ------
 id
-tenant_id
+empresa_id
 cliente_id
 status
 total_amount
@@ -806,7 +806,7 @@ deleted_at
 
 Relacionamentos:
 
-tenants
+empresas
    |
    +---- clientes
    |
@@ -830,7 +830,7 @@ Para uma nova entidade:
 
 1. Identificar a entidade
 2. Definir responsabilidade
-3. Definir relacionamento com tenant
+3. Definir relacionamento com empresa
 4. Definir primary key
 5. Definir foreign keys
 6. Definir campos
@@ -872,7 +872,7 @@ verificar dependências;
 verificar relacionamentos;
 verificar índices;
 verificar constraints;
-verificar impacto no tenant;
+verificar impacto na empresa;
 verificar comportamento do soft delete;
 verificar migrations;
 atualizar testes.
@@ -890,7 +890,7 @@ Qual é sua chave?
 Com quem ela se relaciona?
 Como sua integridade é garantida?
 Como ela será consultada?
-Como será isolada por tenant?
+Como será isolada por empresa?
 Como será alterada no futuro?
 Como será logicamente removida?
 
@@ -902,7 +902,7 @@ Agora o padrão oficial das entidades de negócio fica:
 
 ```text
 id
-tenant_id          ← quando aplicável
+empresa_id          ← quando aplicável
 ...
 created_at
 updated_at

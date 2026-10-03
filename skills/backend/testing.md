@@ -186,7 +186,7 @@ def test_create_cliente_with_valid_data():
     ...
 def test_create_cliente_rejects_duplicate_email():
     ...
-async def test_user_cannot_access_other_tenant_cliente():
+async def test_user_cannot_access_other_empresa_cliente():
     ...
 
 Evitar:
@@ -249,7 +249,7 @@ Exemplos:
 database session
 test client
 authenticated user
-tenant
+empresa
 
 Evitar fixtures gigantes que criem todo o sistema para qualquer teste.
 
@@ -266,12 +266,12 @@ async def db_session():
 Outra:
 
 @pytest.fixture
-async def test_tenant():
+async def test_empresa():
     ...
 
 Evitar uma única fixture que faça:
 
-tenant
+empresa
 user
 role
 permissions
@@ -329,26 +329,26 @@ pagination
 sorting
 filters
 relationships
-18. Tenant Isolation
+18. Empresa Isolation
 
 Toda operação multi-tenant relevante deve possuir teste explícito de isolamento.
 
 Exemplo:
 
-Tenant A
+Empresa A
 └── Cliente A
 
-Tenant B
+Empresa B
 └── Cliente B
 
 Teste:
 
-Tenant A → Cliente A
+Empresa A → Cliente A
 ✓
 
 E:
 
-Tenant A → Cliente B
+Empresa A → Cliente B
 ✗
 19. Testes de GET
 
@@ -356,8 +356,8 @@ Para endpoints de leitura, testar:
 
 recurso existente
 recurso inexistente
-tenant correto
-tenant incorreto
+empresa correta
+empresa incorreta
 registro excluído
 filtros
 paginação
@@ -371,7 +371,7 @@ Para criação, testar:
 dados válidos
 dados inválidos
 duplicidade
-tenant correto
+empresa correta
 campos controlados pelo backend
 constraints
 
@@ -383,8 +383,8 @@ Para atualização, testar:
 
 recurso existente
 recurso inexistente
-tenant correto
-tenant incorreto
+empresa correta
+empresa incorreta
 campos permitidos
 campos protegidos
 validação
@@ -401,7 +401,7 @@ registro não aparece em consultas normais
 
 Também testar:
 
-outro tenant
+outra empresa
 → operação bloqueada
 
 quando aplicável.
@@ -525,7 +525,7 @@ acesso administrativo não concedido
 
 Também testar tentativa de manipular:
 
-tenant_id
+empresa_id
 user_id
 permissions
 roles
@@ -538,7 +538,7 @@ Testar as duas camadas juntas.
 
 Exemplo:
 
-Tenant A
+Empresa A
 User A
 cliente.ler
 
@@ -573,7 +573,7 @@ Exemplo:
 
 {
   "name": "Cliente",
-  "tenant_id": "other-tenant",
+  "empresa_id": "other-empresa",
   "created_at": "2020-01-01T00:00:00Z"
 }
 
@@ -600,7 +600,7 @@ sem filtro
 um filtro
 múltiplos filtros
 valor inexistente
-tenant + filtro
+empresa + filtro
 
 Os resultados devem respeitar todos os filtros simultaneamente.
 
@@ -691,7 +691,7 @@ falha
 retry
 limite de tentativas
 idempotência
-tenant context
+contexto de empresa
 
 quando essas funcionalidades forem implementadas.
 
@@ -781,7 +781,7 @@ test client
 async client
 authenticated client
 test user
-test tenant
+test empresa
 
 Evitar duplicar a criação desses objetos em dezenas de testes.
 
@@ -878,7 +878,7 @@ Funcionalidades sensíveis devem possuir testes de segurança.
 
 Exemplos:
 
-cross-tenant access
+cross-empresa access
 privilege escalation
 mass assignment
 invalid JWT
@@ -956,7 +956,7 @@ Exemplo:
 
 event
 request_id
-tenant_id
+empresa_id
 user_id
 error_code
 
@@ -968,7 +968,7 @@ Quando auditoria for implementada, testar:
 
 ação registrada
 actor correto
-tenant correto
+empresa correta
 entidade correta
 timestamp
 
@@ -1110,7 +1110,7 @@ list
 update
 delete
 
-Garantindo que o contexto do tenant seja mantido.
+Garantindo que o contexto da empresa seja mantido.
 
 72. Testes e Soft Delete
 
@@ -1236,7 +1236,7 @@ CANCELADO → qualquer estado (terminal)
 
 Também testar:
 
-numero_pedido sequencial por tenant
+numero_pedido sequencial por empresa
 itens do pedido
 reserva de estoque
 confirmação de reserva
@@ -1264,7 +1264,7 @@ Quando um teste representar uma regra importante, o nome do teste pode servir co
 
 Exemplo:
 
-async def test_user_cannot_access_other_tenant_cliente():
+async def test_user_cannot_access_other_empresa_cliente():
     ...
 
 Isso facilita a compreensão do domínio.
@@ -1316,7 +1316,7 @@ Especialmente para:
 API
 Authentication
 Authorization
-Tenant Isolation
+Empresa Isolation
 Business Rules
 Database Integrity
 85. Ordem de criação dos testes
@@ -1339,7 +1339,7 @@ Antes de finalizar uma implementação:
  Casos de erro foram considerados;
  Authentication foi testada quando aplicável;
  Authorization foi testada quando aplicável;
- Tenant isolation foi testado;
+ Empresa isolation foi testado;
  Soft delete foi testado quando aplicável;
  Constraints foram testadas quando relevantes;
  Transactions foram testadas quando relevantes;

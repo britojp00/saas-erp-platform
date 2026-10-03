@@ -9,7 +9,7 @@ class AuditLogResponse(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
-    tenant_id: int
+    empresa_id: int
     user_id: int | None
     action: str
     entity_type: str

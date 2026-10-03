@@ -4,8 +4,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import (
     BigIntPrimaryKeyMixin,
+    EscopoEmpresaMixin,
     SoftDeleteMixin,
-    TenantScopedMixin,
     TimestampMixin,
 )
 
@@ -14,25 +14,25 @@ class Categoria(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
     SoftDeleteMixin,
-    TenantScopedMixin,
+    EscopoEmpresaMixin,
     Base,
 ):
     __tablename__ = "categorias"
 
     __table_args__ = (
         UniqueConstraint(
-            "tenant_id",
+            "empresa_id",
             "name",
-            name="uq_categorias_tenant_name",
+            name="uq_categorias_empresa_name",
         ),
         UniqueConstraint(
-            "tenant_id",
+            "empresa_id",
             "id",
-            name="uq_categorias_tenant_id",
+            name="uq_categorias_empresa_id",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "parent_id"],
-            ["categorias.tenant_id", "categorias.id"],
+            ["empresa_id", "parent_id"],
+            ["categorias.empresa_id", "categorias.id"],
             ondelete="RESTRICT",
         ),
     )

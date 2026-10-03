@@ -41,7 +41,7 @@ async def list_produtos(
     is_active: bool | None = Query(default=None),
 ) -> ListaProdutosResposta:
     items, total = await service.list(
-        current_user.tenant_id,
+        current_user.empresa_id,
         page=page,
         page_size=page_size,
         search=search,
@@ -70,7 +70,7 @@ async def get_produto(
     current_user: CurrentUser,
     service: Annotated[ProdutoService, Depends(get_produto_service)],
 ) -> ProdutoResposta:
-    produto = await service.get_by_id(produto_id, current_user.tenant_id)
+    produto = await service.get_by_id(produto_id, current_user.empresa_id)
     return ProdutoResposta.model_validate(produto)
 
 
@@ -88,7 +88,7 @@ async def create_produto(
     service: Annotated[ProdutoService, Depends(get_produto_service)],
 ) -> ProdutoResposta:
     produto = await service.create(
-        current_user.tenant_id, data, user_id=current_user.id
+        current_user.empresa_id, data, user_id=current_user.id
     )
     return ProdutoResposta.model_validate(produto)
 
@@ -107,7 +107,7 @@ async def update_produto(
     service: Annotated[ProdutoService, Depends(get_produto_service)],
 ) -> ProdutoResposta:
     produto = await service.update(
-        produto_id, current_user.tenant_id, data, user_id=current_user.id
+        produto_id, current_user.empresa_id, data, user_id=current_user.id
     )
     return ProdutoResposta.model_validate(produto)
 
@@ -125,5 +125,5 @@ async def delete_produto(
     service: Annotated[ProdutoService, Depends(get_produto_service)],
 ) -> None:
     await service.soft_delete(
-        produto_id, current_user.tenant_id, user_id=current_user.id
+        produto_id, current_user.empresa_id, user_id=current_user.id
     )

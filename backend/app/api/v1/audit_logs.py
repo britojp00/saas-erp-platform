@@ -45,7 +45,7 @@ async def list_audit_logs(
         order = "desc"
 
     items, total = await service.list(
-        current_user.tenant_id,
+        current_user.empresa_id,
         page=page,
         page_size=page_size,
         action=action,

@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.db.models.tenant import Tenant
+from app.db.models.empresa import Empresa
 from app.db.models.user import User
 
 
@@ -42,11 +42,11 @@ async def test_postgres_uses_configured_timezone(
 @pytest.mark.asyncio
 async def test_inserted_timestamp_preserves_instant(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ):
     utc_now = datetime.now(UTC)
     user = User(
-        tenant_id=test_tenant.id,
+        empresa_id=test_empresa.id,
         email="tz-test@example.com",
         password_hash="fakehash",
         full_name="TZ Test User",

@@ -167,7 +167,7 @@ JWT
    ↓
 Authenticated User
    ↓
-Tenant Context
+Contexto de Empresa
    ↓
 Authorization
    ↓
@@ -192,9 +192,9 @@ NÃO → 403 Forbidden
 
 A autorização deve ocorrer antes da execução da operação protegida.
 
-9. Tenant Context
+9. Contexto de Empresa
 
-Endpoints que trabalham com dados de tenant não devem depender de um tenant_id arbitrário enviado pelo frontend para autorizar a operação.
+Endpoints que trabalham com dados de empresa não devem depender de um empresa_id arbitrário enviado pelo frontend para autorizar a operação.
 
 O contexto deve ser derivado da identidade autenticada.
 
@@ -206,11 +206,11 @@ JWT
         ↓
 User
         ↓
-Tenant
+Empresa
         ↓
 Repository query
 
-Um tenant_id fornecido explicitamente pela requisição somente deve ser utilizado quando fizer parte de uma operação autorizada e claramente definida.
+Um empresa_id fornecido explicitamente pela requisição somente deve ser utilizado quando fizer parte de uma operação autorizada e claramente definida.
 
 10. IDs
 
@@ -346,7 +346,7 @@ Os filtros devem:
 possuir nomes claros;
 ser validados;
 possuir comportamento documentado;
-respeitar tenant;
+respeitar empresa;
 considerar deleted_at.
 18. Busca
 
@@ -428,7 +428,7 @@ Idempotency-Key: 8d9e...
 
 A estratégia deve ser implementada somente em operações que realmente necessitem desse controle.
 
-A chave de idempotência deve possuir escopo apropriado ao tenant e à operação.
+A chave de idempotência deve possuir escopo apropriado à empresa e à operação.
 
 24. Erros
 
@@ -466,7 +466,7 @@ Quando um recurso não existir dentro do contexto autorizado:
 
 404 Not Found
 
-Em recursos multi-tenant, o comportamento não deve permitir descobrir dados de outro tenant através de mensagens diferenciadas.
+Em recursos multi-tenant, o comportamento não deve permitir descobrir dados de outra empresa através de mensagens diferenciadas.
 
 27. Forbidden
 
@@ -666,7 +666,7 @@ Antes de executar uma alteração incompatível, avaliar versionamento ou estrat
 
 Nunca confiar diretamente em informações vindas do cliente para:
 
-tenant_id
+empresa_id
 user_id
 role
 permission
@@ -686,7 +686,7 @@ Deve considerar:
 
 IP
 usuário
-tenant
+empresa
 endpoint
 operação
 
@@ -762,8 +762,8 @@ quando forem aplicáveis ao recurso.
 
 Testar também:
 
-tenant A → seus dados
-tenant A → dados do tenant B
+empresa A → seus dados
+empresa A → dados da empresa B
 
 O segundo cenário deve ser bloqueado.
 
@@ -795,7 +795,7 @@ Antes de finalizar um endpoint:
  Response schema está definido;
  Autenticação foi considerada;
  Autorização foi considerada;
- Contexto do tenant está correto;
+ Contexto da empresa está correto;
  Status HTTP está correto;
  Erros estão padronizados;
  Paginação foi considerada em listagens;

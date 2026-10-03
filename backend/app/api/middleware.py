@@ -9,8 +9,8 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from app.core.config import settings
 from app.core.request_context import (
     clear_request_context,
+    set_empresa_id,
     set_request_id,
-    set_tenant_id,
     set_user_id,
 )
 
@@ -32,10 +32,10 @@ def _extract_user_context(request: Request) -> tuple[int | None, int | None]:
             algorithms=[settings.jwt_algorithm],
         )
         user_id_str = payload.get("sub")
-        tenant_id_str = payload.get("tenant_id")
+        empresa_id_str = payload.get("empresa_id")
         user_id = int(user_id_str) if user_id_str else None
-        tenant_id = int(tenant_id_str) if tenant_id_str else None
-        return user_id, tenant_id
+        empresa_id = int(empresa_id_str) if empresa_id_str else None
+        return user_id, empresa_id
     except jwt.ExpiredSignatureError:
         return None, None
     except jwt.InvalidTokenError:
@@ -52,8 +52,8 @@ class HTTPLoggingMiddleware(BaseHTTPMiddleware):
 
         set_request_id(request_id)
 
-        user_id, tenant_id = _extract_user_context(request)
-        set_tenant_id(tenant_id)
+        user_id, empresa_id = _extract_user_context(request)
+        set_empresa_id(empresa_id)
         set_user_id(user_id)
 
         start = time.perf_counter()
@@ -98,7 +98,7 @@ class HTTPLoggingMiddleware(BaseHTTPMiddleware):
                 "duration_ms": duration_ms,
                 "request_id": ctx.request_id,
                 "user_id": ctx.user_id,
-                "tenant_id": ctx.tenant_id,
+                "empresa_id": ctx.empresa_id,
             },
         )
 

@@ -13,7 +13,7 @@ export interface UserResponse {
   email: string
   full_name: string
   is_active: boolean
-  tenant_id: number
+  empresa_id: number
   created_at: string
   roles: string[]
   permissions: string[]

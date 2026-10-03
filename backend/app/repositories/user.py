@@ -16,14 +16,14 @@ class UserRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_by_id_and_tenant(
+    async def get_by_id_and_empresa(
         self,
         user_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> User | None:
         stmt = select(User).where(
             User.id == user_id,
-            User.tenant_id == tenant_id,
+            User.empresa_id == empresa_id,
             User.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)

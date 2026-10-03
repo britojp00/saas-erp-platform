@@ -24,7 +24,7 @@ Authorization
     ↓
 O que esse usuário pode fazer?
 
-Tenant Isolation
+Empresa Isolation
     ↓
 Quais dados esse usuário pode acessar?
 1. Princípios
@@ -100,7 +100,7 @@ Exemplo conceitual:
 
 User
 ├── id
-├── tenant_id
+├── empresa_id
 ├── name
 ├── email
 ├── password_hash
@@ -216,27 +216,27 @@ role_permissions
 
 Não armazenar IDs de roles ou permissions dentro de uma string ou JSON quando a relação for estruturalmente relacional.
 
-10. Escopo do Tenant
+10. Escopo da Empresa
 
 Roles e permissions devem respeitar a estratégia multi-tenant do sistema.
 
-Na primeira versão, os usuários pertencem a um tenant.
+Na primeira versão, os usuários pertencem a uma empresa.
 
 Conceito:
 
-Tenant A
+Empresa A
 ├── User A
 ├── Role A
 └── Permission set A
 
-Tenant B
+Empresa B
 ├── User B
 ├── Role B
 └── Permission set B
 
-Um usuário do Tenant A não deve receber autorização baseada em estruturas pertencentes ao Tenant B.
+Um usuário da Empresa A não deve receber autorização baseada em estruturas pertencentes à Empresa B.
 
-11. Tenant Isolation
+11. Empresa Isolation
 
 Autorização não substitui isolamento de dados.
 
@@ -256,7 +256,7 @@ O acesso deve respeitar:
 
 Permission
 +
-Tenant Context
+Contexto de Empresa
 +
 Resource Ownership
 
@@ -267,7 +267,7 @@ quando aplicável.
 Durante uma requisição autenticada, o backend poderá possuir um contexto semelhante a:
 
 user_id
-tenant_id
+empresa_id
 roles
 permissions
 
@@ -278,7 +278,7 @@ O contexto deve ser derivado de fontes confiáveis.
 Não confiar em:
 
 user_id
-tenant_id
+empresa_id
 role
 permission
 
@@ -367,7 +367,7 @@ qualquer pedido pode ser cancelado
 O service pode verificar:
 
 pedido existe?
-pedido pertence ao tenant?
+pedido pertence à empresa?
 pedido está em estado cancelável?
 
 Somente depois realizar a operação.
@@ -448,11 +448,11 @@ Para uma operação protegida, considerar:
         ↓
 3. Usuário ativo?
         ↓
-4. Tenant válido?
+4. Empresa válido?
         ↓
 5. Possui permission?
         ↓
-6. Recurso pertence ao tenant?
+6. Recurso pertence à empresa?
         ↓
 7. Regra de negócio permite?
         ↓
@@ -477,17 +477,17 @@ Administrator
 ├── produto.excluir
 └── pedido.*
 
-Mesmo uma role administrativa deve continuar respeitando o tenant.
+Mesmo uma role administrativa deve continuar respeitando a empresa.
 
-Administrador do Tenant A não deve administrar dados do Tenant B.
+Administrador da Empresa A não deve administrar dados da Empresa B.
 
 24. Superadmin
 
-Um eventual usuário global do sistema pode possuir responsabilidades fora do tenant.
+Um eventual usuário global do sistema pode possuir responsabilidades fora da empresa.
 
 Entretanto, isso deve ser explicitamente modelado.
 
-Não criar um "superadmin" simplesmente como uma role com todas as permissões de tenant.
+Não criar um "superadmin" simplesmente como uma role com todas as permissões de empresa.
 
 Caso exista necessidade de operações globais:
 
@@ -495,7 +495,7 @@ Global Administration
 
 deve ser distinguida de:
 
-Tenant Administration
+Empresa Administration
 25. Permission Granularity
 
 As permissions devem possuir granularidade suficiente para controlar as ações importantes.
@@ -593,7 +593,7 @@ user.role_changed
 
 Registrar informações como:
 
-tenant_id
+empresa_id
 user_id
 action
 target
@@ -605,7 +605,7 @@ Nunca registrar secrets ou credenciais.
 
 Quando permissões forem armazenadas em cache:
 
-tenant_id
+empresa_id
 +
 user_id
 
@@ -647,7 +647,7 @@ Exemplo:
 
 document.read
 
-pode permitir leitura geral dentro do tenant.
+pode permitir leitura geral dentro da empresa.
 
 Enquanto outro recurso pode exigir:
 
@@ -661,12 +661,12 @@ A autorização pode combinar:
 
 Permission
 +
-Tenant
+Empresa
 +
 Ownership
 34. Dados sensíveis
 
-Alguns recursos podem exigir permissions específicas mesmo dentro do mesmo tenant.
+Alguns recursos podem exigir permissions específicas mesmo dentro do mesma empresa.
 
 Exemplos:
 
@@ -686,7 +686,7 @@ Exemplo:
 
 cliente.atualizar
 +
-cliente pertence ao tenant
+cliente pertence à empresa
 +
 cliente está ativo
 → operação permitida
@@ -695,7 +695,7 @@ O service deve impedir situações que uma simples permission não consegue repr
 
 36. Background Jobs
 
-Workers também precisam respeitar autorização e contexto de tenant.
+Workers também precisam respeitar autorização e contexto de empresa.
 
 Entretanto, o worker não possui um usuário HTTP tradicional.
 
@@ -704,7 +704,7 @@ A tarefa deve carregar somente o contexto necessário para executar a operação
 Exemplo:
 
 job
-├── tenant_id
+├── empresa_id
 ├── actor_user_id
 ├── entity_id
 └── operation
@@ -763,7 +763,7 @@ O cenário deve ser testado em conjunto.
 
 Exemplo:
 
-Tenant A
+Empresa A
 User A
 cliente.ler
 
@@ -779,7 +779,7 @@ Mesmo possuindo:
 
 cliente.ler
 
-A permission não pode ultrapassar o isolamento do tenant.
+A permission não pode ultrapassar o isolamento da empresa.
 
 42. Testes de privilege escalation
 
@@ -795,8 +795,8 @@ usuário comum
 
 ou:
 
-usuário de Tenant A
-→ tenta atribuir role de Tenant B
+usuário de Empresa A
+→ tenta atribuir role de Empresa B
 
 Essas operações devem ser bloqueadas.
 
@@ -869,7 +869,7 @@ Ao implementar autorização:
 5. Seed inicial de permissions
 6. Authorization dependency
 7. Permission checks
-8. Tenant isolation
+8. Empresa isolation
 9. Resource ownership quando necessário
 10. Audit
 11. Tests
@@ -885,17 +885,17 @@ Antes de finalizar uma alteração relacionada à autorização:
  Permission possui nome consistente;
  Roles agrupam permissions;
  Relações many-to-many utilizam tabelas próprias;
- Tenant isolation foi considerado;
+ Empresa isolation foi considerado;
  O frontend não é tratado como mecanismo de segurança;
  401 e 403 estão diferenciados;
  Default deny foi respeitado;
  Regras de negócio continuam no service;
  Ownership foi considerado quando necessário;
  Alterações críticas podem ser auditadas;
- Cache respeita tenant e usuário;
+ Cache respeita empresa e usuário;
  Background jobs preservam contexto quando necessário;
  Testes de RBAC existem;
- Testes cross-tenant existem;
+ Testes cross-empresa existem;
  Testes de privilege escalation existem.
 49. Regra principal
 
@@ -903,7 +903,7 @@ Autorização deve responder:
 
 Quem é o usuário?
         ↓
-Qual é o tenant?
+Qual é a empresa?
         ↓
 Qual permission ele possui?
         ↓

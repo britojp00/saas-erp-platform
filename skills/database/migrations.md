@@ -134,7 +134,7 @@ Index
 
 Também verificar:
 
-tenant_id
+empresa_id
 created_at
 updated_at
 deleted_at
@@ -148,9 +148,9 @@ a alteração realizada.
 
 Exemplos:
 
-create tenants table
+create empresas table
 create users table
-add tenant_id to clientes
+add empresa_id to clientes
 create pedidos table
 add pedido status constraint
 create cliente email index
@@ -186,7 +186,7 @@ que utiliza.
 
 Exemplo:
 
-tenants
+empresas
    |
    v
 users
@@ -217,7 +217,7 @@ os dados existentes.
 
 Alterações em entidades multi-tenant devem verificar:
 
-tenant_id
+empresa_id
 Foreign Key
 Indexes
 Unique Constraints
@@ -226,12 +226,12 @@ Existing Data
 
 Exemplo:
 
-Adicionar tenant_id em clientes
+Adicionar empresa_id em clientes
 
 não deve ser tratado apenas como:
 
 ALTER TABLE clientes
-ADD COLUMN tenant_id ...
+ADD COLUMN empresa_id ...
 
 É necessário considerar:
 
@@ -260,10 +260,10 @@ já possui registros.
 
 Adicionar:
 
-tenant_id NOT NULL
+empresa_id NOT NULL
 
 sem definir como os registros existentes receberão
-um tenant pode quebrar a migration.
+uma empresa pode quebrar a migration.
 
 A alteração deve possuir uma estratégia explícita
 para os dados existentes.
@@ -354,12 +354,12 @@ existentes já atendem à regra.
 Exemplo:
 
 UNIQUE (
-    tenant_id,
+    empresa_id,
     sku
 )
 
 Antes de aplicar, verificar se existem registros duplicados
-dentro do mesmo tenant.
+dentro do mesma empresa.
 
 20. Soft Delete
 
@@ -627,7 +627,7 @@ Por que mudou?
 Existem dados existentes?
 Há risco de perda?
 Os relacionamentos estão corretos?
-O tenant foi considerado?
+A empresa foi considerado?
 O soft delete foi considerado?
 Os índices foram considerados?
 Os testes foram atualizados?

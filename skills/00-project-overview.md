@@ -7,7 +7,7 @@ SaaS ERP Platform
 ## Descrição
 
 O SaaS ERP Platform é uma plataforma ERP web desenvolvida
-com arquitetura SaaS e suporte a múltiplos tenants.
+com arquitetura SaaS e suporte a múltiplas empresas.
 
 O projeto tem como objetivo demonstrar o desenvolvimento de
 um sistema corporativo moderno, com separação entre frontend
@@ -157,28 +157,28 @@ Conceito de multi-tenancy
 
 A aplicação será utilizada por diferentes empresas.
 
-Cada empresa representa um tenant.
+Cada empresa representa uma empresa.
 
 Exemplo:
 
-Tenant 1
+Empresa 1
 Empresa A
 
-Tenant 2
+Empresa 2
 Empresa B
 
-Tenant 3
+Empresa 3
 Empresa C
 
-Cada tenant possui seus próprios usuários e dados de negócio.
+Cada empresa possui seus próprios usuários e dados de negócio.
 
-Os dados de um tenant não podem ser acessados por outro tenant.
+Os dados de uma empresa não podem ser acessados por outra empresa.
 
 Módulos planejados
 
 O ERP deverá possuir inicialmente módulos relacionados a:
 
-Tenant
+Empresa
 Users
 Roles
 Permissions
@@ -202,7 +202,7 @@ JWT;
 refresh token;
 RBAC;
 controle de permissões;
-isolamento entre tenants;
+isolamento entre empresas;
 proteção de credenciais.
 
 Informações sensíveis não devem ser armazenadas diretamente
@@ -353,7 +353,7 @@ Audit Logs (1 endpoint: list);
 Seed de desenvolvimento;
 269 testes passando;
 39 API endpoints;
-Logging estruturado (JSON/text, request_id, tenant_id, user_id);
+Logging estruturado (JSON/text, request_id, empresa_id, user_id);
 Observabilidade (HTTP middleware, request context);
 CI (GitHub Actions: lint, format, alembic, pytest, Docker build);
 CD (GitHub Actions + Azure Container Registry + Azure VM Run Command: push para master);

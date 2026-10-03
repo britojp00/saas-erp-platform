@@ -51,7 +51,7 @@ class PedidoService:
 
     async def listar_pedidos(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         page: int,
         page_size: int,
@@ -63,7 +63,7 @@ class PedidoService:
     ) -> tuple[list[Pedido], int]:
         offset = (page - 1) * page_size
         return await self.pedido_repo.list(
-            tenant_id,
+            empresa_id,
             offset=offset,
             limit=page_size,
             search=search,
@@ -75,63 +75,63 @@ class PedidoService:
 
     async def obter_pedido(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
     ) -> Pedido:
-        pedido = await self.pedido_repo.get_by_id(tenant_id, pedido_id)
+        pedido = await self.pedido_repo.get_by_id(empresa_id, pedido_id)
         if pedido is None:
             raise ErroPedidoNaoEncontrado()
         return pedido
 
     async def obter_pedido_com_itens(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
     ) -> Pedido:
-        pedido = await self.obter_pedido(tenant_id, pedido_id)
-        pedido.itens = await self.item_repo.listar_por_pedido(tenant_id, pedido_id)
+        pedido = await self.obter_pedido(empresa_id, pedido_id)
+        pedido.itens = await self.item_repo.listar_por_pedido(empresa_id, pedido_id)
         return pedido
 
     async def _validar_cliente(
         self,
-        tenant_id: int,
+        empresa_id: int,
         cliente_id: int,
     ) -> Cliente:
-        cliente = await self.cliente_repo.get_by_id(cliente_id, tenant_id)
+        cliente = await self.cliente_repo.get_by_id(cliente_id, empresa_id)
         if cliente is None:
             raise ErroPedidoClienteNaoEncontrado()
         return cliente
 
     async def _validar_produto(
         self,
-        tenant_id: int,
+        empresa_id: int,
         produto_id: int,
     ) -> Produto:
-        produto = await self.produto_repo.get_by_id(produto_id, tenant_id)
+        produto = await self.produto_repo.get_by_id(produto_id, empresa_id)
         if produto is None:
             raise ErroPedidoProdutoNaoEncontrado()
         return produto
 
     async def _recalcular_total(self, pedido: Pedido) -> None:
-        items = await self.item_repo.listar_por_pedido(pedido.tenant_id, pedido.id)
+        items = await self.item_repo.listar_por_pedido(pedido.empresa_id, pedido.id)
         pedido.total_amount = sum(item.total_price for item in items)
 
     async def criar_pedido(
         self,
-        tenant_id: int,
+        empresa_id: int,
         data: PedidoCriarPayload,
         user_id: int | None = None,
     ) -> Pedido:
-        await self._validar_cliente(tenant_id, data.cliente_id)
+        await self._validar_cliente(empresa_id, data.cliente_id)
 
         produto_ids = [item.produto_id for item in data.itens]
         if len(produto_ids) != len(set(produto_ids)):
             raise ErroItemPedidoDuplicado()
 
-        numero_pedido = await self.pedido_repo.proximo_numero_pedido(tenant_id)
+        numero_pedido = await self.pedido_repo.proximo_numero_pedido(empresa_id)
 
         pedido = Pedido(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             numero_pedido=numero_pedido,
             cliente_id=data.cliente_id,
             notes=data.notes,
@@ -139,7 +139,7 @@ class PedidoService:
         await self.pedido_repo.create(pedido)
 
         for item_data in data.itens:
-            produto = await self._validar_produto(tenant_id, item_data.produto_id)
+            produto = await self._validar_produto(empresa_id, item_data.produto_id)
 
             unit_price = (
                 item_data.unit_price
@@ -149,7 +149,7 @@ class PedidoService:
             total_price = unit_price * item_data.quantity
 
             item = PedidoItem(
-                tenant_id=tenant_id,
+                empresa_id=empresa_id,
                 pedido_id=pedido.id,
                 produto_id=produto.id,
                 quantity=item_data.quantity,
@@ -162,7 +162,7 @@ class PedidoService:
         await self.pedido_repo.update(pedido)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="PEDIDO_CRIAR",
             entity_type="pedido",
@@ -178,12 +178,12 @@ class PedidoService:
 
     async def atualizar_pedido(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
         data: PedidoAtualizarPayload,
         user_id: int | None = None,
     ) -> Pedido:
-        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        pedido = await self.pedido_repo.get_for_update(empresa_id, pedido_id)
         if pedido is None:
             raise ErroPedidoNaoEncontrado()
 
@@ -198,7 +198,7 @@ class PedidoService:
         update_data = data.model_dump(exclude_unset=True)
 
         if "cliente_id" in update_data and update_data["cliente_id"] is not None:
-            await self._validar_cliente(tenant_id, update_data["cliente_id"])
+            await self._validar_cliente(empresa_id, update_data["cliente_id"])
             pedido.cliente_id = update_data["cliente_id"]
 
         if "notes" in update_data:
@@ -212,7 +212,7 @@ class PedidoService:
         }
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="PEDIDO_ATUALIZAR",
             entity_type="pedido",
@@ -225,12 +225,12 @@ class PedidoService:
 
     async def adicionar_item(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
         data: PedidoItemCriarPayload,
         user_id: int | None = None,
     ) -> PedidoItem:
-        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        pedido = await self.pedido_repo.get_for_update(empresa_id, pedido_id)
         if pedido is None:
             raise ErroPedidoNaoEncontrado()
 
@@ -238,17 +238,17 @@ class PedidoService:
             raise ErroEstadoPedidoInvalido()
 
         if await self.item_repo.existe_produto_no_pedido(
-            tenant_id, pedido_id, data.produto_id
+            empresa_id, pedido_id, data.produto_id
         ):
             raise ErroItemPedidoDuplicado()
 
-        produto = await self._validar_produto(tenant_id, data.produto_id)
+        produto = await self._validar_produto(empresa_id, data.produto_id)
 
         unit_price = data.unit_price if data.unit_price is not None else produto.price
         total_price = unit_price * data.quantity
 
         item = PedidoItem(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             pedido_id=pedido_id,
             produto_id=produto.id,
             quantity=data.quantity,
@@ -261,7 +261,7 @@ class PedidoService:
         await self.pedido_repo.update(pedido)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="PEDIDO_ITEM_ADICIONAR",
             entity_type="pedido_item",
@@ -278,20 +278,22 @@ class PedidoService:
 
     async def atualizar_item(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
         item_id: int,
         data: PedidoItemAtualizarPayload,
         user_id: int | None = None,
     ) -> PedidoItem:
-        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        pedido = await self.pedido_repo.get_for_update(empresa_id, pedido_id)
         if pedido is None:
             raise ErroPedidoNaoEncontrado()
 
         if pedido.status != StatusPedido.RASCUNHO:
             raise ErroEstadoPedidoInvalido()
 
-        item = await self.item_repo.obter_por_id_e_pedido(tenant_id, item_id, pedido_id)
+        item = await self.item_repo.obter_por_id_e_pedido(
+            empresa_id, item_id, pedido_id
+        )
         if item is None:
             raise ErroItemPedidoNaoEncontrado()
 
@@ -321,7 +323,7 @@ class PedidoService:
         }
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="PEDIDO_ITEM_ATUALIZAR",
             entity_type="pedido_item",
@@ -334,23 +336,25 @@ class PedidoService:
 
     async def remover_item(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
         item_id: int,
         user_id: int | None = None,
     ) -> None:
-        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        pedido = await self.pedido_repo.get_for_update(empresa_id, pedido_id)
         if pedido is None:
             raise ErroPedidoNaoEncontrado()
 
         if pedido.status != StatusPedido.RASCUNHO:
             raise ErroEstadoPedidoInvalido()
 
-        item = await self.item_repo.obter_por_id_e_pedido(tenant_id, item_id, pedido_id)
+        item = await self.item_repo.obter_por_id_e_pedido(
+            empresa_id, item_id, pedido_id
+        )
         if item is None:
             raise ErroItemPedidoNaoEncontrado()
 
-        count = await self.item_repo.contar_por_pedido(tenant_id, pedido_id)
+        count = await self.item_repo.contar_por_pedido(empresa_id, pedido_id)
         if count <= 1:
             raise ErroRemocaoItemPedidoNaoPermitida()
 
@@ -366,7 +370,7 @@ class PedidoService:
         await self.pedido_repo.update(pedido)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="PEDIDO_ITEM_REMOVER",
             entity_type="pedido_item",
@@ -376,23 +380,23 @@ class PedidoService:
 
     async def confirmar_pedido(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
         user_id: int | None = None,
     ) -> Pedido:
-        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        pedido = await self.pedido_repo.get_for_update(empresa_id, pedido_id)
         if pedido is None:
             raise ErroPedidoNaoEncontrado()
 
         if pedido.status != StatusPedido.RASCUNHO:
             raise ErroEstadoPedidoInvalido()
 
-        items = await self.item_repo.listar_por_pedido(tenant_id, pedido_id)
+        items = await self.item_repo.listar_por_pedido(empresa_id, pedido_id)
         if not items:
             raise ErroPedidoSemItens()
 
         for item in items:
-            produto = await self.produto_repo.get_by_id(item.produto_id, tenant_id)
+            produto = await self.produto_repo.get_by_id(item.produto_id, empresa_id)
             if (
                 produto is None
                 or not produto.is_active
@@ -400,7 +404,9 @@ class PedidoService:
             ):
                 raise ErroPedidoProdutoInativo()
 
-            estoque = await self.estoque_repo.get_for_update(tenant_id, item.produto_id)
+            estoque = await self.estoque_repo.get_for_update(
+                empresa_id, item.produto_id
+            )
             if estoque is None:
                 raise ErroPedidoProdutoInativo()
 
@@ -411,7 +417,7 @@ class PedidoService:
             estoque.reserved_quantity = estoque.reserved_quantity + item.quantity
 
             reserva = ReservaEstoque(
-                tenant_id=tenant_id,
+                empresa_id=empresa_id,
                 produto_id=item.produto_id,
                 quantity=item.quantity,
                 status=StatusReserva.ATIVA,
@@ -428,7 +434,7 @@ class PedidoService:
         result = await self.pedido_repo.update(pedido)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="PEDIDO_CONFIRMAR",
             entity_type="pedido",
@@ -441,11 +447,11 @@ class PedidoService:
 
     async def cancelar_pedido(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
         user_id: int | None = None,
     ) -> Pedido:
-        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        pedido = await self.pedido_repo.get_for_update(empresa_id, pedido_id)
         if pedido is None:
             raise ErroPedidoNaoEncontrado()
 
@@ -454,11 +460,11 @@ class PedidoService:
 
         reference = f"pedido:{pedido.id}"
         reservas = await self.reserva_repo.list_active_by_reference(
-            tenant_id, reference
+            empresa_id, reference
         )
         for reserva in reservas:
             estoque = await self.estoque_repo.get_for_update(
-                tenant_id, reserva.produto_id
+                empresa_id, reserva.produto_id
             )
             if estoque is not None:
                 estoque.reserved_quantity = estoque.reserved_quantity - reserva.quantity
@@ -474,7 +480,7 @@ class PedidoService:
         result = await self.pedido_repo.update(pedido)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="PEDIDO_CANCELAR",
             entity_type="pedido",
@@ -487,11 +493,11 @@ class PedidoService:
 
     async def concluir_pedido(
         self,
-        tenant_id: int,
+        empresa_id: int,
         pedido_id: int,
         user_id: int | None = None,
     ) -> Pedido:
-        pedido = await self.pedido_repo.get_for_update(tenant_id, pedido_id)
+        pedido = await self.pedido_repo.get_for_update(empresa_id, pedido_id)
         if pedido is None:
             raise ErroPedidoNaoEncontrado()
 
@@ -500,11 +506,11 @@ class PedidoService:
 
         reference = f"pedido:{pedido.id}"
         reservas = await self.reserva_repo.list_active_by_reference(
-            tenant_id, reference
+            empresa_id, reference
         )
         for reserva in reservas:
             estoque = await self.estoque_repo.get_for_update(
-                tenant_id, reserva.produto_id
+                empresa_id, reserva.produto_id
             )
             if estoque is not None:
                 estoque.quantity = estoque.quantity - reserva.quantity
@@ -521,7 +527,7 @@ class PedidoService:
         result = await self.pedido_repo.update(pedido)
 
         await self.audit_service.log(
-            tenant_id=tenant_id,
+            empresa_id=empresa_id,
             user_id=user_id,
             action="PEDIDO_CONCLUIR",
             entity_type="pedido",

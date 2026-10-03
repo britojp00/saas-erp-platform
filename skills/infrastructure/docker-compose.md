@@ -786,7 +786,7 @@ antes de existir necessidade.
 43. Multi-tenancy
 
 O Docker Compose não é responsável
-pelo isolamento entre tenants.
+pelo isolamento entre empresas.
 
 O Compose fornece a infraestrutura.
 

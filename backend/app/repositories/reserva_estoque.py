@@ -17,11 +17,11 @@ class ReservaEstoqueRepository:
 
     async def get_by_id(
         self,
-        tenant_id: int,
+        empresa_id: int,
         reserva_id: int,
     ) -> ReservaEstoque | None:
         stmt = select(ReservaEstoque).where(
-            ReservaEstoque.tenant_id == tenant_id,
+            ReservaEstoque.empresa_id == empresa_id,
             ReservaEstoque.id == reserva_id,
         )
         result = await self.session.execute(stmt)
@@ -29,14 +29,14 @@ class ReservaEstoqueRepository:
 
     async def list(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         offset: int,
         limit: int,
         produto_id: int | None = None,
     ) -> tuple[list[ReservaEstoque], int]:
         base_stmt = select(ReservaEstoque).where(
-            ReservaEstoque.tenant_id == tenant_id,
+            ReservaEstoque.empresa_id == empresa_id,
         )
         if produto_id is not None:
             base_stmt = base_stmt.where(ReservaEstoque.produto_id == produto_id)
@@ -57,13 +57,13 @@ class ReservaEstoqueRepository:
 
     async def list_active_by_reference(
         self,
-        tenant_id: int,
+        empresa_id: int,
         reference: str,
     ) -> list[ReservaEstoque]:
         stmt = (
             select(ReservaEstoque)
             .where(
-                ReservaEstoque.tenant_id == tenant_id,
+                ReservaEstoque.empresa_id == empresa_id,
                 ReservaEstoque.reference == reference,
                 ReservaEstoque.status == StatusReserva.ATIVA,
             )
@@ -74,11 +74,11 @@ class ReservaEstoqueRepository:
 
     async def exists_by_idempotency_key(
         self,
-        tenant_id: int,
+        empresa_id: int,
         idempotency_key: str,
     ) -> bool:
         stmt = select(ReservaEstoque).where(
-            ReservaEstoque.tenant_id == tenant_id,
+            ReservaEstoque.empresa_id == empresa_id,
             ReservaEstoque.idempotency_key == idempotency_key,
         )
         result = await self.session.execute(stmt)

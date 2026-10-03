@@ -36,18 +36,18 @@ def test_wrong_password_fails():
 
 
 def test_jwt_create_and_decode():
-    data = {"sub": "user-id-123", "tenant_id": "tenant-id-456"}
+    data = {"sub": "user-id-123", "empresa_id": "empresa-id-456"}
     token = create_access_token(data)
 
     decoded = decode_access_token(token)
     assert decoded["sub"] == "user-id-123"
-    assert decoded["tenant_id"] == "tenant-id-456"
+    assert decoded["empresa_id"] == "empresa-id-456"
     assert "exp" in decoded
     assert "iat" in decoded
 
 
 def test_jwt_with_custom_expiration():
-    data = {"sub": "user-id-123", "tenant_id": "tenant-id-456"}
+    data = {"sub": "user-id-123", "empresa_id": "empresa-id-456"}
     expires_delta = timedelta(hours=1)
     token = create_access_token(data, expires_delta=expires_delta)
 
@@ -56,7 +56,7 @@ def test_jwt_with_custom_expiration():
 
 
 def test_jwt_invalid_signature():
-    data = {"sub": "user-id-123", "tenant_id": "tenant-id-456"}
+    data = {"sub": "user-id-123", "empresa_id": "empresa-id-456"}
     fake_token = jwt.encode(
         data,
         "wrong-secret-key",
@@ -67,7 +67,7 @@ def test_jwt_invalid_signature():
 
 
 def test_jwt_with_wrong_algorithm():
-    data = {"sub": "user-id-123", "tenant_id": "tenant-id-456"}
+    data = {"sub": "user-id-123", "empresa_id": "empresa-id-456"}
     fake_token = jwt.encode(
         data,
         settings.jwt_secret_key,

@@ -10,11 +10,11 @@ class EstoqueRepository:
 
     async def get_by_produto_id(
         self,
-        tenant_id: int,
+        empresa_id: int,
         produto_id: int,
     ) -> Estoque | None:
         stmt = select(Estoque).where(
-            Estoque.tenant_id == tenant_id,
+            Estoque.empresa_id == empresa_id,
             Estoque.produto_id == produto_id,
             Estoque.deleted_at.is_(None),
         )
@@ -23,13 +23,13 @@ class EstoqueRepository:
 
     async def get_for_update(
         self,
-        tenant_id: int,
+        empresa_id: int,
         produto_id: int,
     ) -> Estoque | None:
         stmt = (
             select(Estoque)
             .where(
-                Estoque.tenant_id == tenant_id,
+                Estoque.empresa_id == empresa_id,
                 Estoque.produto_id == produto_id,
                 Estoque.deleted_at.is_(None),
             )
@@ -40,14 +40,14 @@ class EstoqueRepository:
 
     async def list(
         self,
-        tenant_id: int,
+        empresa_id: int,
         *,
         offset: int,
         limit: int,
         produto_id: int | None = None,
     ) -> tuple[list[Estoque], int]:
         base_stmt = select(Estoque).where(
-            Estoque.tenant_id == tenant_id,
+            Estoque.empresa_id == empresa_id,
             Estoque.deleted_at.is_(None),
         )
         if produto_id is not None:
@@ -66,13 +66,13 @@ class EstoqueRepository:
 
     async def get_or_create(
         self,
-        tenant_id: int,
+        empresa_id: int,
         produto_id: int,
     ) -> Estoque:
-        estoque = await self.get_by_produto_id(tenant_id, produto_id)
+        estoque = await self.get_by_produto_id(empresa_id, produto_id)
         if estoque is None:
             estoque = Estoque(
-                tenant_id=tenant_id,
+                empresa_id=empresa_id,
                 produto_id=produto_id,
             )
             self.session.add(estoque)

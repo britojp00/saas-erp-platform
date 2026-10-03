@@ -30,7 +30,7 @@ export interface ListaPedidosResposta<T> {
 
 export interface PedidoResumo {
   id: number
-  tenant_id: number
+  empresa_id: number
   numero_pedido: number
   cliente_id: number
   status: string
@@ -41,7 +41,7 @@ export interface PedidoResumo {
 
 export interface ItemEstoque {
   id: number
-  tenant_id: number
+  empresa_id: number
   produto_id: number
   quantity: number | string
   reserved_quantity: number | string
@@ -51,7 +51,7 @@ export interface ItemEstoque {
 
 export interface AuditLogItem {
   id: number
-  tenant_id: number
+  empresa_id: number
   user_id: number | null
   action: string
   entity_type: string

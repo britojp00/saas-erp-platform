@@ -39,7 +39,7 @@ async def list_clientes(
     order: str = Query(default="desc"),
 ) -> ListaClientesResposta:
     items, total = await service.list(
-        current_user.tenant_id,
+        current_user.empresa_id,
         page=page,
         page_size=page_size,
         search=search,
@@ -66,7 +66,7 @@ async def get_cliente(
     current_user: CurrentUser,
     service: Annotated[ClienteService, Depends(get_cliente_service)],
 ) -> ClienteResposta:
-    cliente = await service.get_by_id(cliente_id, current_user.tenant_id)
+    cliente = await service.get_by_id(cliente_id, current_user.empresa_id)
     return ClienteResposta.model_validate(cliente)
 
 
@@ -84,7 +84,7 @@ async def create_cliente(
     service: Annotated[ClienteService, Depends(get_cliente_service)],
 ) -> ClienteResposta:
     cliente = await service.create(
-        current_user.tenant_id, data, user_id=current_user.id
+        current_user.empresa_id, data, user_id=current_user.id
     )
     return ClienteResposta.model_validate(cliente)
 
@@ -103,7 +103,7 @@ async def update_cliente(
     service: Annotated[ClienteService, Depends(get_cliente_service)],
 ) -> ClienteResposta:
     cliente = await service.update(
-        cliente_id, current_user.tenant_id, data, user_id=current_user.id
+        cliente_id, current_user.empresa_id, data, user_id=current_user.id
     )
     return ClienteResposta.model_validate(cliente)
 
@@ -121,5 +121,5 @@ async def delete_cliente(
     service: Annotated[ClienteService, Depends(get_cliente_service)],
 ) -> None:
     await service.soft_delete(
-        cliente_id, current_user.tenant_id, user_id=current_user.id
+        cliente_id, current_user.empresa_id, user_id=current_user.id
     )

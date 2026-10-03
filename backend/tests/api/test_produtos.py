@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import create_access_token, get_password_hash
 from app.db.models.categoria import Categoria
 from app.db.models.cliente import Cliente
+from app.db.models.empresa import Empresa
 from app.db.models.estoque import Estoque
 from app.db.models.pedido import Pedido
 from app.db.models.pedido_item import PedidoItem
@@ -17,25 +18,24 @@ from app.db.models.permission import Permission
 from app.db.models.produto import Produto
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
-from app.db.models.tenant import Tenant
 from app.db.models.user import User
 from app.db.models.user_role import UserRole
 
 
 async def _create_permission(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
 ) -> Permission:
     stmt = select(Permission).where(
-        Permission.tenant_id == tenant_id,
+        Permission.empresa_id == empresa_id,
         Permission.name == name,
     )
     result = await session.execute(stmt)
     existing = result.scalar_one_or_none()
     if existing:
         return existing
-    perm = Permission(tenant_id=tenant_id, name=name)
+    perm = Permission(empresa_id=empresa_id, name=name)
     session.add(perm)
     await session.flush()
     return perm
@@ -43,32 +43,32 @@ async def _create_permission(
 
 async def _create_role_with_perms(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     perm_names: list[str],
 ) -> Role:
     stmt = select(Role).where(
-        Role.tenant_id == tenant_id,
+        Role.empresa_id == empresa_id,
         Role.name == name,
     )
     result = await session.execute(stmt)
     existing = result.scalar_one_or_none()
     if existing:
         return existing
-    role = Role(tenant_id=tenant_id, name=name)
+    role = Role(empresa_id=empresa_id, name=name)
     session.add(role)
     await session.flush()
     for pname in perm_names:
-        perm = await _create_permission(session, tenant_id, pname)
+        perm = await _create_permission(session, empresa_id, pname)
         stmt_rp = select(RolePermission).where(
-            RolePermission.tenant_id == tenant_id,
+            RolePermission.empresa_id == empresa_id,
             RolePermission.role_id == role.id,
             RolePermission.permission_id == perm.id,
         )
         rp_result = await session.execute(stmt_rp)
         if rp_result.scalar_one_or_none() is None:
             rp = RolePermission(
-                tenant_id=tenant_id,
+                empresa_id=empresa_id,
                 role_id=role.id,
                 permission_id=perm.id,
             )
@@ -79,12 +79,12 @@ async def _create_role_with_perms(
 
 async def _assign_role_to_user(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     user_id: int,
     role_id: int,
 ) -> None:
     stmt = select(UserRole).where(
-        UserRole.tenant_id == tenant_id,
+        UserRole.empresa_id == empresa_id,
         UserRole.user_id == user_id,
         UserRole.role_id == role_id,
     )
@@ -92,7 +92,7 @@ async def _assign_role_to_user(
     if result.scalar_one_or_none():
         return
     ur = UserRole(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         user_id=user_id,
         role_id=role_id,
     )
@@ -102,11 +102,11 @@ async def _assign_role_to_user(
 
 async def _create_categoria_in_db(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
 ) -> Categoria:
     categoria = Categoria(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         name=name,
     )
     session.add(categoria)
@@ -116,7 +116,7 @@ async def _create_categoria_in_db(
 
 async def _create_produto_in_db(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     sku: str,
     categoria_id: int | None = None,
@@ -125,7 +125,7 @@ async def _create_produto_in_db(
     is_active: bool = True,
 ) -> Produto:
     produto = Produto(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         sku=sku,
         name=name,
         categoria_id=categoria_id,
@@ -140,11 +140,11 @@ async def _create_produto_in_db(
 
 async def _create_estoque_in_db(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     produto_id: int,
 ) -> Estoque:
     estoque = Estoque(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         produto_id=produto_id,
         quantity=Decimal("5.000"),
         reserved_quantity=Decimal("0.000"),
@@ -156,18 +156,18 @@ async def _create_estoque_in_db(
 
 async def _create_pedido_with_item(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     produto_id: int,
 ) -> tuple[Pedido, PedidoItem]:
     cliente = Cliente(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         name="Test Cliente",
     )
     session.add(cliente)
     await session.flush()
 
     pedido = Pedido(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         numero_pedido=int(time.time() * 1000),
         cliente_id=cliente.id,
         status="RASCUNHO",
@@ -177,7 +177,7 @@ async def _create_pedido_with_item(
     await session.flush()
 
     pedido_item = PedidoItem(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         pedido_id=pedido.id,
         produto_id=produto_id,
         quantity=Decimal("2.000"),
@@ -192,11 +192,11 @@ async def _create_pedido_with_item(
 @pytest.fixture
 async def all_produto_perms(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> Role:
     return await _create_role_with_perms(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         "produto_admin",
         [
             "produto.ler",
@@ -210,12 +210,12 @@ async def all_produto_perms(
 @pytest.fixture
 async def admin_user(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
     all_produto_perms: Role,
 ) -> User:
     await _assign_role_to_user(
-        db_session, test_tenant.id, test_user.id, all_produto_perms.id
+        db_session, test_empresa.id, test_user.id, all_produto_perms.id
     )
     await db_session.commit()
     return test_user
@@ -224,38 +224,38 @@ async def admin_user(
 @pytest.fixture
 async def admin_headers(
     admin_user: User,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> dict[str, str]:
     token = create_access_token(
         data={
             "sub": str(admin_user.id),
-            "tenant_id": str(test_tenant.id),
+            "empresa_id": str(test_empresa.id),
         }
     )
     return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
-async def other_tenant(db_session: AsyncSession) -> Tenant:
-    tenant = Tenant(
-        name="Other Tenant",
-        slug="other-produto-tenant",
+async def other_empresa(db_session: AsyncSession) -> Empresa:
+    empresa = Empresa(
+        name="Outra Empresa",
+        slug="other-produto-empresa",
         is_active=True,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
-    db_session.add(tenant)
+    db_session.add(empresa)
     await db_session.flush()
-    return tenant
+    return empresa
 
 
 @pytest.fixture
-async def other_tenant_user(
+async def other_empresa_user(
     db_session: AsyncSession,
-    other_tenant: Tenant,
+    other_empresa: Empresa,
 ) -> User:
     user = User(
-        tenant_id=other_tenant.id,
+        empresa_id=other_empresa.id,
         email="other@example.com",
         full_name="Other User",
         is_active=True,
@@ -269,14 +269,14 @@ async def other_tenant_user(
 
 
 @pytest.fixture
-async def other_tenant_headers(
+async def other_empresa_headers(
     db_session: AsyncSession,
-    other_tenant_user: User,
-    other_tenant: Tenant,
+    other_empresa_user: User,
+    other_empresa: Empresa,
 ) -> dict[str, str]:
     role = await _create_role_with_perms(
         db_session,
-        other_tenant.id,
+        other_empresa.id,
         "other_produto_all",
         [
             "produto.ler",
@@ -286,13 +286,13 @@ async def other_tenant_headers(
         ],
     )
     await _assign_role_to_user(
-        db_session, other_tenant.id, other_tenant_user.id, role.id
+        db_session, other_empresa.id, other_empresa_user.id, role.id
     )
     await db_session.commit()
     token = create_access_token(
         data={
-            "sub": str(other_tenant_user.id),
-            "tenant_id": str(other_tenant.id),
+            "sub": str(other_empresa_user.id),
+            "empresa_id": str(other_empresa.id),
         }
     )
     return {"Authorization": f"Bearer {token}"}
@@ -334,10 +334,12 @@ async def test_create_produto(
 async def test_create_produto_with_all_fields(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Electronics")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Electronics"
+    )
     await db_session.commit()
 
     response = await client.post(
@@ -384,10 +386,10 @@ async def test_create_produto_without_permission(
 async def test_create_produto_duplicate_sku(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_produto_in_db(db_session, test_tenant.id, "Laptop", "SKU-DUP")
+    await _create_produto_in_db(db_session, test_empresa.id, "Laptop", "SKU-DUP")
     await db_session.commit()
 
     response = await client.post(
@@ -441,15 +443,15 @@ async def test_create_produto_non_existent_categoria(
 
 
 @pytest.mark.asyncio
-async def test_create_produto_cross_tenant_categoria(
+async def test_create_produto_cross_empresa_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant: Tenant,
+    test_empresa: Empresa,
+    other_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     other_categoria = await _create_categoria_in_db(
-        db_session, other_tenant.id, "Other Categoria"
+        db_session, other_empresa.id, "Other Categoria"
     )
     await db_session.commit()
 
@@ -470,11 +472,11 @@ async def test_create_produto_cross_tenant_categoria(
 async def test_create_produto_deleted_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     categoria = await _create_categoria_in_db(
-        db_session, test_tenant.id, "Deleted Categoria"
+        db_session, test_empresa.id, "Deleted Categoria"
     )
     categoria.deleted_at = datetime.now(UTC)
     await db_session.commit()
@@ -590,11 +592,11 @@ async def test_list_produtos_empty(
 async def test_list_produtos_with_data(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_produto_in_db(db_session, test_tenant.id, "Laptop", "SKU-L1")
-    await _create_produto_in_db(db_session, test_tenant.id, "Mouse", "SKU-M1")
+    await _create_produto_in_db(db_session, test_empresa.id, "Laptop", "SKU-L1")
+    await _create_produto_in_db(db_session, test_empresa.id, "Mouse", "SKU-M1")
     await db_session.commit()
 
     response = await client.get(
@@ -611,11 +613,11 @@ async def test_list_produtos_with_data(
 async def test_list_produtos_search_by_name(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_produto_in_db(db_session, test_tenant.id, "Laptop Pro", "SKU-LP")
-    await _create_produto_in_db(db_session, test_tenant.id, "Mouse Basic", "SKU-MB")
+    await _create_produto_in_db(db_session, test_empresa.id, "Laptop Pro", "SKU-LP")
+    await _create_produto_in_db(db_session, test_empresa.id, "Mouse Basic", "SKU-MB")
     await db_session.commit()
 
     response = await client.get(
@@ -633,11 +635,11 @@ async def test_list_produtos_search_by_name(
 async def test_list_produtos_search_by_sku(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_produto_in_db(db_session, test_tenant.id, "Laptop", "SKU-ABC")
-    await _create_produto_in_db(db_session, test_tenant.id, "Mouse", "SKU-XYZ")
+    await _create_produto_in_db(db_session, test_empresa.id, "Laptop", "SKU-ABC")
+    await _create_produto_in_db(db_session, test_empresa.id, "Mouse", "SKU-XYZ")
     await db_session.commit()
 
     response = await client.get(
@@ -655,12 +657,12 @@ async def test_list_produtos_search_by_sku(
 async def test_list_produtos_pagination(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     for i in range(5):
         await _create_produto_in_db(
-            db_session, test_tenant.id, f"Produto {i}", f"SKU-P{i}"
+            db_session, test_empresa.id, f"Produto {i}", f"SKU-P{i}"
         )
     await db_session.commit()
 
@@ -681,11 +683,11 @@ async def test_list_produtos_pagination(
 async def test_list_produtos_sort(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_produto_in_db(db_session, test_tenant.id, "Zebra", "SKU-Z")
-    await _create_produto_in_db(db_session, test_tenant.id, "Alpha", "SKU-A")
+    await _create_produto_in_db(db_session, test_empresa.id, "Zebra", "SKU-Z")
+    await _create_produto_in_db(db_session, test_empresa.id, "Alpha", "SKU-A")
     await db_session.commit()
 
     response = await client.get(
@@ -703,16 +705,16 @@ async def test_list_produtos_sort(
 async def test_list_produtos_filter_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    cat_a = await _create_categoria_in_db(db_session, test_tenant.id, "Cat A")
-    cat_b = await _create_categoria_in_db(db_session, test_tenant.id, "Cat B")
+    cat_a = await _create_categoria_in_db(db_session, test_empresa.id, "Cat A")
+    cat_b = await _create_categoria_in_db(db_session, test_empresa.id, "Cat B")
     await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-F1", categoria_id=cat_a.id
+        db_session, test_empresa.id, "Laptop", "SKU-F1", categoria_id=cat_a.id
     )
     await _create_produto_in_db(
-        db_session, test_tenant.id, "Mouse", "SKU-F2", categoria_id=cat_b.id
+        db_session, test_empresa.id, "Mouse", "SKU-F2", categoria_id=cat_b.id
     )
     await db_session.commit()
 
@@ -731,14 +733,14 @@ async def test_list_produtos_filter_categoria(
 async def test_list_produtos_filter_is_active(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     await _create_produto_in_db(
-        db_session, test_tenant.id, "Active", "SKU-ACT", is_active=True
+        db_session, test_empresa.id, "Active", "SKU-ACT", is_active=True
     )
     await _create_produto_in_db(
-        db_session, test_tenant.id, "Inactive", "SKU-INACT", is_active=False
+        db_session, test_empresa.id, "Inactive", "SKU-INACT", is_active=False
     )
     await db_session.commit()
 
@@ -773,11 +775,11 @@ async def test_list_produtos_without_permission(
 async def test_get_produto(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-G1"
+        db_session, test_empresa.id, "Laptop", "SKU-G1"
     )
     await db_session.commit()
 
@@ -805,20 +807,20 @@ async def test_get_produto_not_found(
 
 
 @pytest.mark.asyncio
-async def test_get_produto_cross_tenant(
+async def test_get_produto_cross_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant_headers: dict[str, str],
+    test_empresa: Empresa,
+    other_empresa_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Meu Produto", "SKU-GCT"
+        db_session, test_empresa.id, "Meu Produto", "SKU-GCT"
     )
     await db_session.commit()
 
     response = await client.get(
         f"/api/v1/produtos/{produto.id}",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response.status_code == 404
 
@@ -830,11 +832,11 @@ async def test_get_produto_cross_tenant(
 async def test_update_produto(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-U1"
+        db_session, test_empresa.id, "Laptop", "SKU-U1"
     )
     await db_session.commit()
 
@@ -852,11 +854,11 @@ async def test_update_produto(
 async def test_update_produto_sku(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-U2"
+        db_session, test_empresa.id, "Laptop", "SKU-U2"
     )
     await db_session.commit()
 
@@ -874,12 +876,12 @@ async def test_update_produto_sku(
 async def test_update_produto_price(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         "Laptop",
         "SKU-U3",
         price=Decimal("500.00"),
@@ -900,12 +902,12 @@ async def test_update_produto_price(
 async def test_update_produto_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "New Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "New Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-U4"
+        db_session, test_empresa.id, "Laptop", "SKU-U4"
     )
     await db_session.commit()
 
@@ -923,13 +925,13 @@ async def test_update_produto_categoria(
 async def test_update_produto_remove_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         "Laptop",
         "SKU-U5",
         categoria_id=categoria.id,
@@ -950,11 +952,11 @@ async def test_update_produto_remove_categoria(
 async def test_update_produto_description(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-U6"
+        db_session, test_empresa.id, "Laptop", "SKU-U6"
     )
     await db_session.commit()
 
@@ -972,11 +974,11 @@ async def test_update_produto_description(
 async def test_update_produto_cost_price(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-U7"
+        db_session, test_empresa.id, "Laptop", "SKU-U7"
     )
     await db_session.commit()
 
@@ -994,11 +996,11 @@ async def test_update_produto_cost_price(
 async def test_update_produto_is_active(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-U8", is_active=True
+        db_session, test_empresa.id, "Laptop", "SKU-U8", is_active=True
     )
     await db_session.commit()
 
@@ -1016,11 +1018,11 @@ async def test_update_produto_is_active(
 async def test_update_produto_without_permission(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     authenticated_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-U9"
+        db_session, test_empresa.id, "Laptop", "SKU-U9"
     )
     await db_session.commit()
 
@@ -1046,20 +1048,20 @@ async def test_update_produto_not_found(
 
 
 @pytest.mark.asyncio
-async def test_update_produto_cross_tenant(
+async def test_update_produto_cross_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant_headers: dict[str, str],
+    test_empresa: Empresa,
+    other_empresa_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Meu Produto", "SKU-UCT"
+        db_session, test_empresa.id, "Meu Produto", "SKU-UCT"
     )
     await db_session.commit()
 
     response = await client.patch(
         f"/api/v1/produtos/{produto.id}",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
         json={"name": "Hacked"},
     )
     assert response.status_code == 404
@@ -1069,12 +1071,12 @@ async def test_update_produto_cross_tenant(
 async def test_update_produto_duplicate_sku(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    await _create_produto_in_db(db_session, test_tenant.id, "Laptop", "SKU-EXISTING")
+    await _create_produto_in_db(db_session, test_empresa.id, "Laptop", "SKU-EXISTING")
     other = await _create_produto_in_db(
-        db_session, test_tenant.id, "Mouse", "SKU-OTHER"
+        db_session, test_empresa.id, "Mouse", "SKU-OTHER"
     )
     await db_session.commit()
 
@@ -1090,11 +1092,11 @@ async def test_update_produto_duplicate_sku(
 async def test_update_produto_same_sku_no_conflict(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-SAME"
+        db_session, test_empresa.id, "Laptop", "SKU-SAME"
     )
     await db_session.commit()
 
@@ -1110,11 +1112,11 @@ async def test_update_produto_same_sku_no_conflict(
 async def test_update_produto_non_existent_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-NC"
+        db_session, test_empresa.id, "Laptop", "SKU-NC"
     )
     await db_session.commit()
 
@@ -1127,18 +1129,18 @@ async def test_update_produto_non_existent_categoria(
 
 
 @pytest.mark.asyncio
-async def test_update_produto_cross_tenant_categoria(
+async def test_update_produto_cross_empresa_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant: Tenant,
+    test_empresa: Empresa,
+    other_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     other_categoria = await _create_categoria_in_db(
-        db_session, other_tenant.id, "Other Cat"
+        db_session, other_empresa.id, "Other Cat"
     )
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-XC"
+        db_session, test_empresa.id, "Laptop", "SKU-XC"
     )
     await db_session.commit()
 
@@ -1154,13 +1156,15 @@ async def test_update_produto_cross_tenant_categoria(
 async def test_update_produto_deleted_categoria(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Deleted Cat")
+    categoria = await _create_categoria_in_db(
+        db_session, test_empresa.id, "Deleted Cat"
+    )
     categoria.deleted_at = datetime.now(UTC)
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-DC"
+        db_session, test_empresa.id, "Laptop", "SKU-DC"
     )
     await db_session.commit()
 
@@ -1176,11 +1180,11 @@ async def test_update_produto_deleted_categoria(
 async def test_update_produto_negative_price(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-NP"
+        db_session, test_empresa.id, "Laptop", "SKU-NP"
     )
     await db_session.commit()
 
@@ -1199,11 +1203,11 @@ async def test_update_produto_negative_price(
 async def test_delete_produto(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-D1"
+        db_session, test_empresa.id, "Laptop", "SKU-D1"
     )
     await db_session.commit()
 
@@ -1218,11 +1222,11 @@ async def test_delete_produto(
 async def test_deleted_produto_not_in_list(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-D2"
+        db_session, test_empresa.id, "Laptop", "SKU-D2"
     )
     await db_session.commit()
 
@@ -1243,11 +1247,11 @@ async def test_deleted_produto_not_in_list(
 async def test_deleted_produto_not_found(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-D3"
+        db_session, test_empresa.id, "Laptop", "SKU-D3"
     )
     await db_session.commit()
 
@@ -1267,11 +1271,11 @@ async def test_deleted_produto_not_found(
 async def test_deleted_produto_cannot_be_updated(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-D4"
+        db_session, test_empresa.id, "Laptop", "SKU-D4"
     )
     await db_session.commit()
 
@@ -1301,20 +1305,20 @@ async def test_delete_produto_not_found(
 
 
 @pytest.mark.asyncio
-async def test_delete_produto_cross_tenant(
+async def test_delete_produto_cross_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant_headers: dict[str, str],
+    test_empresa: Empresa,
+    other_empresa_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Meu Produto", "SKU-DCT"
+        db_session, test_empresa.id, "Meu Produto", "SKU-DCT"
     )
     await db_session.commit()
 
     response = await client.delete(
         f"/api/v1/produtos/{produto.id}",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response.status_code == 404
 
@@ -1323,11 +1327,11 @@ async def test_delete_produto_cross_tenant(
 async def test_delete_produto_without_permission(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     authenticated_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-DNP"
+        db_session, test_empresa.id, "Laptop", "SKU-DNP"
     )
     await db_session.commit()
 
@@ -1342,13 +1346,13 @@ async def test_delete_produto_without_permission(
 async def test_delete_produto_with_estoque_blocked(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-DINV"
+        db_session, test_empresa.id, "Laptop", "SKU-DINV"
     )
-    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_empresa.id, produto.id)
     await db_session.commit()
 
     response = await client.delete(
@@ -1362,13 +1366,13 @@ async def test_delete_produto_with_estoque_blocked(
 async def test_delete_produto_with_pedido_itens_blocked(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-DORD"
+        db_session, test_empresa.id, "Laptop", "SKU-DORD"
     )
-    await _create_pedido_with_item(db_session, test_tenant.id, produto.id)
+    await _create_pedido_with_item(db_session, test_empresa.id, produto.id)
     await db_session.commit()
 
     response = await client.delete(
@@ -1382,19 +1386,19 @@ async def test_delete_produto_with_pedido_itens_blocked(
 
 
 @pytest.mark.asyncio
-async def test_produtos_isolated_by_tenant(
+async def test_produtos_isolated_by_empresa(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant: Tenant,
+    test_empresa: Empresa,
+    other_empresa: Empresa,
     admin_headers: dict[str, str],
-    other_tenant_headers: dict[str, str],
+    other_empresa_headers: dict[str, str],
 ):
     await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto Tenant A", "SKU-TA"
+        db_session, test_empresa.id, "Produto Empresa A", "SKU-TA"
     )
     await _create_produto_in_db(
-        db_session, other_tenant.id, "Produto Tenant B", "SKU-TB"
+        db_session, other_empresa.id, "Produto Empresa B", "SKU-TB"
     )
     await db_session.commit()
 
@@ -1403,27 +1407,27 @@ async def test_produtos_isolated_by_tenant(
         headers=admin_headers,
     )
     assert response_a.json()["total"] == 1
-    assert response_a.json()["items"][0]["name"] == "Produto Tenant A"
+    assert response_a.json()["items"][0]["name"] == "Produto Empresa A"
 
     response_b = await client.get(
         "/api/v1/produtos",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response_b.json()["total"] == 1
-    assert response_b.json()["items"][0]["name"] == "Produto Tenant B"
+    assert response_b.json()["items"][0]["name"] == "Produto Empresa B"
 
 
 @pytest.mark.asyncio
-async def test_same_sku_different_tenants(
+async def test_same_sku_different_empresas(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant: Tenant,
+    test_empresa: Empresa,
+    other_empresa: Empresa,
     admin_headers: dict[str, str],
-    other_tenant_headers: dict[str, str],
+    other_empresa_headers: dict[str, str],
 ):
-    await _create_produto_in_db(db_session, test_tenant.id, "Laptop", "SKU-SAME-SKU")
-    await _create_produto_in_db(db_session, other_tenant.id, "Laptop", "SKU-SAME-SKU")
+    await _create_produto_in_db(db_session, test_empresa.id, "Laptop", "SKU-SAME-SKU")
+    await _create_produto_in_db(db_session, other_empresa.id, "Laptop", "SKU-SAME-SKU")
     await db_session.commit()
 
     response_a = await client.get(
@@ -1434,7 +1438,7 @@ async def test_same_sku_different_tenants(
 
     response_b = await client.get(
         "/api/v1/produtos",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response_b.json()["total"] == 1
 
@@ -1473,12 +1477,12 @@ async def test_create_produto_decimal_precision(
 async def test_update_produto_cost_price_to_null(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         "Laptop",
         "SKU-CN",
         cost_price=Decimal("500.00"),
@@ -1522,11 +1526,11 @@ async def test_create_produto_inactive(
 async def test_update_produto_activate_deactivated(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ):
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Laptop", "SKU-ACTV", is_active=False
+        db_session, test_empresa.id, "Laptop", "SKU-ACTV", is_active=False
     )
     await db_session.commit()
 

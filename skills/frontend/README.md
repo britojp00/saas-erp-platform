@@ -233,11 +233,11 @@ Essa lógica existe para UX.
 
 Nunca confiar nela para impedir operações.
 
-13. Tenant Context
+13. Contexto de Empresa
 
-O frontend poderá exibir informações relacionadas ao tenant atual.
+O frontend poderá exibir informações relacionadas à empresa atual.
 
-Entretanto, não deve utilizar um tenant_id enviado pela interface como mecanismo de segurança.
+Entretanto, não deve utilizar um empresa_id enviado pela interface como mecanismo de segurança.
 
 O backend continua responsável por determinar e validar o contexto.
 
@@ -420,7 +420,7 @@ Adicionar uma solução dedicada somente quando a complexidade justificar.
 Estado global pode ser apropriado para:
 
 authenticated user
-tenant context
+contexto de empresa
 theme
 application settings
 
@@ -953,30 +953,30 @@ Quando implementado, considerar:
 
 stale data
 invalidation
-tenant
+empresa
 permissions
 
-Nunca retornar dados de tenant incorreto através de cache.
+Nunca retornar dados de empresa incorreta através de cache.
 
-65. Tenant-aware Cache
+65. Cache com escopo de empresa
 
-Qualquer cache no frontend que possa conter dados específicos de tenant deve considerar o contexto.
+Qualquer cache no frontend que possa conter dados específicos de empresa deve considerar o contexto.
 
-Ao trocar de tenant:
+Ao trocar de empresa:
 
 cache anterior
 → invalidar / separar
 
 quando aplicável.
 
-66. Tenant Switching
+66. Empresa Switching
 
-Caso o sistema futuramente permita que um usuário pertença a múltiplos tenants, a troca de tenant deverá:
+Caso o sistema futuramente permita que um usuário pertença a múltiplas empresas, a troca de empresa deverá:
 
 validar contexto no backend
 atualizar sessão
 invalidar dados antigos
-carregar dados do novo tenant
+carregar dados do nova empresa
 
 Não realizar a troca apenas no estado local do frontend.
 
@@ -1067,7 +1067,7 @@ protected routes
 permission-based UI
 sensitive data exposure
 authentication flow
-tenant switching
+empresa switching
 
 Mas lembrar:
 
@@ -1321,7 +1321,7 @@ Antes de finalizar uma alteração no frontend:
  API calls estão centralizadas;
  Authentication foi considerada;
  Authorization foi considerada;
- Tenant isolation foi considerada;
+ Empresa isolation foi considerada;
  Backend continua sendo a autoridade de segurança;
  Loading state foi tratado;
  Error state foi tratado;

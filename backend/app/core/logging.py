@@ -21,8 +21,8 @@ class JSONFormatter(logging.Formatter):
         ctx = get_request_context()
         if ctx.request_id:
             log_entry["request_id"] = ctx.request_id
-        if ctx.tenant_id is not None:
-            log_entry["tenant_id"] = ctx.tenant_id
+        if ctx.empresa_id is not None:
+            log_entry["empresa_id"] = ctx.empresa_id
         if ctx.user_id is not None:
             log_entry["user_id"] = ctx.user_id
 
@@ -51,8 +51,8 @@ class TextFormatter(logging.Formatter):
         ]
         if ctx.request_id:
             parts.append(f"request_id={ctx.request_id}")
-        if ctx.tenant_id is not None:
-            parts.append(f"tenant_id={ctx.tenant_id}")
+        if ctx.empresa_id is not None:
+            parts.append(f"empresa_id={ctx.empresa_id}")
         if ctx.user_id is not None:
             parts.append(f"user_id={ctx.user_id}")
         if record.exc_info and record.exc_info[0] is not None:

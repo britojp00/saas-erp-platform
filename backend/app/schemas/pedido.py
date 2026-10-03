@@ -60,7 +60,7 @@ class PedidoItemResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
-    tenant_id: int
+    empresa_id: int
     pedido_id: int
     produto_id: int
     quantity: Decimal
@@ -94,7 +94,7 @@ class PedidoResposta(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
-    tenant_id: int
+    empresa_id: int
     numero_pedido: int
     cliente_id: int
     status: str
@@ -128,7 +128,7 @@ class PedidoResumo(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
-    tenant_id: int
+    empresa_id: int
     numero_pedido: int
     cliente_id: int
     status: str

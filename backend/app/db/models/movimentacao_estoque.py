@@ -16,7 +16,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import (
     BigIntPrimaryKeyMixin,
-    TenantScopedMixin,
+    EscopoEmpresaMixin,
     TimestampMixin,
 )
 
@@ -30,20 +30,20 @@ class TipoMovimentacao(str, enum.Enum):
 class MovimentacaoEstoque(
     BigIntPrimaryKeyMixin,
     TimestampMixin,
-    TenantScopedMixin,
+    EscopoEmpresaMixin,
     Base,
 ):
     __tablename__ = "estoque_movimentacoes"
 
     __table_args__ = (
         UniqueConstraint(
-            "tenant_id",
+            "empresa_id",
             "idempotency_key",
-            name="uq_estoque_movimentacoes_tenant_idempotency",
+            name="uq_estoque_movimentacoes_empresa_idempotency",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "produto_id"],
-            ["produtos.tenant_id", "produtos.id"],
+            ["empresa_id", "produto_id"],
+            ["produtos.empresa_id", "produtos.id"],
             ondelete="RESTRICT",
         ),
     )

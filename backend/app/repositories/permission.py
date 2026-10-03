@@ -13,23 +13,23 @@ class PermissionRepository:
     async def get_names_by_user(
         self,
         user_id: int,
-        tenant_id: int,
+        empresa_id: int,
     ) -> set[str]:
         stmt = (
             select(distinct(Permission.name))
             .join(
                 RolePermission,
                 (RolePermission.permission_id == Permission.id)
-                & (RolePermission.tenant_id == Permission.tenant_id),
+                & (RolePermission.empresa_id == Permission.empresa_id),
             )
             .join(
                 UserRole,
                 (UserRole.role_id == RolePermission.role_id)
-                & (UserRole.tenant_id == RolePermission.tenant_id),
+                & (UserRole.empresa_id == RolePermission.empresa_id),
             )
             .where(
                 UserRole.user_id == user_id,
-                UserRole.tenant_id == tenant_id,
+                UserRole.empresa_id == empresa_id,
                 Permission.deleted_at.is_(None),
             )
         )

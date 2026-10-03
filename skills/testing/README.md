@@ -108,7 +108,7 @@ status code
 authentication
 authorization
 validation
-tenant isolation
+empresa isolation
 6. Frontend Tests
 
 O frontend deverá possuir testes próprios conforme a complexidade da aplicação.
@@ -151,7 +151,7 @@ Testes de segurança devem proteger especialmente:
 
 authentication
 authorization
-tenant isolation
+empresa isolation
 privilege escalation
 mass assignment
 input validation
@@ -160,15 +160,15 @@ Esses testes não devem ser opcionais quando a funcionalidade afetar uma dessas 
 
 9. Multi-tenancy Tests
 
-Toda funcionalidade que acessar dados de tenant deve considerar testes de isolamento.
+Toda funcionalidade que acessar dados de empresa deve considerar testes de isolamento.
 
 Exemplo:
 
-Tenant A
+Empresa A
 ├── User A
 └── Cliente A
 
-Tenant B
+Empresa B
 ├── User B
 └── Cliente B
 
@@ -213,7 +213,7 @@ Também verificar o vínculo correto entre:
 
 User
 +
-Tenant
+Empresa
 12. Authorization Tests
 
 Testar:
@@ -283,7 +283,7 @@ Fixtures devem fornecer recursos comuns.
 Exemplos:
 
 database
-tenant
+empresa
 user
 authenticated client
 test data
@@ -487,7 +487,7 @@ um filtro
 múltiplos filtros
 valor inexistente
 combinação de filtros
-tenant + filtro
+empresa + filtro
 
 Os resultados devem respeitar todos os filtros aplicados.
 
@@ -516,7 +516,7 @@ failure
 retry
 maximum attempts
 idempotency
-tenant context
+contexto de empresa
 reprocessing
 33. Queue Tests
 
@@ -735,8 +735,8 @@ unauthenticated
 authenticated
 authorized
 unauthorized
-same tenant
-different tenant
+same empresa
+different empresa
 owner
 non-owner
 
@@ -774,7 +774,7 @@ password_hash
 tokens
 secrets
 credentials
-dados de outro tenant
+dados de outra empresa
 campos internos
 
 Esses testes são particularmente importantes para endpoints administrativos.
@@ -802,7 +802,7 @@ Quando logging fizer parte do comportamento relevante, validar:
 event
 level
 request_id
-tenant_id
+empresa_id
 user_id
 error_code
 
@@ -813,7 +813,7 @@ Não acoplar testes excessivamente ao texto das mensagens.
 Quando auditoria for implementada, testar:
 
 actor
-tenant
+empresa
 action
 entity
 entity_id
@@ -874,7 +874,7 @@ Testes com nomes claros também funcionam como documentação executável.
 
 Exemplo:
 
-async def test_user_cannot_access_other_tenant_cliente():
+async def test_user_cannot_access_other_empresa_cliente():
     ...
 
 Esse nome comunica uma regra importante do sistema.
@@ -885,7 +885,7 @@ Como o Integration Hub consumirá a API real do ERP, os contratos importantes da
 
 authentication
 authorization
-tenant context
+contexto de empresa
 request schema
 response schema
 error responses
@@ -930,7 +930,7 @@ resultado esperado
 
 Exemplo:
 
-test_user_cannot_access_other_tenant_cliente
+test_user_cannot_access_other_empresa_cliente
 
 Evitar:
 
@@ -1060,7 +1060,7 @@ Isso pode ser utilizado para:
 
 test database
 authenticated user
-tenant
+empresa
 mock services
 
 Os overrides devem permanecer restritos ao ambiente de testes.

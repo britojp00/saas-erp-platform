@@ -219,7 +219,7 @@ Contém os modelos ORM do SQLAlchemy.
 
 Exemplos:
 
-Tenant
+Empresa
 User
 Role
 Permission
@@ -347,7 +347,7 @@ POST /api/v1/clientes
           |
           +---- validar regras
           |
-          +---- verificar tenant
+          +---- verificar empresa
           |
           +---- verificar duplicidade
           |
@@ -426,7 +426,7 @@ Multi-tenancy é um requisito estrutural do sistema.
 
 Conceito:
 
-Tenant
+Empresa
   |
   +---- Users
   +---- Clientes
@@ -434,25 +434,25 @@ Tenant
   +---- Pedidos
   +---- Estoque
 
-Entidades de negócio pertencentes a um tenant devem possuir
-referência ao tenant correspondente quando aplicável.
+Entidades de negócio pertencentes a uma empresa devem possuir
+referência à empresa correspondente quando aplicável.
 
 Exemplo:
 
 clientes
 
 id
-tenant_id
+empresa_id
 name
 email
 created_at
 updated_at
-13. Isolamento entre tenants
+13. Isolamento entre empresas
 
-O contexto do tenant deve ser obtido de uma fonte confiável
+O contexto da empresa deve ser obtido de uma fonte confiável
 da autenticação da aplicação.
 
-O sistema não deve confiar exclusivamente em um tenant_id
+O sistema não deve confiar exclusivamente em um empresa_id
 fornecido pelo cliente.
 
 Exemplo:
@@ -460,27 +460,27 @@ Exemplo:
 Usuário autenticado
        |
        v
-Tenant = 10
+Empresa = 10
        |
        v
 GET /api/v1/clientes
        |
        v
-Clientes do Tenant 10
+Clientes da Empresa 10
 
-Uma tentativa de acessar dados pertencentes a outro tenant
+Uma tentativa de acessar dados pertencentes a outra empresa
 deve ser bloqueada.
 
 14. Regra de acesso aos dados
 
-Quando uma entidade pertence a um tenant, consultas e operações
-sobre essa entidade devem considerar o contexto do tenant.
+Quando uma entidade pertence a uma empresa, consultas e operações
+sobre essa entidade devem considerar o contexto da empresa.
 
 Conceitualmente:
 
 Recurso
 +
-Tenant atual
+Empresa atual
 
 em vez de somente:
 
@@ -490,7 +490,7 @@ Exemplo conceitual:
 
 query.where(
     Cliente.id == cliente_id,
-    Cliente.tenant_id == tenant_id,
+    Cliente.empresa_id == empresa_id,
 )
 
 A implementação concreta deve seguir as abstrações definidas
@@ -728,7 +728,7 @@ Implementação atual:
 
 - JSON ou texto configurável via LOG_JSON
 - Timestamp com timezone (America/Sao_Paulo)
-- request_id, tenant_id, user_id incluídos automaticamente
+- request_id, empresa_id, user_id incluídos automaticamente
 - Configuração via setup_logging() em core/logging.py
 
 Exemplo JSON:
@@ -739,7 +739,7 @@ Exemplo JSON:
   "logger": "app.http",
   "message": "request_completed",
   "request_id": "...",
-  "tenant_id": 10,
+  "empresa_id": 10,
   "user_id": 32,
   "method": "GET",
   "path": "/api/v1/clientes",
@@ -785,8 +785,8 @@ internal_exception
 Auditoria (implementada):
 
 - Tabela `audit_logs` append-only
-- Registro por tenant (tenant_id)
-- Campos: action, entity_type, entity_id, user_id, tenant_id, details, ip_address, user_agent
+- Registro por empresa (empresa_id)
+- Campos: action, entity_type, entity_id, user_id, empresa_id, details, ip_address, user_agent
 - Consulta via GET /api/v1/audit-logs com filtros e paginação
 - Service: services/audit_log.py
 - Repository: repositories/audit_log.py

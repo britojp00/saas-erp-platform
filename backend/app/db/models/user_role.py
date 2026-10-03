@@ -4,23 +4,23 @@ from sqlalchemy import BigInteger, DateTime, ForeignKeyConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
-from app.db.mixins import TenantScopedMixin
+from app.db.mixins import EscopoEmpresaMixin
 
 
-class UserRole(TenantScopedMixin, Base):
+class UserRole(EscopoEmpresaMixin, Base):
     __tablename__ = "user_roles"
 
     __table_args__ = (
         ForeignKeyConstraint(
-            ["tenant_id", "user_id"],
-            ["users.tenant_id", "users.id"],
-            name="fk_user_roles_tenant_user",
+            ["empresa_id", "user_id"],
+            ["users.empresa_id", "users.id"],
+            name="fk_user_roles_empresa_user",
             ondelete="CASCADE",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "role_id"],
-            ["roles.tenant_id", "roles.id"],
-            name="fk_user_roles_tenant_role",
+            ["empresa_id", "role_id"],
+            ["roles.empresa_id", "roles.id"],
+            name="fk_user_roles_empresa_role",
             ondelete="CASCADE",
         ),
     )

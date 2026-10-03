@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, get_password_hash
 from app.db.models.categoria import Categoria
+from app.db.models.empresa import Empresa
 from app.db.models.estoque import Estoque
 from app.db.models.movimentacao_estoque import MovimentacaoEstoque, TipoMovimentacao
 from app.db.models.permission import Permission
@@ -15,25 +16,24 @@ from app.db.models.produto import Produto
 from app.db.models.reserva_estoque import ReservaEstoque, StatusReserva
 from app.db.models.role import Role
 from app.db.models.role_permission import RolePermission
-from app.db.models.tenant import Tenant
 from app.db.models.user import User
 from app.db.models.user_role import UserRole
 
 
 async def _create_permission(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
 ) -> Permission:
     stmt = select(Permission).where(
-        Permission.tenant_id == tenant_id,
+        Permission.empresa_id == empresa_id,
         Permission.name == name,
     )
     result = await session.execute(stmt)
     existing = result.scalar_one_or_none()
     if existing:
         return existing
-    perm = Permission(tenant_id=tenant_id, name=name)
+    perm = Permission(empresa_id=empresa_id, name=name)
     session.add(perm)
     await session.flush()
     return perm
@@ -41,32 +41,32 @@ async def _create_permission(
 
 async def _create_role_with_perms(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     perm_names: list[str],
 ) -> Role:
     stmt = select(Role).where(
-        Role.tenant_id == tenant_id,
+        Role.empresa_id == empresa_id,
         Role.name == name,
     )
     result = await session.execute(stmt)
     existing = result.scalar_one_or_none()
     if existing:
         return existing
-    role = Role(tenant_id=tenant_id, name=name)
+    role = Role(empresa_id=empresa_id, name=name)
     session.add(role)
     await session.flush()
     for pname in perm_names:
-        perm = await _create_permission(session, tenant_id, pname)
+        perm = await _create_permission(session, empresa_id, pname)
         stmt_rp = select(RolePermission).where(
-            RolePermission.tenant_id == tenant_id,
+            RolePermission.empresa_id == empresa_id,
             RolePermission.role_id == role.id,
             RolePermission.permission_id == perm.id,
         )
         rp_result = await session.execute(stmt_rp)
         if rp_result.scalar_one_or_none() is None:
             rp = RolePermission(
-                tenant_id=tenant_id,
+                empresa_id=empresa_id,
                 role_id=role.id,
                 permission_id=perm.id,
             )
@@ -77,12 +77,12 @@ async def _create_role_with_perms(
 
 async def _assign_role_to_user(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     user_id: int,
     role_id: int,
 ) -> None:
     stmt = select(UserRole).where(
-        UserRole.tenant_id == tenant_id,
+        UserRole.empresa_id == empresa_id,
         UserRole.user_id == user_id,
         UserRole.role_id == role_id,
     )
@@ -90,7 +90,7 @@ async def _assign_role_to_user(
     if result.scalar_one_or_none():
         return
     ur = UserRole(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         user_id=user_id,
         role_id=role_id,
     )
@@ -100,11 +100,11 @@ async def _assign_role_to_user(
 
 async def _create_categoria_in_db(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
 ) -> Categoria:
     categoria = Categoria(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         name=name,
     )
     session.add(categoria)
@@ -114,7 +114,7 @@ async def _create_categoria_in_db(
 
 async def _create_produto_in_db(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     name: str,
     sku: str,
     categoria_id: int | None = None,
@@ -122,7 +122,7 @@ async def _create_produto_in_db(
     is_active: bool = True,
 ) -> Produto:
     produto = Produto(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         sku=sku,
         name=name,
         categoria_id=categoria_id,
@@ -136,13 +136,13 @@ async def _create_produto_in_db(
 
 async def _create_estoque_in_db(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     produto_id: int,
     quantity: Decimal = Decimal("100.000"),
     reserved_quantity: Decimal = Decimal("0.000"),
 ) -> Estoque:
     estoque = Estoque(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         produto_id=produto_id,
         quantity=quantity,
         reserved_quantity=reserved_quantity,
@@ -154,14 +154,14 @@ async def _create_estoque_in_db(
 
 async def _create_movimentacao_in_db(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     produto_id: int,
     tipo_movimentacao: str = "ENTRADA",
     quantity: Decimal = Decimal("10.000"),
     idempotency_key: str = "test-key",
 ) -> MovimentacaoEstoque:
     movimentacao = MovimentacaoEstoque(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         produto_id=produto_id,
         tipo_movimentacao=TipoMovimentacao(tipo_movimentacao),
         quantity=quantity,
@@ -174,14 +174,14 @@ async def _create_movimentacao_in_db(
 
 async def _create_reserva_in_db(
     session: AsyncSession,
-    tenant_id: int,
+    empresa_id: int,
     produto_id: int,
     quantity: Decimal = Decimal("5.000"),
     status: StatusReserva = StatusReserva.ATIVA,
     idempotency_key: str = "test-reserva-key",
 ) -> ReservaEstoque:
     reserva = ReservaEstoque(
-        tenant_id=tenant_id,
+        empresa_id=empresa_id,
         produto_id=produto_id,
         quantity=quantity,
         status=status,
@@ -195,11 +195,11 @@ async def _create_reserva_in_db(
 @pytest.fixture
 async def all_estoque_perms(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> Role:
     return await _create_role_with_perms(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         "estoque_admin",
         [
             "estoque.ler",
@@ -211,11 +211,11 @@ async def all_estoque_perms(
 @pytest.fixture
 async def read_only_estoque_perms(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> Role:
     return await _create_role_with_perms(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         "estoque_reader",
         [
             "estoque.ler",
@@ -226,12 +226,12 @@ async def read_only_estoque_perms(
 @pytest.fixture
 async def admin_user(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
     all_estoque_perms: Role,
 ) -> User:
     await _assign_role_to_user(
-        db_session, test_tenant.id, test_user.id, all_estoque_perms.id
+        db_session, test_empresa.id, test_user.id, all_estoque_perms.id
     )
     await db_session.commit()
     return test_user
@@ -240,12 +240,12 @@ async def admin_user(
 @pytest.fixture
 async def admin_headers(
     admin_user: User,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> dict[str, str]:
     token = create_access_token(
         data={
             "sub": str(admin_user.id),
-            "tenant_id": str(test_tenant.id),
+            "empresa_id": str(test_empresa.id),
         }
     )
     return {"Authorization": f"Bearer {token}"}
@@ -254,12 +254,12 @@ async def admin_headers(
 @pytest.fixture
 async def read_only_user(
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     test_user: User,
     read_only_estoque_perms: Role,
 ) -> User:
     await _assign_role_to_user(
-        db_session, test_tenant.id, test_user.id, read_only_estoque_perms.id
+        db_session, test_empresa.id, test_user.id, read_only_estoque_perms.id
     )
     await db_session.commit()
     return test_user
@@ -268,38 +268,38 @@ async def read_only_user(
 @pytest.fixture
 async def read_only_headers(
     read_only_user: User,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> dict[str, str]:
     token = create_access_token(
         data={
             "sub": str(read_only_user.id),
-            "tenant_id": str(test_tenant.id),
+            "empresa_id": str(test_empresa.id),
         }
     )
     return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
-async def other_tenant(db_session: AsyncSession) -> Tenant:
-    tenant = Tenant(
-        name="Other Tenant",
-        slug="other-estoque-tenant",
+async def other_empresa(db_session: AsyncSession) -> Empresa:
+    empresa = Empresa(
+        name="Outra Empresa",
+        slug="other-estoque-empresa",
         is_active=True,
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
-    db_session.add(tenant)
+    db_session.add(empresa)
     await db_session.flush()
-    return tenant
+    return empresa
 
 
 @pytest.fixture
-async def other_tenant_user(
+async def other_empresa_user(
     db_session: AsyncSession,
-    other_tenant: Tenant,
+    other_empresa: Empresa,
 ) -> User:
     user = User(
-        tenant_id=other_tenant.id,
+        empresa_id=other_empresa.id,
         email="other@example.com",
         full_name="Other User",
         is_active=True,
@@ -313,14 +313,14 @@ async def other_tenant_user(
 
 
 @pytest.fixture
-async def other_tenant_headers(
+async def other_empresa_headers(
     db_session: AsyncSession,
-    other_tenant_user: User,
-    other_tenant: Tenant,
+    other_empresa_user: User,
+    other_empresa: Empresa,
 ) -> dict[str, str]:
     role = await _create_role_with_perms(
         db_session,
-        other_tenant.id,
+        other_empresa.id,
         "other_estoque_all",
         [
             "estoque.ler",
@@ -328,13 +328,13 @@ async def other_tenant_headers(
         ],
     )
     await _assign_role_to_user(
-        db_session, other_tenant.id, other_tenant_user.id, role.id
+        db_session, other_empresa.id, other_empresa_user.id, role.id
     )
     await db_session.commit()
     token = create_access_token(
         data={
-            "sub": str(other_tenant_user.id),
-            "tenant_id": str(other_tenant.id),
+            "sub": str(other_empresa_user.id),
+            "empresa_id": str(other_empresa.id),
         }
     )
     return {"Authorization": f"Bearer {token}"}
@@ -347,12 +347,12 @@ async def other_tenant_headers(
 async def test_create_entrada_movimentacao(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto A", "SKU-A", categoria.id
+        db_session, test_empresa.id, "Produto A", "SKU-A", categoria.id
     )
     await db_session.commit()
 
@@ -379,14 +379,14 @@ async def test_create_entrada_movimentacao(
 async def test_create_saida_movimentacao(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto B", "SKU-B", categoria.id
+        db_session, test_empresa.id, "Produto B", "SKU-B", categoria.id
     )
-    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_empresa.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
@@ -409,14 +409,14 @@ async def test_create_saida_movimentacao(
 async def test_ajuste_movimentacao(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto C", "SKU-C", categoria.id
+        db_session, test_empresa.id, "Produto C", "SKU-C", categoria.id
     )
-    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_empresa.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
@@ -439,15 +439,15 @@ async def test_ajuste_movimentacao(
 async def test_movimentacao_updates_saldo(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto D", "SKU-D", categoria.id
+        db_session, test_empresa.id, "Produto D", "SKU-D", categoria.id
     )
     await _create_estoque_in_db(
-        db_session, test_tenant.id, produto.id, quantity=Decimal("50.000")
+        db_session, test_empresa.id, produto.id, quantity=Decimal("50.000")
     )
     await db_session.commit()
 
@@ -475,15 +475,15 @@ async def test_movimentacao_updates_saldo(
 async def test_saida_movimentacao_insufficient_stock(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto E", "SKU-E", categoria.id
+        db_session, test_empresa.id, "Produto E", "SKU-E", categoria.id
     )
     await _create_estoque_in_db(
-        db_session, test_tenant.id, produto.id, quantity=Decimal("5.000")
+        db_session, test_empresa.id, produto.id, quantity=Decimal("5.000")
     )
     await db_session.commit()
 
@@ -504,16 +504,16 @@ async def test_saida_movimentacao_insufficient_stock(
 async def test_saida_movimentacao_cannot_consume_reserved(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto F", "SKU-F", categoria.id
+        db_session, test_empresa.id, "Produto F", "SKU-F", categoria.id
     )
     await _create_estoque_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         produto.id,
         quantity=Decimal("10.000"),
         reserved_quantity=Decimal("5.000"),
@@ -537,16 +537,16 @@ async def test_saida_movimentacao_cannot_consume_reserved(
 async def test_ajuste_leaves_reserved_exceeds_quantity(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto G", "SKU-G", categoria.id
+        db_session, test_empresa.id, "Produto G", "SKU-G", categoria.id
     )
     await _create_estoque_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         produto.id,
         quantity=Decimal("10.000"),
         reserved_quantity=Decimal("5.000"),
@@ -570,12 +570,12 @@ async def test_ajuste_leaves_reserved_exceeds_quantity(
 async def test_idempotent_movimentacao_returns_same(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto H", "SKU-H", categoria.id
+        db_session, test_empresa.id, "Produto H", "SKU-H", categoria.id
     )
     await db_session.commit()
 
@@ -608,18 +608,18 @@ async def test_idempotent_movimentacao_returns_same(
 async def test_list_movimentacoes(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto I", "SKU-I", categoria.id
+        db_session, test_empresa.id, "Produto I", "SKU-I", categoria.id
     )
     await _create_movimentacao_in_db(
-        db_session, test_tenant.id, produto.id, "ENTRADA", Decimal("10.000"), "key-1"
+        db_session, test_empresa.id, produto.id, "ENTRADA", Decimal("10.000"), "key-1"
     )
     await _create_movimentacao_in_db(
-        db_session, test_tenant.id, produto.id, "SAIDA", Decimal("5.000"), "key-2"
+        db_session, test_empresa.id, produto.id, "SAIDA", Decimal("5.000"), "key-2"
     )
     await db_session.commit()
 
@@ -640,14 +640,14 @@ async def test_list_movimentacoes(
 async def test_create_reserva(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto J", "SKU-J", categoria.id
+        db_session, test_empresa.id, "Produto J", "SKU-J", categoria.id
     )
-    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_empresa.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
@@ -671,15 +671,15 @@ async def test_create_reserva(
 async def test_reserva_updates_reserved_quantity(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto K", "SKU-K", categoria.id
+        db_session, test_empresa.id, "Produto K", "SKU-K", categoria.id
     )
     await _create_estoque_in_db(
-        db_session, test_tenant.id, produto.id, quantity=Decimal("20.000")
+        db_session, test_empresa.id, produto.id, quantity=Decimal("20.000")
     )
     await db_session.commit()
 
@@ -707,16 +707,16 @@ async def test_reserva_updates_reserved_quantity(
 async def test_reserva_insufficient_stock(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto L", "SKU-L", categoria.id
+        db_session, test_empresa.id, "Produto L", "SKU-L", categoria.id
     )
     await _create_estoque_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         produto.id,
         quantity=Decimal("10.000"),
         reserved_quantity=Decimal("8.000"),
@@ -739,14 +739,14 @@ async def test_reserva_insufficient_stock(
 async def test_reserva_inactive_produto(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto M", "SKU-M", categoria.id, is_active=False
+        db_session, test_empresa.id, "Produto M", "SKU-M", categoria.id, is_active=False
     )
-    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_empresa.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
@@ -765,18 +765,18 @@ async def test_reserva_inactive_produto(
 async def test_confirm_reserva(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto N", "SKU-N", categoria.id
+        db_session, test_empresa.id, "Produto N", "SKU-N", categoria.id
     )
     estoque = await _create_estoque_in_db(
-        db_session, test_tenant.id, produto.id, quantity=Decimal("20.000")
+        db_session, test_empresa.id, produto.id, quantity=Decimal("20.000")
     )
     reserva = await _create_reserva_in_db(
-        db_session, test_tenant.id, produto.id, Decimal("5.000")
+        db_session, test_empresa.id, produto.id, Decimal("5.000")
     )
     estoque.reserved_quantity = Decimal("5.000")
     await db_session.commit()
@@ -801,18 +801,18 @@ async def test_confirm_reserva(
 async def test_release_reserva(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto O", "SKU-O", categoria.id
+        db_session, test_empresa.id, "Produto O", "SKU-O", categoria.id
     )
     estoque = await _create_estoque_in_db(
-        db_session, test_tenant.id, produto.id, quantity=Decimal("20.000")
+        db_session, test_empresa.id, produto.id, quantity=Decimal("20.000")
     )
     reserva = await _create_reserva_in_db(
-        db_session, test_tenant.id, produto.id, Decimal("5.000")
+        db_session, test_empresa.id, produto.id, Decimal("5.000")
     )
     estoque.reserved_quantity = Decimal("5.000")
     await db_session.commit()
@@ -831,18 +831,18 @@ async def test_release_reserva(
 async def test_cancel_reserva(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto P", "SKU-P", categoria.id
+        db_session, test_empresa.id, "Produto P", "SKU-P", categoria.id
     )
     estoque = await _create_estoque_in_db(
-        db_session, test_tenant.id, produto.id, quantity=Decimal("20.000")
+        db_session, test_empresa.id, produto.id, quantity=Decimal("20.000")
     )
     reserva = await _create_reserva_in_db(
-        db_session, test_tenant.id, produto.id, Decimal("5.000")
+        db_session, test_empresa.id, produto.id, Decimal("5.000")
     )
     estoque.reserved_quantity = Decimal("5.000")
     await db_session.commit()
@@ -861,16 +861,16 @@ async def test_cancel_reserva(
 async def test_confirm_already_confirmed_reserva(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto Q", "SKU-Q", categoria.id
+        db_session, test_empresa.id, "Produto Q", "SKU-Q", categoria.id
     )
     reserva = await _create_reserva_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         produto.id,
         Decimal("5.000"),
         StatusReserva.CONFIRMADA,
@@ -888,18 +888,18 @@ async def test_confirm_already_confirmed_reserva(
 async def test_list_reservas(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Produto R", "SKU-R", categoria.id
+        db_session, test_empresa.id, "Produto R", "SKU-R", categoria.id
     )
     await _create_reserva_in_db(
-        db_session, test_tenant.id, produto.id, Decimal("5.000"), idempotency_key="r1"
+        db_session, test_empresa.id, produto.id, Decimal("5.000"), idempotency_key="r1"
     )
     await _create_reserva_in_db(
-        db_session, test_tenant.id, produto.id, Decimal("3.000"), idempotency_key="r2"
+        db_session, test_empresa.id, produto.id, Decimal("3.000"), idempotency_key="r2"
     )
     await db_session.commit()
 
@@ -920,18 +920,18 @@ async def test_list_reservas(
 async def test_list_estoque_saldos(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     p1 = await _create_produto_in_db(
-        db_session, test_tenant.id, "Prod 1", "SKU-1", categoria.id
+        db_session, test_empresa.id, "Prod 1", "SKU-1", categoria.id
     )
     p2 = await _create_produto_in_db(
-        db_session, test_tenant.id, "Prod 2", "SKU-2", categoria.id
+        db_session, test_empresa.id, "Prod 2", "SKU-2", categoria.id
     )
-    await _create_estoque_in_db(db_session, test_tenant.id, p1.id)
-    await _create_estoque_in_db(db_session, test_tenant.id, p2.id)
+    await _create_estoque_in_db(db_session, test_empresa.id, p1.id)
+    await _create_estoque_in_db(db_session, test_empresa.id, p2.id)
     await db_session.commit()
 
     response = await client.get(
@@ -947,15 +947,15 @@ async def test_list_estoque_saldos(
 async def test_get_single_saldo(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "Prod Single", "SKU-S", categoria.id
+        db_session, test_empresa.id, "Prod Single", "SKU-S", categoria.id
     )
     await _create_estoque_in_db(
-        db_session, test_tenant.id, produto.id, quantity=Decimal("42.000")
+        db_session, test_empresa.id, produto.id, quantity=Decimal("42.000")
     )
     await db_session.commit()
 
@@ -985,24 +985,24 @@ async def test_get_nonexistent_saldo(
 
 
 @pytest.mark.asyncio
-async def test_cannot_access_other_tenant_estoque(
+async def test_cannot_access_other_empresa_estoque(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant: Tenant,
-    other_tenant_headers: dict[str, str],
+    test_empresa: Empresa,
+    other_empresa: Empresa,
+    other_empresa_headers: dict[str, str],
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "TenantProd", "SKU-TP", categoria.id
+        db_session, test_empresa.id, "EmpresaProd", "SKU-TP", categoria.id
     )
-    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_empresa.id, produto.id)
     await db_session.commit()
 
     response = await client.get(
         f"/api/v1/estoque/{produto.id}",
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response.status_code == 404
 
@@ -1014,7 +1014,7 @@ async def test_cannot_access_other_tenant_estoque(
 async def test_read_only_user_can_list(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     read_only_headers: dict[str, str],
 ) -> None:
     response = await client.get(
@@ -1028,13 +1028,13 @@ async def test_read_only_user_can_list(
 async def test_read_only_user_cannot_create_movimentacao(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
 ) -> None:
     ro_role = await _create_role_with_perms(
-        db_session, test_tenant.id, "inv_readonly", ["estoque.ler"]
+        db_session, test_empresa.id, "inv_readonly", ["estoque.ler"]
     )
     ro_user = User(
-        tenant_id=test_tenant.id,
+        empresa_id=test_empresa.id,
         email="readonly@example.com",
         full_name="Read Only",
         is_active=True,
@@ -1044,17 +1044,17 @@ async def test_read_only_user_cannot_create_movimentacao(
     )
     db_session.add(ro_user)
     await db_session.flush()
-    await _assign_role_to_user(db_session, test_tenant.id, ro_user.id, ro_role.id)
+    await _assign_role_to_user(db_session, test_empresa.id, ro_user.id, ro_role.id)
     await db_session.commit()
 
     ro_token = create_access_token(
-        data={"sub": str(ro_user.id), "tenant_id": str(test_tenant.id)}
+        data={"sub": str(ro_user.id), "empresa_id": str(test_empresa.id)}
     )
     ro_headers = {"Authorization": f"Bearer {ro_token}"}
 
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "ProdRO", "SKU-RO", categoria.id
+        db_session, test_empresa.id, "ProdRO", "SKU-RO", categoria.id
     )
     await db_session.commit()
 
@@ -1083,19 +1083,19 @@ async def test_unauthenticated_cannot_access(
 async def test_movimentacao_on_inactive_produto_allowed(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         "Inactive",
         "SKU-INACT",
         categoria.id,
         is_active=False,
     )
-    await _create_estoque_in_db(db_session, test_tenant.id, produto.id)
+    await _create_estoque_in_db(db_session, test_empresa.id, produto.id)
     await db_session.commit()
 
     response = await client.post(
@@ -1115,12 +1115,12 @@ async def test_movimentacao_on_inactive_produto_allowed(
 async def test_ajuste_must_be_positive(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "AdjProd", "SKU-ADJ", categoria.id
+        db_session, test_empresa.id, "AdjProd", "SKU-ADJ", categoria.id
     )
     await db_session.commit()
 
@@ -1141,12 +1141,12 @@ async def test_ajuste_must_be_positive(
 async def test_invalid_tipo_movimentacao(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "BadType", "SKU-BT", categoria.id
+        db_session, test_empresa.id, "BadType", "SKU-BT", categoria.id
     )
     await db_session.commit()
 
@@ -1167,17 +1167,17 @@ async def test_invalid_tipo_movimentacao(
 async def test_pagination_works(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "PagProd", "SKU-PAG", categoria.id
+        db_session, test_empresa.id, "PagProd", "SKU-PAG", categoria.id
     )
     for i in range(5):
         await _create_movimentacao_in_db(
             db_session,
-            test_tenant.id,
+            test_empresa.id,
             produto.id,
             "ENTRADA",
             Decimal("1.000"),
@@ -1204,15 +1204,15 @@ async def test_pagination_works(
 async def test_idempotent_reserva_returns_same(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "IdemRes", "SKU-IR", categoria.id
+        db_session, test_empresa.id, "IdemRes", "SKU-IR", categoria.id
     )
     await _create_estoque_in_db(
-        db_session, test_tenant.id, produto.id, quantity=Decimal("50.000")
+        db_session, test_empresa.id, produto.id, quantity=Decimal("50.000")
     )
     await db_session.commit()
 
@@ -1244,16 +1244,16 @@ async def test_idempotent_reserva_returns_same(
 async def test_released_reserva_cannot_be_confirmed(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "RelCf", "SKU-RC", categoria.id
+        db_session, test_empresa.id, "RelCf", "SKU-RC", categoria.id
     )
     reserva = await _create_reserva_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         produto.id,
         Decimal("5.000"),
         StatusReserva.LIBERADA,
@@ -1271,16 +1271,16 @@ async def test_released_reserva_cannot_be_confirmed(
 async def test_cancelled_reserva_cannot_be_confirmed(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "CanCf", "SKU-CC", categoria.id
+        db_session, test_empresa.id, "CanCf", "SKU-CC", categoria.id
     )
     reserva = await _create_reserva_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         produto.id,
         Decimal("5.000"),
         StatusReserva.CANCELADA,
@@ -1298,16 +1298,16 @@ async def test_cancelled_reserva_cannot_be_confirmed(
 async def test_confirmed_reserva_cannot_be_released(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "CfRel", "SKU-CR", categoria.id
+        db_session, test_empresa.id, "CfRel", "SKU-CR", categoria.id
     )
     reserva = await _create_reserva_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         produto.id,
         Decimal("5.000"),
         StatusReserva.CONFIRMADA,
@@ -1325,16 +1325,16 @@ async def test_confirmed_reserva_cannot_be_released(
 async def test_saida_at_boundary_exactly_available(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "BoundOut", "SKU-BO", categoria.id
+        db_session, test_empresa.id, "BoundOut", "SKU-BO", categoria.id
     )
     await _create_estoque_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         produto.id,
         quantity=Decimal("100.000"),
         reserved_quantity=Decimal("30.000"),
@@ -1358,16 +1358,16 @@ async def test_saida_at_boundary_exactly_available(
 async def test_saida_one_over_boundary_fails(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
+    test_empresa: Empresa,
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "BoundOutFail", "SKU-BOF", categoria.id
+        db_session, test_empresa.id, "BoundOutFail", "SKU-BOF", categoria.id
     )
     await _create_estoque_in_db(
         db_session,
-        test_tenant.id,
+        test_empresa.id,
         produto.id,
         quantity=Decimal("100.000"),
         reserved_quantity=Decimal("30.000"),
@@ -1388,17 +1388,17 @@ async def test_saida_one_over_boundary_fails(
 
 
 @pytest.mark.asyncio
-async def test_cross_tenant_cannot_create_movimentacao_on_other_tenant_produto(
+async def test_cross_empresa_cannot_create_movimentacao_on_other_empresa_produto(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant: Tenant,
-    other_tenant_headers: dict[str, str],
+    test_empresa: Empresa,
+    other_empresa: Empresa,
+    other_empresa_headers: dict[str, str],
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "CrossTenant", "SKU-CT", categoria.id
+        db_session, test_empresa.id, "CrossEmpresa", "SKU-CT", categoria.id
     )
     await db_session.commit()
 
@@ -1408,25 +1408,25 @@ async def test_cross_tenant_cannot_create_movimentacao_on_other_tenant_produto(
             "produto_id": produto.id,
             "tipo_movimentacao": "ENTRADA",
             "quantity": "10.000",
-            "idempotency_key": "cross-tenant-movimentacao",
+            "idempotency_key": "cross-empresa-movimentacao",
         },
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_cross_tenant_cannot_create_reserva_on_other_tenant_produto(
+async def test_cross_empresa_cannot_create_reserva_on_other_empresa_produto(
     client: AsyncClient,
     db_session: AsyncSession,
-    test_tenant: Tenant,
-    other_tenant: Tenant,
-    other_tenant_headers: dict[str, str],
+    test_empresa: Empresa,
+    other_empresa: Empresa,
+    other_empresa_headers: dict[str, str],
     admin_headers: dict[str, str],
 ) -> None:
-    categoria = await _create_categoria_in_db(db_session, test_tenant.id, "Cat")
+    categoria = await _create_categoria_in_db(db_session, test_empresa.id, "Cat")
     produto = await _create_produto_in_db(
-        db_session, test_tenant.id, "CrossTenantRes", "SKU-CTR", categoria.id
+        db_session, test_empresa.id, "CrossEmpresaRes", "SKU-CTR", categoria.id
     )
     await db_session.commit()
 
@@ -1435,8 +1435,8 @@ async def test_cross_tenant_cannot_create_reserva_on_other_tenant_produto(
         json={
             "produto_id": produto.id,
             "quantity": "5.000",
-            "idempotency_key": "cross-tenant-reserva",
+            "idempotency_key": "cross-empresa-reserva",
         },
-        headers=other_tenant_headers,
+        headers=other_empresa_headers,
     )
     assert response.status_code == 404
