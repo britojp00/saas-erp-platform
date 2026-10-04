@@ -10,6 +10,10 @@ const percentFormatter = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 0,
 })
 
+const quantityFormatter = new Intl.NumberFormat('pt-BR', {
+  maximumFractionDigits: 3,
+})
+
 const dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
   dateStyle: 'short',
   timeStyle: 'short',
@@ -21,6 +25,12 @@ export function formatNumber(value: number): string {
 
 export function formatAmount(value: number): string {
   return amountFormatter.format(value)
+}
+
+export function formatQuantity(value: string | number): string {
+  const parsed = typeof value === 'string' ? Number(value) : value
+  if (Number.isNaN(parsed)) return String(value)
+  return quantityFormatter.format(parsed)
 }
 
 export function formatPercent(value: number): string {
