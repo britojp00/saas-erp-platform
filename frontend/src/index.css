@@ -749,34 +749,39 @@ a:focus-visible {
 }
 
 .clientes-page,
-.categorias-page {
+.categorias-page,
+.produtos-page {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
 }
 
 .clientes-toolbar,
-.categorias-toolbar {
+.categorias-toolbar,
+.produtos-toolbar {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
 .clientes-search,
-.categorias-search {
+.categorias-search,
+.produtos-search {
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
 }
 
 .clientes-search .field,
-.categorias-search .field {
+.categorias-search .field,
+.produtos-search .field {
   flex: 1;
   max-width: 20rem;
 }
 
 .clientes-search button,
-.categorias-search button {
+.categorias-search button,
+.produtos-search button {
   padding: 0.5rem 0.75rem;
   font-size: 0.8125rem;
 }
@@ -786,7 +791,8 @@ a:focus-visible {
 }
 
 .clientes-table,
-.categorias-table {
+.categorias-table,
+.produtos-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
@@ -795,7 +801,9 @@ a:focus-visible {
 .clientes-table th,
 .clientes-table td,
 .categorias-table th,
-.categorias-table td {
+.categorias-table td,
+.produtos-table th,
+.produtos-table td {
   padding: 0.625rem 0.75rem;
   text-align: left;
   vertical-align: top;
@@ -803,7 +811,8 @@ a:focus-visible {
 }
 
 .clientes-table th,
-.categorias-table th {
+.categorias-table th,
+.produtos-table th {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -812,31 +821,38 @@ a:focus-visible {
 }
 
 .clientes-table td,
-.categorias-table td {
+.categorias-table td,
+.produtos-table td {
   color: var(--color-text);
 }
 
 .clientes-table th:first-child,
 .clientes-table td:first-child,
 .categorias-table th:first-child,
-.categorias-table td:first-child {
+.categorias-table td:first-child,
+.produtos-table th:first-child,
+.produtos-table td:first-child {
   padding-left: 0;
 }
 
 .clientes-table th:last-child,
 .clientes-table td:last-child,
 .categorias-table th:last-child,
-.categorias-table td:last-child {
+.categorias-table td:last-child,
+.produtos-table th:last-child,
+.produtos-table td:last-child {
   padding-right: 0;
 }
 
 .clientes-table tbody tr:last-child td,
-.categorias-table tbody tr:last-child td {
+.categorias-table tbody tr:last-child td,
+.produtos-table tbody tr:last-child td {
   border-bottom: 0;
 }
 
 .clientes-table__sort,
-.categorias-table__sort {
+.categorias-table__sort,
+.produtos-table__sort {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -852,13 +868,15 @@ a:focus-visible {
 }
 
 .clientes-table__sort-mark,
-.categorias-table__sort-mark {
+.categorias-table__sort-mark,
+.produtos-table__sort-mark {
   color: var(--color-primary-text);
   font-size: 0.6875rem;
 }
 
 .clientes-table__actions,
-.categorias-table__actions {
+.categorias-table__actions,
+.produtos-table__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -866,14 +884,16 @@ a:focus-visible {
 }
 
 .clientes-table__confirm-text,
-.categorias-table__confirm-text {
+.categorias-table__confirm-text,
+.produtos-table__confirm-text {
   flex: 1 0 100%;
   font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 
 .clientes-table__action,
-.categorias-table__action {
+.categorias-table__action,
+.produtos-table__action {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
@@ -889,34 +909,40 @@ a:focus-visible {
 }
 
 .clientes-table__action:hover:not(:disabled),
-.categorias-table__action:hover:not(:disabled) {
+.categorias-table__action:hover:not(:disabled),
+.produtos-table__action:hover:not(:disabled) {
   background-color: var(--color-subtle-background);
   border-color: var(--color-border-strong);
 }
 
 .clientes-table__action--danger,
-.categorias-table__action--danger {
+.categorias-table__action--danger,
+.produtos-table__action--danger {
   border-color: var(--color-danger);
   color: var(--color-danger-text);
 }
 
 .clientes-table__action--danger:hover:not(:disabled),
-.categorias-table__action--danger:hover:not(:disabled) {
+.categorias-table__action--danger:hover:not(:disabled),
+.produtos-table__action--danger:hover:not(:disabled) {
   background-color: var(--color-badge-cancelado-background);
 }
 
 .clientes-table__action:disabled,
-.categorias-table__action:disabled {
+.categorias-table__action:disabled,
+.produtos-table__action:disabled {
   cursor: not-allowed;
 }
 
 .clientes-table__action > svg,
-.categorias-table__action > svg {
+.categorias-table__action > svg,
+.produtos-table__action > svg {
   flex: none;
 }
 
 .clientes-table__spinner,
-.categorias-table__spinner {
+.categorias-table__spinner,
+.produtos-table__spinner {
   flex: none;
   width: 0.75rem;
   height: 0.75rem;
@@ -934,7 +960,8 @@ a:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   .clientes-table__spinner,
-  .categorias-table__spinner {
+  .categorias-table__spinner,
+  .produtos-table__spinner {
     animation: none;
   }
 }
@@ -1001,14 +1028,16 @@ a:focus-visible {
 }
 
 .cliente-create-page,
-.categoria-create-page {
+.categoria-create-page,
+.produto-create-page {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
 }
 
 .cliente-edit-page,
-.categoria-edit-page {
+.categoria-edit-page,
+.produto-edit-page {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -1019,7 +1048,8 @@ a:focus-visible {
 }
 
 .cliente-missing,
-.categoria-missing {
+.categoria-missing,
+.produto-missing {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1032,7 +1062,8 @@ a:focus-visible {
 }
 
 .cliente-missing p,
-.categoria-missing p {
+.categoria-missing p,
+.produto-missing p {
   margin: 0;
 }
 
@@ -1053,13 +1084,15 @@ a:focus-visible {
   }
 
   .clientes-search,
-  .categorias-search {
+  .categorias-search,
+  .produtos-search {
     flex-direction: column;
     align-items: stretch;
   }
 
   .clientes-search .field,
-  .categorias-search .field {
+  .categorias-search .field,
+  .produtos-search .field {
     max-width: none;
   }
 
