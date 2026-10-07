@@ -530,7 +530,7 @@ saas-erp-platform/
 - [ ] Deployment
 - [ ] Integration Hub
 - [ ] Permissao propria de auditoria: hoje `/api/v1/audit-logs` exige
-  `role.read`; separar em uma permissao de auditoria numa fase futura
+  `role.ler`; separar em uma permissao de auditoria numa fase futura
   de RBAC/Auditoria
 - [ ] Unificar chave de paginacao: `/pedidos` devolve `itens` enquanto
   os demais recursos devolvem `items`; depende de versionamento de API

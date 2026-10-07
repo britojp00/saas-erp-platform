@@ -144,7 +144,7 @@ async def test_roles_endpoint_with_permission(
     test_empresa: Empresa,
     test_user: User,
 ):
-    role_read = await _create_permission(db_session, test_empresa.id, "role.read")
+    role_read = await _create_permission(db_session, test_empresa.id, "role.ler")
     role = await _create_role(db_session, test_empresa.id, "viewer")
     await _assign_permission(db_session, test_empresa.id, role.id, role_read.id)
     await _assign_role_to_user(db_session, test_empresa.id, test_user.id, role.id)
@@ -218,11 +218,11 @@ async def test_cross_empresa_cannot_see_roles(
     await db_session.flush()
 
     other_role = await _create_role(db_session, other_empresa.id, "other-admin")
-    other_perm = await _create_permission(db_session, other_empresa.id, "role.read")
+    other_perm = await _create_permission(db_session, other_empresa.id, "role.ler")
     await _assign_permission(db_session, other_empresa.id, other_role.id, other_perm.id)
 
     my_role = await _create_role(db_session, test_empresa.id, "my-viewer")
-    my_perm = await _create_permission(db_session, test_empresa.id, "role.read")
+    my_perm = await _create_permission(db_session, test_empresa.id, "role.ler")
     await _assign_permission(db_session, test_empresa.id, my_role.id, my_perm.id)
     await _assign_role_to_user(db_session, test_empresa.id, test_user.id, my_role.id)
     await db_session.commit()

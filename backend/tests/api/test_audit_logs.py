@@ -112,7 +112,7 @@ ALL_AUDIT_PERMS = [
     "pedido.criar",
     "pedido.atualizar",
     "pedido.cancelar",
-    "role.read",
+    "role.ler",
 ]
 
 

@@ -24,7 +24,7 @@ async def get_audit_log_service(
     "",
     response_model=AuditLogListResponse,
     dependencies=[
-        Depends(require_permissions("role.read")),
+        Depends(require_permissions("role.ler")),
     ],
 )
 async def list_audit_logs(

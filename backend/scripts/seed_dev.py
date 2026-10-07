@@ -12,6 +12,11 @@ from sqlalchemy.ext.asyncio import (
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.core.config import settings
+from app.core.permissions import (
+    ALL_PERMISSIONS,
+    MANAGER_EXCLUDED,
+    READ_PERMISSIONS,
+)
 from app.core.security import get_password_hash
 from app.db.models.empresa import Empresa
 from app.db.models.permission import Permission
@@ -30,49 +35,6 @@ session_factory = async_sessionmaker(
 SEED_EMPRESA_SLUG = "demo"
 SEED_USER_EMAIL = "admin@demo.com"
 DEFAULT_DEV_PASSWORD = "admin123"
-
-ALL_PERMISSIONS = [
-    "cliente.ler",
-    "cliente.criar",
-    "cliente.atualizar",
-    "cliente.excluir",
-    "produto.ler",
-    "produto.criar",
-    "produto.atualizar",
-    "produto.excluir",
-    "categoria.ler",
-    "categoria.criar",
-    "categoria.atualizar",
-    "categoria.excluir",
-    "pedido.ler",
-    "pedido.criar",
-    "pedido.atualizar",
-    "pedido.cancelar",
-    "estoque.ler",
-    "estoque.atualizar",
-    "user.read",
-    "user.create",
-    "user.update",
-    "user.delete",
-    "role.read",
-    "role.create",
-    "role.update",
-    "role.delete",
-    "permission.read",
-]
-
-MANAGER_EXCLUDED = {"user.delete", "role.delete", "permission.read"}
-
-READ_PERMISSIONS = {
-    "cliente.ler",
-    "produto.ler",
-    "categoria.ler",
-    "pedido.ler",
-    "estoque.ler",
-    "user.read",
-    "role.read",
-    "permission.read",
-}
 
 
 async def _get_or_create_permission(

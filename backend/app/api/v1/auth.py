@@ -56,7 +56,7 @@ async def get_me(
 @router.get(
     "/roles",
     dependencies=[
-        Depends(require_permissions("role.read")),
+        Depends(require_permissions("role.ler")),
     ],
 )
 async def list_roles(
