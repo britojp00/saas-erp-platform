@@ -771,7 +771,8 @@ a:focus-visible {
 .clientes-page,
 .categorias-page,
 .produtos-page,
-.estoque-page {
+.estoque-page,
+.pedidos-page {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -780,7 +781,8 @@ a:focus-visible {
 .clientes-toolbar,
 .categorias-toolbar,
 .produtos-toolbar,
-.estoque-toolbar {
+.estoque-toolbar,
+.pedidos-toolbar {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -788,7 +790,8 @@ a:focus-visible {
 
 .clientes-search,
 .categorias-search,
-.produtos-search {
+.produtos-search,
+.pedidos-search {
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
@@ -796,16 +799,29 @@ a:focus-visible {
 
 .clientes-search .field,
 .categorias-search .field,
-.produtos-search .field {
+.produtos-search .field,
+.pedidos-search .field {
   flex: 1;
   max-width: 20rem;
 }
 
 .clientes-search button,
 .categorias-search button,
-.produtos-search button {
+.produtos-search button,
+.pedidos-search button {
   padding: 0.5rem 0.75rem;
   font-size: 0.8125rem;
+}
+
+.pedidos-filters {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pedidos-filtro {
+  max-width: 20rem;
 }
 
 .estoque-filtro {
@@ -851,7 +867,8 @@ a:focus-visible {
 .clientes-table,
 .categorias-table,
 .produtos-table,
-.estoque-table {
+.estoque-table,
+.pedidos-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
@@ -864,7 +881,9 @@ a:focus-visible {
 .produtos-table th,
 .produtos-table td,
 .estoque-table th,
-.estoque-table td {
+.estoque-table td,
+.pedidos-table th,
+.pedidos-table td {
   padding: 0.625rem 0.75rem;
   text-align: left;
   vertical-align: top;
@@ -874,7 +893,8 @@ a:focus-visible {
 .clientes-table th,
 .categorias-table th,
 .produtos-table th,
-.estoque-table th {
+.estoque-table th,
+.pedidos-table th {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -885,7 +905,8 @@ a:focus-visible {
 .clientes-table td,
 .categorias-table td,
 .produtos-table td,
-.estoque-table td {
+.estoque-table td,
+.pedidos-table td {
   color: var(--color-text);
 }
 
@@ -896,7 +917,9 @@ a:focus-visible {
 .produtos-table th:first-child,
 .produtos-table td:first-child,
 .estoque-table th:first-child,
-.estoque-table td:first-child {
+.estoque-table td:first-child,
+.pedidos-table th:first-child,
+.pedidos-table td:first-child {
   padding-left: 0;
 }
 
@@ -907,20 +930,24 @@ a:focus-visible {
 .produtos-table th:last-child,
 .produtos-table td:last-child,
 .estoque-table th:last-child,
-.estoque-table td:last-child {
+.estoque-table td:last-child,
+.pedidos-table th:last-child,
+.pedidos-table td:last-child {
   padding-right: 0;
 }
 
 .clientes-table tbody tr:last-child td,
 .categorias-table tbody tr:last-child td,
 .produtos-table tbody tr:last-child td,
-.estoque-table tbody tr:last-child td {
+.estoque-table tbody tr:last-child td,
+.pedidos-table tbody tr:last-child td {
   border-bottom: 0;
 }
 
 .clientes-table__sort,
 .categorias-table__sort,
-.produtos-table__sort {
+.produtos-table__sort,
+.pedidos-table__sort {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -937,7 +964,8 @@ a:focus-visible {
 
 .clientes-table__sort-mark,
 .categorias-table__sort-mark,
-.produtos-table__sort-mark {
+.produtos-table__sort-mark,
+.pedidos-table__sort-mark {
   color: var(--color-primary-text);
   font-size: 0.6875rem;
 }
@@ -945,7 +973,8 @@ a:focus-visible {
 .clientes-table__actions,
 .categorias-table__actions,
 .produtos-table__actions,
-.estoque-table__actions {
+.estoque-table__actions,
+.pedidos-table__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -955,7 +984,8 @@ a:focus-visible {
 .clientes-table__confirm-text,
 .categorias-table__confirm-text,
 .produtos-table__confirm-text,
-.estoque-table__confirm-text {
+.estoque-table__confirm-text,
+.pedidos-table__confirm-text {
   flex: 1 0 100%;
   font-size: 0.75rem;
   color: var(--color-text-muted);
@@ -964,7 +994,8 @@ a:focus-visible {
 .clientes-table__action,
 .categorias-table__action,
 .produtos-table__action,
-.estoque-table__action {
+.estoque-table__action,
+.pedidos-table__action {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
@@ -982,42 +1013,48 @@ a:focus-visible {
 .clientes-table__action:hover:not(:disabled),
 .categorias-table__action:hover:not(:disabled),
 .produtos-table__action:hover:not(:disabled),
-.estoque-table__action:hover:not(:disabled) {
+.estoque-table__action:hover:not(:disabled),
+.pedidos-table__action:hover:not(:disabled) {
   background-color: var(--color-subtle-background);
   border-color: var(--color-border-strong);
 }
 
 .clientes-table__action--danger,
 .categorias-table__action--danger,
-.produtos-table__action--danger {
+.produtos-table__action--danger,
+.pedidos-table__action--danger {
   border-color: var(--color-danger);
   color: var(--color-danger-text);
 }
 
 .clientes-table__action--danger:hover:not(:disabled),
 .categorias-table__action--danger:hover:not(:disabled),
-.produtos-table__action--danger:hover:not(:disabled) {
+.produtos-table__action--danger:hover:not(:disabled),
+.pedidos-table__action--danger:hover:not(:disabled) {
   background-color: var(--color-badge-cancelado-background);
 }
 
 .clientes-table__action:disabled,
 .categorias-table__action:disabled,
 .produtos-table__action:disabled,
-.estoque-table__action:disabled {
+.estoque-table__action:disabled,
+.pedidos-table__action:disabled {
   cursor: not-allowed;
 }
 
 .clientes-table__action > svg,
 .categorias-table__action > svg,
 .produtos-table__action > svg,
-.estoque-table__action > svg {
+.estoque-table__action > svg,
+.pedidos-table__action > svg {
   flex: none;
 }
 
 .clientes-table__spinner,
 .categorias-table__spinner,
 .produtos-table__spinner,
-.estoque-table__spinner {
+.estoque-table__spinner,
+.pedidos-table__spinner {
   flex: none;
   width: 0.75rem;
   height: 0.75rem;
@@ -1037,7 +1074,8 @@ a:focus-visible {
   .clientes-table__spinner,
   .categorias-table__spinner,
   .produtos-table__spinner,
-  .estoque-table__spinner {
+  .estoque-table__spinner,
+  .pedidos-table__spinner {
     animation: none;
   }
 }
@@ -1097,7 +1135,8 @@ a:focus-visible {
   cursor: not-allowed;
 }
 
-.cliente-detail-page {
+.cliente-detail-page,
+.pedido-detail-page {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -1105,7 +1144,8 @@ a:focus-visible {
 
 .cliente-create-page,
 .categoria-create-page,
-.produto-create-page {
+.produto-create-page,
+.pedido-create-page {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -1125,7 +1165,8 @@ a:focus-visible {
 
 .cliente-missing,
 .categoria-missing,
-.produto-missing {
+.produto-missing,
+.pedido-missing {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1139,8 +1180,141 @@ a:focus-visible {
 
 .cliente-missing p,
 .categoria-missing p,
-.produto-missing p {
+.produto-missing p,
+.pedido-missing p {
   margin: 0;
+}
+
+.pedidos-form {
+  max-width: 56rem;
+}
+
+.pedidos-form > .field,
+.pedidos-form > .entity-form__actions,
+.pedidos-form > .pedidos-item-list__add {
+  max-width: 32rem;
+}
+
+.button--primary {
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.button--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.button--danger {
+  background: transparent;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger-text);
+}
+
+.button--danger:hover:not(:disabled) {
+  background: var(--color-badge-cancelado-background);
+}
+
+.pedidos-item-list {
+  min-width: 0;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--color-surface);
+}
+
+.pedidos-item-list legend {
+  padding: 0 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.pedidos-item-row + .pedidos-item-row {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.pedidos-item-row__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.pedidos-item-row__title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.pedidos-item-row__fields {
+  display: grid;
+  grid-template-columns: minmax(12rem, 2fr) minmax(7rem, 1fr) minmax(7rem, 1fr);
+  gap: 0.75rem;
+}
+
+.pedidos-item-list__add {
+  margin-top: 0.75rem;
+}
+
+.pedidos-item-list__add button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.pedidos-item-add {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.pedidos-item-add h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.pedidos-item-add__fields {
+  display: grid;
+  grid-template-columns: minmax(12rem, 2fr) minmax(7rem, 1fr) minmax(7rem, 1fr);
+  gap: 0.75rem;
+}
+
+.pedidos-item-add .entity-form__actions {
+  justify-content: flex-start;
+}
+
+.pedidos-item-add .entity-form__actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.pedidos-table .field {
+  min-width: 7.5rem;
+}
+
+.pedidos-table .field label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.pedidos-table__message {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-danger-text);
 }
 
 @media (max-width: 64rem) {
@@ -1161,19 +1335,32 @@ a:focus-visible {
 
   .clientes-search,
   .categorias-search,
-  .produtos-search {
+  .produtos-search,
+  .pedidos-search {
     flex-direction: column;
     align-items: stretch;
   }
 
   .clientes-search .field,
   .categorias-search .field,
-  .produtos-search .field {
+  .produtos-search .field,
+  .pedidos-search .field {
     max-width: none;
   }
 
-  .estoque-filtro {
+  .pedidos-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .estoque-filtro,
+  .pedidos-filtro {
     max-width: none;
+  }
+
+  .pedidos-item-row__fields,
+  .pedidos-item-add__fields {
+    grid-template-columns: 1fr;
   }
 
   .pagination {

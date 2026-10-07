@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
-import { IconFolder, IconPackage } from '@tabler/icons-react'
+import { IconFolder, IconPackage, IconShoppingCart } from '@tabler/icons-react'
 import { useAuth } from '../contexts/AuthContext'
 
 interface NavItem {
@@ -23,7 +23,11 @@ const NAV_ITEMS: NavItem[] = [
     icon: <IconPackage size={16} aria-hidden="true" />,
   },
   { to: '/estoque', label: 'Estoque' },
-  { to: '/pedidos', label: 'Pedidos' },
+  {
+    to: '/pedidos',
+    label: 'Pedidos',
+    icon: <IconShoppingCart size={16} aria-hidden="true" />,
+  },
 ]
 
 interface AppSidebarProps {

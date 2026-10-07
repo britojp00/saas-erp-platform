@@ -1,42 +1,14 @@
+import type { StatusPedido } from './pedidos'
+
+export type { ListaPedidosResposta, PedidoResumo } from './pedidos'
+export type { StatusPedido }
+export { ROTULOS_STATUS_PEDIDO, STATUS_PEDIDOS } from './pedidos'
+
 export interface PaginatedResponse<T> {
   items: T[]
   page: number
   page_size: number
   total: number
-}
-
-export type StatusPedido = 'RASCUNHO' | 'CONFIRMADO' | 'CONCLUIDO' | 'CANCELADO'
-
-export const STATUS_PEDIDOS: readonly StatusPedido[] = [
-  'RASCUNHO',
-  'CONFIRMADO',
-  'CONCLUIDO',
-  'CANCELADO',
-]
-
-export const ROTULOS_STATUS_PEDIDO: Record<StatusPedido, string> = {
-  RASCUNHO: 'Rascunho',
-  CONFIRMADO: 'Confirmado',
-  CONCLUIDO: 'Concluído',
-  CANCELADO: 'Cancelado',
-}
-
-export interface ListaPedidosResposta<T> {
-  itens: T[]
-  page: number
-  page_size: number
-  total: number
-}
-
-export interface PedidoResumo {
-  id: number
-  empresa_id: number
-  numero_pedido: number
-  cliente_id: number
-  status: string
-  total_amount: number
-  created_at: string
-  updated_at: string
 }
 
 export interface ItemEstoque {
