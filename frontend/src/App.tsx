@@ -11,6 +11,8 @@ import DashboardPage from './pages/DashboardPage'
 import PaginaEstoque from './pages/PaginaEstoque'
 import LoginPage from './pages/LoginPage'
 import PaginaPedidos from './pages/PaginaPedidos'
+import PaginaCriarPedido from './pages/PaginaCriarPedido'
+import PaginaDetalhePedido from './pages/PaginaDetalhePedido'
 import PaginaCriarProduto from './pages/PaginaCriarProduto'
 import PaginaEditarProduto from './pages/PaginaEditarProduto'
 import PaginaListaProdutos from './pages/PaginaListaProdutos'
@@ -45,6 +47,8 @@ export default function App() {
           />
           <Route path="/estoque" element={<PaginaEstoque />} />
           <Route path="/pedidos" element={<PaginaPedidos />} />
+          <Route path="/pedidos/criar" element={<PaginaCriarPedido />} />
+          <Route path="/pedidos/:id" element={<PaginaDetalhePedido />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
