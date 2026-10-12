@@ -7,7 +7,29 @@ if (!baseUrl) {
 }
 
 const API_BASE_URL = baseUrl.replace(/\/+$/, '')
+const API_BASE_PATHNAME = API_BASE_URL.replace(
+  /^[a-z][a-z0-9+.-]*:\/\/[^/]*/i,
+  '',
+)
 const DEFAULT_TIMEOUT_MS = 10_000
+
+export function resolveApiUrl(path: string): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+
+  if (API_BASE_PATHNAME === '') {
+    return `${API_BASE_URL}${normalizedPath}`
+  }
+
+  if (normalizedPath === API_BASE_PATHNAME) {
+    return API_BASE_URL
+  }
+
+  if (normalizedPath.startsWith(`${API_BASE_PATHNAME}/`)) {
+    return `${API_BASE_URL}${normalizedPath.slice(API_BASE_PATHNAME.length)}`
+  }
+
+  return `${API_BASE_URL}${normalizedPath}`
+}
 
 let authToken: string | null = null
 let unauthorizedHandler: (() => void) | null = null
@@ -140,7 +162,7 @@ async function request<T>(
 
   let response: Response
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, init)
+    response = await fetch(resolveApiUrl(path), init)
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw error
