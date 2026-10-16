@@ -1568,6 +1568,124 @@ class TestPedidoMultiTenancy:
 
 
 class TestPedidoEstoqueIntegracao:
+    async def _setup_permissao_confirmacao(
+        self,
+        db_session: AsyncSession,
+        test_empresa: Empresa,
+    ) -> None:
+        role = await _create_role_with_perms(
+            db_session,
+            test_empresa.id,
+            "pedido_stock_validation",
+            ["pedido.ler", "pedido.criar", "pedido.atualizar", "estoque.ler"],
+        )
+        await _assign_role_to_user(
+            db_session,
+            test_empresa.id,
+            (await _get_user(db_session, test_empresa.id)).id,
+            role.id,
+        )
+        await db_session.commit()
+
+    async def test_confirmar_pedido_produto_inativo_falha(
+        self,
+        client: AsyncClient,
+        db_session: AsyncSession,
+        test_empresa: Empresa,
+        authenticated_headers: dict,
+        cliente: Cliente,
+    ) -> None:
+        await self._setup_permissao_confirmacao(db_session, test_empresa)
+
+        produto_inativo = await _create_produto(
+            db_session, test_empresa.id, "Produto Inativo", is_active=False
+        )
+        await _create_estoque(db_session, test_empresa.id, produto_inativo.id)
+        await db_session.commit()
+
+        create_resp = await client.post(
+            "/api/v1/pedidos",
+            json={
+                "cliente_id": cliente.id,
+                "itens": [{"produto_id": produto_inativo.id, "quantity": 1}],
+            },
+            headers=authenticated_headers,
+        )
+        pedido_id = create_resp.json()["id"]
+
+        response = await client.post(
+            f"/api/v1/pedidos/{pedido_id}/confirmar",
+            headers=authenticated_headers,
+        )
+        assert response.status_code == 409
+        assert response.json()["detail"] == (
+            "Todos os produtos devem estar ativos para confirmar o pedido"
+        )
+
+    async def test_confirmar_pedido_produto_ativo_sem_estoque_falha(
+        self,
+        client: AsyncClient,
+        db_session: AsyncSession,
+        test_empresa: Empresa,
+        authenticated_headers: dict,
+        cliente: Cliente,
+    ) -> None:
+        await self._setup_permissao_confirmacao(db_session, test_empresa)
+
+        produto_sem_estoque = await _create_produto(
+            db_session, test_empresa.id, "Produto Sem Estoque"
+        )
+        await db_session.commit()
+
+        create_resp = await client.post(
+            "/api/v1/pedidos",
+            json={
+                "cliente_id": cliente.id,
+                "itens": [{"produto_id": produto_sem_estoque.id, "quantity": 1}],
+            },
+            headers=authenticated_headers,
+        )
+        pedido_id = create_resp.json()["id"]
+
+        response = await client.post(
+            f"/api/v1/pedidos/{pedido_id}/confirmar",
+            headers=authenticated_headers,
+        )
+        assert response.status_code == 409
+        assert response.json()["detail"] == (
+            "Estoque insuficiente para o produto 'Produto Sem Estoque': "
+            "solicitado 1, disponível 0"
+        )
+
+    async def test_confirmar_pedido_estoque_exatamente_suficiente(
+        self,
+        client: AsyncClient,
+        db_session: AsyncSession,
+        test_empresa: Empresa,
+        authenticated_headers: dict,
+        cliente: Cliente,
+        produto: Produto,
+        estoque: Estoque,
+    ) -> None:
+        await self._setup_permissao_confirmacao(db_session, test_empresa)
+
+        create_resp = await client.post(
+            "/api/v1/pedidos",
+            json={
+                "cliente_id": cliente.id,
+                "itens": [{"produto_id": produto.id, "quantity": 100}],
+            },
+            headers=authenticated_headers,
+        )
+        pedido_id = create_resp.json()["id"]
+
+        response = await client.post(
+            f"/api/v1/pedidos/{pedido_id}/confirmar",
+            headers=authenticated_headers,
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "CONFIRMADO"
+
     async def test_estoque_insuficiente_falha(
         self,
         client: AsyncClient,
@@ -1578,19 +1696,7 @@ class TestPedidoEstoqueIntegracao:
         produto: Produto,
         estoque: Estoque,
     ) -> None:
-        role = await _create_role_with_perms(
-            db_session,
-            test_empresa.id,
-            "pedido_insufficient",
-            ["pedido.ler", "pedido.criar", "pedido.atualizar"],
-        )
-        await _assign_role_to_user(
-            db_session,
-            test_empresa.id,
-            (await _get_user(db_session, test_empresa.id)).id,
-            role.id,
-        )
-        await db_session.commit()
+        await self._setup_permissao_confirmacao(db_session, test_empresa)
 
         create_resp = await client.post(
             "/api/v1/pedidos",
@@ -1607,6 +1713,24 @@ class TestPedidoEstoqueIntegracao:
             headers=authenticated_headers,
         )
         assert response.status_code == 409
+        assert response.json()["detail"] == (
+            "Estoque insuficiente para o produto 'Produto Teste': "
+            "solicitado 200, disponível 100"
+        )
+
+        pedido_resp = await client.get(
+            f"/api/v1/pedidos/{pedido_id}",
+            headers=authenticated_headers,
+        )
+        assert pedido_resp.status_code == 200
+        assert pedido_resp.json()["status"] == "RASCUNHO"
+
+        inv_resp = await client.get(
+            f"/api/v1/estoque/{produto.id}",
+            headers=authenticated_headers,
+        )
+        assert inv_resp.status_code == 200
+        assert float(inv_resp.json()["reserved_quantity"]) == 0.0
 
 
 async def _get_user(session: AsyncSession, empresa_id: int) -> User:

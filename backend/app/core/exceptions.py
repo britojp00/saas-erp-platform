@@ -1,4 +1,5 @@
 import logging
+from decimal import Decimal
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -152,6 +153,39 @@ class ErroPedidoProdutoNaoEncontrado(DomainError):
 
 class ErroPedidoProdutoInativo(DomainError):
     """Levantado ao tentar confirmar um pedido com produtos inativos."""
+
+
+def _formatar_quantidade(valor: Decimal) -> str:
+    return format(valor.normalize(), "f")
+
+
+class ErroPedidoEstoqueInsuficiente(DomainError):
+    """Levantado ao confirmar um pedido sem estoque disponivel para um item."""
+
+    def __init__(
+        self,
+        produto_nome: str | None = None,
+        quantidade_solicitada: Decimal | None = None,
+        quantidade_disponivel: Decimal | None = None,
+    ) -> None:
+        self.produto_nome = produto_nome
+        self.quantidade_solicitada = quantidade_solicitada
+        self.quantidade_disponivel = quantidade_disponivel
+        super().__init__(self.mensagem)
+
+    @property
+    def mensagem(self) -> str:
+        if (
+            self.produto_nome is None
+            or self.quantidade_solicitada is None
+            or self.quantidade_disponivel is None
+        ):
+            return "Estoque insuficiente para confirmar o pedido"
+        return (
+            f"Estoque insuficiente para o produto '{self.produto_nome}': "
+            f"solicitado {_formatar_quantidade(self.quantidade_solicitada)}, "
+            f"disponível {_formatar_quantidade(self.quantidade_disponivel)}"
+        )
 
 
 def register_exception_handlers(app: FastAPI) -> None:
@@ -583,4 +617,17 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={
                 "detail": "Todos os produtos devem estar ativos para confirmar o pedido"
             },
+        )
+
+    @app.exception_handler(ErroPedidoEstoqueInsuficiente)
+    async def pedido_estoque_insuficiente_error_handler(
+        request: Request, exc: ErroPedidoEstoqueInsuficiente
+    ) -> JSONResponse:
+        logger.warning(
+            "pedido.estoque_insuficiente",
+            extra={"event": "pedido.estoque_insuficiente"},
+        )
+        return JSONResponse(
+            status_code=409,
+            content={"detail": exc.mensagem},
         )

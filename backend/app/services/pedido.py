@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,6 +8,7 @@ from app.core.exceptions import (
     ErroItemPedidoDuplicado,
     ErroItemPedidoNaoEncontrado,
     ErroPedidoClienteNaoEncontrado,
+    ErroPedidoEstoqueInsuficiente,
     ErroPedidoNaoEncontrado,
     ErroPedidoProdutoInativo,
     ErroPedidoProdutoNaoEncontrado,
@@ -407,12 +409,17 @@ class PedidoService:
             estoque = await self.estoque_repo.get_for_update(
                 empresa_id, item.produto_id
             )
-            if estoque is None:
-                raise ErroPedidoProdutoInativo()
-
-            available = estoque.quantity - estoque.reserved_quantity
-            if available < item.quantity:
-                raise ErroPedidoProdutoInativo()
+            quantidade_disponivel = (
+                estoque.quantity - estoque.reserved_quantity
+                if estoque is not None
+                else Decimal(0)
+            )
+            if estoque is None or quantidade_disponivel < item.quantity:
+                raise ErroPedidoEstoqueInsuficiente(
+                    produto_nome=produto.name,
+                    quantidade_solicitada=item.quantity,
+                    quantidade_disponivel=quantidade_disponivel,
+                )
 
             estoque.reserved_quantity = estoque.reserved_quantity + item.quantity
 
