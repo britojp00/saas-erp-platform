@@ -244,6 +244,10 @@ na mesma origem; o nginx ja envia `X-Forwarded-Proto`.
 - `ci.yml` nao foi alterado;
 - jobs `build_and_push` e `deploy` (producao) continuam identicos;
 - este ambiente e iniciado manualmente (secao 6);
-- validacao de build do frontend no CI ficou para uma etapa futura;
+- a qualidade desta branch e validada pelo workflow
+  `.github/workflows/dev.yml` (push e pull request para
+  `feat/development-web-v1`): backend (ruff, alembic, pytest) e
+  frontend (`npm run typecheck` e `npm run build`), sem build de
+  imagem e sem deploy;
 - esta branch nao deve ser mergeada em `master` sem revisao, pois o
   pipeline de `master` dispara deploy automatico de producao.

@@ -41,7 +41,11 @@ independentes;
 claros;
 focados em comportamento.
 
-Resultado atual: **273 passed**
+Quantidade de testes identificados: **286** (contagem estática em
+07/11/2026; a suíte não foi reexecutada nesta data).
+
+Última execução verde comprovada: **16/10/2026** (Dev CI no
+GitHub Actions).
 
 Evitar testes criados somente para aumentar cobertura numérica.
 

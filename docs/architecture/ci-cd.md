@@ -127,7 +127,7 @@ Etapas do CI (ordem preservada):
 6. Ruff format check
 7. Alembic upgrade head
 8. Alembic check
-9. Pytest (273 testes)
+9. Pytest (suíte de testes; 286 testes identificados em 07/11/2026)
 10. Docker build
 
 Todas as etapas devem passar para que o pipeline seja considerado válido.
@@ -404,7 +404,7 @@ Job: ci
   ├── Ruff format check
   ├── Alembic upgrade head
   ├── Alembic check
-  ├── Pytest (273 testes)
+  ├── Pytest (suíte de testes; 286 testes identificados em 07/11/2026)
   └── Docker build
        |
        | (todos passaram)
@@ -692,3 +692,25 @@ Antes de ativar o deploy:
 - Skills: `skills/infrastructure/README.md`,
   `skills/infrastructure/docker.md`,
   `skills/infrastructure/docker-compose.md`
+
+# 17. Dev CI (branch de desenvolvimento)
+
+Workflow separado: `.github/workflows/dev.yml`
+
+Executa somente em push e pull request para
+`feat/development-web-v1`:
+
+| Job | Etapas |
+|---|---|
+| `backend` | Python 3.13, uv, PostgreSQL 17 (services), `uv sync --frozen`, ruff check, ruff format check, alembic upgrade head, alembic check, pytest |
+| `frontend` | Node 22 com cache npm, `npm ci`, `npm run typecheck`, `npm run build` |
+
+Características:
+
+- sem build ou push de imagem;
+- sem deploy e sem login Azure;
+- permissões mínimas (`permissions: contents: read`);
+- não requer `id-token: write`.
+
+Este workflow é independente do `ci.yml` e não altera a pipeline de
+produção documentada nas seções anteriores.

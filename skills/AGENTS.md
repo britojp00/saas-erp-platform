@@ -10,6 +10,7 @@ localizadas em:
 
 ```text
 skills/
+```
 
 As skills representam os padrões técnicos e arquiteturais
 adotados pelo projeto.
@@ -170,7 +171,11 @@ A estrutura do backend deve seguir:
 backend/app/
 ├── api/
 ├── core/
-├── models/
+├── db/
+│   ├── models/
+│   ├── mixins.py
+│   ├── base.py
+│   └── database.py
 ├── schemas/
 ├── repositories/
 ├── services/
@@ -184,13 +189,13 @@ antes de alterações relacionadas ao backend.
 
 10. Frontend
 
-O frontend será uma aplicação separada.
+O frontend é uma aplicação separada.
 
 Localização:
 
 frontend/
 
-Tecnologias planejadas:
+Tecnologias utilizadas:
 
 React
 TypeScript
@@ -351,6 +356,8 @@ Antes de alterar:
 
 Dockerfile
 docker-compose.yml
+docker-compose.dev.yml
+docker-compose.prod.yml
 containers
 volumes
 services
@@ -513,4 +520,6 @@ em vez de introduzir complexidade desnecessária.
 
 ```text
 saas-erp-platform/
-└── AGENTS.md
+└── skills/
+    └── AGENTS.md
+```

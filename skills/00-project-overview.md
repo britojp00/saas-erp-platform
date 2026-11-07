@@ -351,12 +351,13 @@ Estoque (9 endpoints: movimentacoes, reservas, confirmar, liberar, cancelar);
 Pedidos (10 endpoints: CRUD, itens, confirmar, cancelar, concluir);
 Audit Logs (1 endpoint: list);
 Seed de desenvolvimento;
-273 testes passando;
+286 testes identificados (contagem estática de 07/11/2026);
 39 API endpoints;
 Logging estruturado (JSON/text, request_id, empresa_id, user_id);
 Observabilidade (HTTP middleware, request context);
 CI (GitHub Actions: lint, format, alembic, pytest, Docker build);
 CD (GitHub Actions + Azure Container Registry + Azure VM Run Command: push para master);
+Dev CI (GitHub Actions: backend (ruff, alembic, pytest) e frontend (typecheck, build) em push e pull request para feat/development-web-v1);
 Ruff check e format;
 APP_TIMEZONE=America/Sao_Paulo;
 Timestamps timezone-aware com offset local.
